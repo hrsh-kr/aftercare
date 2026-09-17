@@ -1,0 +1,18 @@
+{
+  "candidate_id": "test-candidate-real",
+  "repo_url": "https://github.com/hrsh-kr/GroundTruth",
+  "claims": [
+    {
+      "claim": "I built a system that checks GitHub commit authorship and timeline patterns using Python and the requests library.",
+      "status": "insufficient",
+      "reason": "The repository has no dependency files listed, which contradicts the claim that Python and the requests library were used. Additionally, while there is commit authorship data supporting one user, there is insufficient information about commit patterns to verify the system's functionality.",
+      "evidence": {
+        "author_share": 1.0,
+        "commit_count": 3,
+        "timeline_shape": "insufficient",
+        "is_fork": false,
+        "dependency_files": []
+      }
+    }
+  ]
+}

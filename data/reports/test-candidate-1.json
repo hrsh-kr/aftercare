@@ -1,0 +1,18 @@
+{
+  "candidate_id": "test-candidate-1",
+  "repo_url": "https://github.com/psf/requests",
+  "claims": [
+    {
+      "claim": "This project is a Python HTTP library.",
+      "status": "inconsistent",
+      "reason": "The repository is a fork and has no Python dependencies, contradicting the claim that it is a Python HTTP library.",
+      "evidence": {
+        "author_share": 0.0,
+        "commit_count": 30,
+        "timeline_shape": "iterative",
+        "is_fork": false,
+        "dependency_files": []
+      }
+    }
+  ]
+}

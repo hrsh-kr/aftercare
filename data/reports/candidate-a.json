@@ -1,0 +1,20 @@
+{
+  "candidate_id": "candidate-a",
+  "repo_url": "https://github.com/hrsh-kr/GroundTruth",
+  "claims": [
+    {
+      "claim": "I built a system that checks GitHub commit authorship and timeline patterns using Python, requests, and the Strands Agents SDK.",
+      "status": "verified",
+      "reason": "The evidence confirms that the project uses Python, requests, and the Strands Agents SDK as claimed, and that all commits are from the same author over a recent period.",
+      "evidence": {
+        "author_share": 1.0,
+        "commit_count": 4,
+        "timeline_shape": "iterative",
+        "is_fork": false,
+        "dependency_files": [
+          "requirements.txt"
+        ]
+      }
+    }
+  ]
+}
