@@ -44,8 +44,18 @@ Ask exactly one follow-up question, one or two sentences, nothing else."""
 
 SCORE_PROMPT = """Score this candidate's answer from 1 to 5 for genuine, \
 specific understanding of the actual code (not just plausible-sounding \
-writing). A 5 references specific details from the diff. A 1 is generic \
-enough to describe almost any code change.
+writing).
+
+Score what they actually said, not whether they covered everything the \
+diff contains -- a short answer that's specific and accurate about one \
+part of the change is a 4 or 5, even if it doesn't mention every function \
+in the diff. Only score low if what they said is generic, vague, wrong, or \
+could apply to almost any code change.
+
+A 5: references real specifics from the diff (an actual value, function \
+name, or decision) and explains why, even briefly.
+A 3: plausible but vague, or correct only at a surface level.
+A 1: generic enough to describe almost any code change, or factually wrong.
 
 Commit diff:
 {diff}
