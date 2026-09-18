@@ -98,6 +98,7 @@ def lookup():
         {
             "found": True,
             "customer_name": regs[0].customer_name,
+            "brand": agent_mod.brand_for(regs[0].product_id),
             "products": [
                 {"product_id": r.product_id, "product_name": r.product_name, "serial_number": r.serial_number}
                 for r in regs

@@ -1,4 +1,4 @@
-# Windmere ArcticAir 1.5T — Split AC
+# ArcticAir 1.5T — Split AC
 ## User Manual
 
 *Model: AC-CB-15T · 1.5 ton · Split, indoor + outdoor unit*
@@ -7,7 +7,7 @@
 
 ## 1. Installation
 
-Installed by a Windmere technician at time of purchase. Outdoor unit needs at least 30cm clearance on all sides for airflow — do not enclose it or stack items against it.
+Installed by an authorized technician at time of purchase. Outdoor unit needs at least 30cm clearance on all sides for airflow — do not enclose it or stack items against it.
 
 ---
 

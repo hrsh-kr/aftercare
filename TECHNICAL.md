@@ -92,7 +92,7 @@ POST /tickets/{ticket_id}/status
 
 **Fully real:** the registration data (we author it, but it's structured and real once entered), the agent's retrieval-and-grounding logic, the escalation decision, the full conversation log.
 
-**Authored for the demo, not fetched from anywhere:** the product manual, the brand's terms & conditions, and the sales records — realistic, not real, written for this one fully-onboarded brand, since there's no public API for any of these the way GitHub gave us commits.
+**Authored for the demo, not fetched from anywhere:** each product's manual, its brand's terms & conditions, and the sales records — realistic, not real, written for the two fully-onboarded brands in this demo, since there's no public API for any of these the way GitHub gave us commits.
 
 **Simulated, and said so in the video:** the WhatsApp channel itself — a styled web chat UI stands in for it. The logic behind it is real.
 

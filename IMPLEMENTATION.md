@@ -23,10 +23,10 @@
 - [x] Groundtruth (first idea, candidate-authenticity verification) archived, not deleted, at `archive/groundtruth/` — working code, in case anything is reusable later
 - [x] Original product spec preserved at `source/aftercare/` for reference
 - [x] Fixtures authored at `fixtures/` — **reworked once already, see decision log:** dropped the ceiling fan (troubleshooting required tools/ladder work nobody does over chat), replaced with washing machine + AC, both genuinely DIY-fixable, researched against real common-fault patterns, not invented:
-  - [x] `manual_windmere_washing_machine.md` — drum noise (level + load balance, real DIY steps), foul smell/residue (lint filter, descaling), no-start, safety
-  - [x] `manual_windmere_ac.md` — not cooling (filter clean), foul smell (drain + filter), water dripping, safety
-  - [x] `terms_windmere.md` — multi-product warranty terms (washing machine: 2yr motor; AC: 5yr compressor; both: 1yr parts)
-  - [x] `sales_data_windmere.csv` — 4 customers across both products, mixed warranty states
+  - [x] `manual_aquaspin.md` — drum noise (level + load balance, real DIY steps), foul smell/residue (lint filter, descaling), no-start, safety
+  - [x] `manual_arcticair.md` — not cooling (filter clean), foul smell (drain + filter), water dripping, safety
+  - [x] `terms_aquaspin.md`, `terms_arcticair.md` — per-brand warranty terms (washing machine: 2yr motor; AC: 5yr compressor; both: 1yr parts)
+  - [x] `sales_data.csv` — 4 customers across both products, mixed warranty states
 
 ---
 
@@ -54,7 +54,7 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ## Phase 2 — Layer 1: registration + lookup (done)
 
-- [x] `src/layer1/registration.py`: loads `fixtures/sales_data_windmere.csv` into memory as `Registration` records (kept simple — a list, not the JSON-file-per-record pattern from the first build, since this is one small CSV, not per-candidate reports; revisit if it needs to grow)
+- [x] `src/layer1/registration.py`: loads `fixtures/sales_data.csv` into memory as `Registration` records (kept simple — a list, not the JSON-file-per-record pattern from the first build, since this is one small CSV, not per-candidate reports; revisit if it needs to grow)
 - [x] `lookup_by_phone()`: returns all registered products for a phone number, `[]` for an unknown one — no fabrication, matches the honesty rule
 - [x] `compute_warranty_status()` **moved here from the test script** and made canonical — the test script now imports it instead of keeping its own copy, so the date math can't drift out of sync between the two
 - [x] Verified: loaded all 4 registrations, looked up a known phone (correct product + serial returned) and an unknown one (empty list, not an error or a guess), warranty status for all 4 matches Phase 1's recorded output exactly
@@ -63,7 +63,7 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 - [x] `src/layer2/agent.py`: the multi-turn loop — `start()` + `respond()`, a real `Conversation` state machine
 - [x] Safety check runs before any model call
-- [x] Source routing: coverage question → `terms_windmere.md`, troubleshooting → the matching manual by `product_id` prefix (`WM-` / `AC-`), not by guessing from complaint text
+- [x] Source routing: coverage question → the matching brand's terms file (`terms_aquaspin.md` / `terms_arcticair.md`), troubleshooting → the matching manual, both by `product_id` prefix (`WM-` / `AC-`), not by guessing from complaint text
 - [x] Escalation logic + `src/layer3b/tickets.py` (built now, not deferred to Phase 4 — escalation needs somewhere real to write to)
 - [x] `scripts/test_agent_multiturn.py`: 4 paths tested through the real agent, not just direct model calls
 
@@ -84,7 +84,8 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] `src/webapp/app.py` (Flask) + `templates/index.html` + `static/style.css` + `static/chat.js` — simulated chat UI, real logic underneath (calls straight into `src/layer1` and `src/layer2`, nothing mocked at this layer)
 - [x] Applied `SKILL.md`'s product-screen rules: one accent color, restrained type/spacing, motion only for new messages arriving
 - [x] Registration lookup screen, the complaint conversation, resolution/escalation states — all three visually distinct (white = waiting on agent, green = customer, amber = escalated to a ticket)
-- [x] **Fixed a real product-logic inconsistency, caught after Phase 5's first pass:** the lookup screen asked the customer to type their own phone number, which makes no sense for a WhatsApp simulation — a real integration already knows the sender from the incoming message, nothing is ever typed. Replaced the phone-number text field with an explicit "pick who you're simulating" selector (`/api/customers`, honestly labeled as a demo stand-in, not pretending to be the real mechanism). Product line names also updated per request: AC is now "Windmere ArcticAir," washing machine is "Windmere AquaSpin" (Windmere stays the onboarded parent brand; these are its product lines, not separate companies) — confirmed both show correctly through the real selector flow.
+- [x] **Fixed a real product-logic inconsistency, caught after Phase 5's first pass:** the lookup screen asked the customer to type their own phone number, which makes no sense for a WhatsApp simulation — a real integration already knows the sender from the incoming message, nothing is ever typed. Replaced the phone-number text field with an explicit "pick who you're simulating" selector (`/api/customers`, honestly labeled as a demo stand-in, not pretending to be the real mechanism).
+- [x] **Naming correction:** "Windmere" (the earlier parent-brand name) was never a name the user gave — it was invented mid-build and got flagged as such. Removed entirely, everywhere (fixtures, code, templates, docs). AC line is "ArcticAir," washing-machine line is "AquaSpin" — now two fully independent brands, not one parent with two product lines. Each has its own manual, its own terms file (`terms_arcticair.md` / `terms_aquaspin.md`, split out of the old combined `terms_windmere.md`), and its own chat header, set dynamically per customer (`brand_for()` in `src/layer2/agent.py`, returned by `/api/lookup`, applied client-side in `chat.js`). The dashboard is no longer branded to one company — it's Aftercare's own cross-brand ops view (`Aftercare — Ops Dashboard`), which fits the actual pitch better: Aftercare is the platform, brands are its clients. Fixture files renamed accordingly (`manual_arcticair.md`, `manual_aquaspin.md`, `sales_data.csv`); confirmed both brands render correctly (distinct header text, correct manual/terms retrieval) through a live test.
 - [x] `.claude/launch.json` added so the dev server runs via the Browser pane tool properly
 
 **Tested live in the browser, not just described:** ran the full Priya (washing machine) conversation through the real UI — lookup → complaint → step 1 (level check) → "still broken" → step 2 (load balance, genuinely different) → "fixed it" → resolved, composer correctly disabled. Separately ran Sameer's safety-flagged AC complaint through the real UI — immediate ticket (TBB-0003), correct amber styling, no troubleshooting attempted.
@@ -122,8 +123,8 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ## Decisions made along the way (add to this as you go)
 
-- Fictional brand ("Windmere") chosen over real brand names for fixture data.
+- Fictional brand names chosen over real brand names for fixture data — originally one invented parent brand ("Windmere") with two product lines, later corrected to two fully independent brands (ArcticAir, AquaSpin) once it turned out the parent name had never actually been requested. See Phase 5's naming-correction note.
 - Real brand names (well-known AC/washing machine/speaker brands) used only as narrative texture in `PITCH.md`, never named explicitly in the doc itself — generic phrasing ("one of India's best-known AC brands") plus a real screenshot with the logo blacked out for the actual demo video. Real enough to be credible, not attached to a specific trademark.
 - Ceiling fan fixture dropped and replaced with washing machine + AC — original troubleshooting wasn't hands-only doable. See Phase 1's rework note above.
 - Layer 2 redesigned from a one-shot "here's a suggestion" into a real multi-turn loop: one step, wait for a reply, escalate only after self-service was genuinely tried (capped at 2 attempts) — not a detail, this is now the actual spec in `DESIGN.md`/`TECHNICAL.md`.
-- One brand, two products (washing machine + AC), full flow first — scope updated from the original "one product" plan since both were explicitly wanted for the demo; more products only if time remains after Phase 6.
+- Two brands, one product each (AquaSpin washing machine, ArcticAir AC), full flow first — scope updated from the original "one product" plan since both were explicitly wanted for the demo; more brands/products only if time remains after Phase 6.

@@ -28,8 +28,8 @@ FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
 
 MANUALS = {
-    "washing_machine": FIXTURES / "manual_windmere_washing_machine.md",
-    "ac": FIXTURES / "manual_windmere_ac.md",
+    "washing_machine": FIXTURES / "manual_aquaspin.md",
+    "ac": FIXTURES / "manual_arcticair.md",
 }
 
 
@@ -106,7 +106,7 @@ def main() -> None:
     print("=" * 60)
     print("WARRANTY -- all four fixture customers, per product type")
     print("=" * 60)
-    with open(FIXTURES / "sales_data_windmere.csv") as f:
+    with open(FIXTURES / "sales_data.csv") as f:
         for row in csv.DictReader(f):
             test_warranty(agent, row["customer_name"], row["purchase_date"], row["product_id"], row["product_name"])
 

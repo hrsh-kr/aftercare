@@ -1,4 +1,4 @@
-# Windmere AquaSpin 700 — Front-Load Washing Machine
+# AquaSpin 700 — Front-Load Washing Machine
 ## User Manual
 
 *Model: WM-FC-700 · 7kg · Front load*

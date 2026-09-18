@@ -13,7 +13,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
-SALES_DATA = FIXTURES / "sales_data_windmere.csv"
+SALES_DATA = FIXTURES / "sales_data.csv"
 
 
 @dataclass

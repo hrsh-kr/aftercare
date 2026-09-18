@@ -6,6 +6,8 @@ const messagesEl = document.getElementById("messages");
 const composer = document.getElementById("composer");
 const messageInput = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
+const brandDot = document.getElementById("brand-dot");
+const brandName = document.getElementById("brand-name");
 
 let phone = null;
 let conversationId = null;
@@ -56,6 +58,9 @@ async function selectCustomer(selectedPhone) {
   lookupScreen.hidden = true;
   messagesEl.hidden = false;
   composer.hidden = false;
+
+  brandName.textContent = `${data.brand} Support`;
+  brandDot.textContent = data.brand[0];
 
   const productLine = data.products.map((p) => p.product_name).join(", ");
   addBubble(`Hi ${data.customer_name}! I can see your ${productLine}. What can I help with?`, "agent");

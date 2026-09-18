@@ -4,7 +4,7 @@ One system, three layers, two audiences — same shape that worked for us before
 
 **Track: Build It, competing for Best UI too.** No AWS account needed — everything below runs locally, using AWS's own open-source tooling (Strands Agents SDK + a local model), the same approach as our earlier build.
 
-**Scope assumption: one brand, fully onboarded.** We assume the brand already gave us their product catalog structure, their sales data, and their terms & conditions — the way any real integration would start. We build the complete flow for that one brand, end to end, before considering any other scenario. One feature that runs beats five that almost do.
+**Scope assumption: a small number of brands, fully onboarded.** We assume each brand already gave us their product catalog structure, their sales data, and their terms & conditions — the way any real integration would start. The demo runs two independent brands (an AC line and a washing-machine line) to show the model generalizes across products, not one company's whole appliance catalog under a single umbrella name. We build the complete flow end to end before considering any other scenario. One feature that runs beats five that almost do.
 
 **Fixtures, not real data.** The product manual, the terms & conditions, and the sales records this build runs on are authored by us — realistic, not real. Same principle as simulating the WhatsApp channel: what's being demonstrated is the logic, not a claim that this is a live brand integration.
 

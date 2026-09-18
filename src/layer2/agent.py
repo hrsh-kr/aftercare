@@ -19,10 +19,17 @@ from src.layer3b.tickets import Ticket, next_ticket_id
 
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
 MANUAL_BY_PREFIX = {
-    "WM-": FIXTURES / "manual_windmere_washing_machine.md",
-    "AC-": FIXTURES / "manual_windmere_ac.md",
+    "WM-": FIXTURES / "manual_aquaspin.md",
+    "AC-": FIXTURES / "manual_arcticair.md",
 }
-TERMS_PATH = FIXTURES / "terms_windmere.md"
+TERMS_BY_PREFIX = {
+    "WM-": FIXTURES / "terms_aquaspin.md",
+    "AC-": FIXTURES / "terms_arcticair.md",
+}
+BRAND_BY_PREFIX = {
+    "WM-": "AquaSpin",
+    "AC-": "ArcticAir",
+}
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
 COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
 MAX_ATTEMPTS = 2
@@ -80,6 +87,23 @@ def _manual_for(product_id: str) -> Path:
     raise ValueError(f"No manual mapped for product_id {product_id}")
 
 
+def _terms_for(product_id: str) -> Path:
+    for prefix, path in TERMS_BY_PREFIX.items():
+        if product_id.startswith(prefix):
+            return path
+    raise ValueError(f"No terms mapped for product_id {product_id}")
+
+
+def brand_for(product_id: str) -> str:
+    """ArcticAir and AquaSpin are two independent brands, each with
+    their own manual, terms, and support line -- there is no shared
+    parent company in this demo."""
+    for prefix, brand in BRAND_BY_PREFIX.items():
+        if product_id.startswith(prefix):
+            return brand
+    raise ValueError(f"No brand mapped for product_id {product_id}")
+
+
 PHRASE_STEP_PROMPT = """A customer's complaint: "{complaint}"
 
 The one step to give them, taken directly from the manual: "{raw_step}"
@@ -104,7 +128,7 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         return conv
 
     if _is_coverage_question(complaint):
-        sections = load_sections(TERMS_PATH)
+        sections = load_sections(_terms_for(registration.product_id))
         source = "terms"
     else:
         sections = load_sections(_manual_for(registration.product_id))
