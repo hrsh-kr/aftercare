@@ -1,6 +1,6 @@
-# Groundtruth
+# Aftercare
 
-Checks whether a candidate's claims are true — using real evidence, before anyone reaches an interview — then has a short written conversation with them about their own work, so a genuine claim can be told apart from one that only looks good on paper.
+The support line that already knows what you bought. A product is registered once, quietly, at the point of sale — no app, no form. When a customer messages about a problem, months or years later, the conversation already knows their product, its warranty status, and history. It reads their complaint, grounds a real fix in that exact product's manual, and only escalates to the brand's team when it genuinely can't help — never a guess.
 
 Built for **First Commit** (WeMakeDevs × AWS, Bharat Builds Tour). **Build It track**, also competing for **Best UI**.
 
@@ -8,7 +8,7 @@ Built for **First Commit** (WeMakeDevs × AWS, Bharat Builds Tour). **Build It t
 
 ## Status
 
-Design locked. Build started 17 September. Build order is in `DESIGN.md`; how we work is in `SKILL.md`.
+Design locked, build starting. See `SKILL.md` for how we work, `DESIGN.md` §9 for the build order.
 
 ## The docs
 
@@ -18,12 +18,13 @@ Design locked. Build started 17 September. Build order is in `DESIGN.md`; how we
 | [`DESIGN.md`](DESIGN.md) | What we're building, and what we're not |
 | [`TECHNICAL.md`](TECHNICAL.md) | How it's built, in AWS terms |
 | [`SKILL.md`](SKILL.md) | How we design, write, and code |
-| `RESEARCH.md` | The original research archive — reference only |
+| `source/aftercare/` | The original product spec this build is based on — reference only |
+| `archive/groundtruth/` | Our first hackathon build (candidate-authenticity verification) — set aside, not discarded, in case any of it is useful later |
 
 ## In one sentence
 
-One engine verifies claims against real repo evidence. One layer has an adaptive conversation grounded in that evidence. Two views sit on top — one for the candidate, one for the company. Full picture in `DESIGN.md`.
+One engine registers products and looks them up by phone number. One agent reads a complaint, grounds a real fix in that product's actual manual, and escalates honestly when it can't help. Two views sit on top — the customer's chat, the brand's dashboard. Full picture in `DESIGN.md`.
 
 ## Stack
 
-Strands Agents SDK + a local model, SAM CLI + LocalStack (Lambda, API Gateway, Step Functions, DynamoDB, S3), Cedar. No AWS account required. Full mapping in `TECHNICAL.md`.
+Strands Agents SDK + a local model (Ollama), plain local Python standing in for Lambda/DynamoDB. No AWS account required. Full mapping in `TECHNICAL.md`.

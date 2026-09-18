@@ -31,7 +31,7 @@ We're competing for Best UI as well as the main track, so this section isn't dec
 - Motion: only to clarify a state change — a result appearing, a step completing. Fast, subtle, never for its own sake.
 
 **The landing page** — a different job, so a different mode. This is Apple's *marketing* register, not their utility one: apple.com is not a restrained dashboard, it's an immersive, narrative experience — big type for the hero line, real pacing as you scroll, color and imagery used richly, motion used to build a feeling, not just to confirm a click landed.
-- One big, bold claim as the hero — the tagline itself ("Verify the claim. Not the résumé."), not a feature list.
+- One big, bold claim as the hero — the tagline itself ("The support line that already knows what you bought."), not a feature list.
 - The page follows `PITCH.md`'s actual narrative arc as you scroll — problem, then the reveal, then proof, then the close. The landing page *is* the pitch, designed.
 - Typography can be large and expressive for hero moments — still one typeface, still considered, just not the restrained utility scale.
 - Richer color and real imagery are fair game here — a real screenshot, a real moment from the product — as long as the accent color stays consistent with the product itself, so the two feel like one thing.
@@ -65,8 +65,8 @@ Mostly how good engineering already works, stated so it doesn't drift under dead
 
 Paul Graham's order, and it's the right one for four days with no head start:
 
-1. **Build the smallest version that works, before touching any infrastructure.** Prove the one uncertain thing — can our actual local model tell a real explanation from a generic one — with a plain script against a real repo. If this doesn't work well, nothing downstream matters yet.
-2. **Then integrate the AWS toolkit**, one piece at a time, in the build order set out in `DESIGN.md`. We're on Build It — Strands, SAM CLI + LocalStack, Cedar — so "integrating AWS" means wiring these in locally, not deploying to a billed account.
+1. **Build the smallest version that works, before touching any infrastructure.** Prove the one uncertain thing — can our actual local model ground a suggestion in a real manual passage and correctly recognize when to escalate instead of guess — with a plain script against a real (authored) product manual. If this doesn't work well, nothing downstream matters yet.
+2. **Then integrate the AWS toolkit**, one piece at a time, in the build order set out in `DESIGN.md`. We're on Build It — Strands and a local model — so "integrating AWS" means wiring these in locally, not deploying to a billed account.
 3. **Iterate outward from a working core.** Never sideways into something new before the current layer is solid.
 
 Don't design ahead of what's proven. Don't build ahead of what's designed.
@@ -95,4 +95,5 @@ After each build milestone in `DESIGN.md`'s build order, check: does `README.md`
 - **`TECHNICAL.md`** — how, concretely: the pipeline, the data, what's real versus mocked.
 - **`README.md`** — the front door.
 - **`SKILL.md`** — this file.
-- **`RESEARCH.md`** — the original research archive. Reference only, not maintained during the build.
+- **`source/aftercare/`** — the original product spec this build is based on. Reference only, not maintained during the build.
+- **`archive/groundtruth/`** — our first hackathon build, set aside when we pivoted. Not discarded, not part of this submission.
