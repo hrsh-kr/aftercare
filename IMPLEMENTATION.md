@@ -150,19 +150,14 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **Which server is which:** Flask (`src/webapp/app.py`, port 5001) is what the live demo runs — faster iteration, serves the HTML/JS too. SAM Local (`sam build --use-container && sam local start-api --warm-containers LAZY`, port 3000) is the serverless-readiness proof — JSON API only, no templates. Both real, different jobs, same `api_core.py` underneath.
 
-## Phase 7.6 — OpenSearch-backed retrieval (not started)
+## Phase 7.6 — OpenSearch-backed retrieval (done)
 
-- [ ] Local single-node OpenSearch container (Docker + Java both confirmed present)
-- [ ] Index manual + terms sections per brand at startup via `opensearch-py`
-- [ ] Replace `keyword_retrieve()` in `src/layer1/retrieval.py`'s call site with real BM25 search, keeping the existing function as a documented, honest fallback if OpenSearch isn't reachable — not hidden, noted in `TECHNICAL.md`
-- [ ] Re-run Phase 1's grounding test against the OpenSearch-backed path to confirm retrieval quality didn't regress
+- [x] Local single-node OpenSearch container (`scripts/start_opensearch.sh` — security plugin disabled, local dev only, mirrors the Ollama/Cedar setup-script pattern)
+- [x] `src/layer1/opensearch_retrieval.py` — indexes every manual/terms section (all brands, once per process) into a single `aftercare-sections` index, `{path, heading, body}`. Retrieval is a `bool` query: `filter` on the exact source path (same document boundary `keyword_retrieve()` always respected — never cross-brand), `must` a `multi_match` (`heading^2`, `body`) for real BM25 ranking instead of hand-scored word overlap.
+- [x] `retrieve(query, doc_path)` tries OpenSearch first, falls back to the original `keyword_retrieve()` if unreachable — and returns which one actually answered (`"opensearch"` / `"keyword_fallback"`) rather than pretending OpenSearch always ran. `Conversation` gained a `retrieval_method` field to carry this honestly through the rest of the system.
+- [x] `src/layer2/agent.py`'s `start()` now calls `opensearch_retrieval.retrieve()` instead of `load_sections()` + `keyword_retrieve()` directly
 
-## Phase 7.6 — OpenSearch-backed retrieval (not started)
-
-- [ ] Local single-node OpenSearch container (Docker + Java both confirmed present)
-- [ ] Index manual + terms sections per brand at startup via `opensearch-py`
-- [ ] Replace `keyword_retrieve()` in `src/layer1/retrieval.py`'s call site with real BM25 search, keeping the existing function as a documented, honest fallback if OpenSearch isn't reachable — not hidden, noted in `TECHNICAL.md`
-- [ ] Re-run Phase 1's grounding test against the OpenSearch-backed path to confirm retrieval quality didn't regress
+**Verified live, both paths:** ran the same three cases Phase 1 validated (washing machine drum noise, washing machine foul smell, AC not cooling) directly against `opensearch_retrieval.retrieve()` — all three correctly retrieved the right section, `method == "opensearch"` confirmed each time, not a silent fallback. Then pointed `OPENSEARCH_HOST` at a nonexistent port and re-ran the drum-noise case — correctly fell back, `method == "keyword_fallback"`, same correct section returned. Then re-ran the full Phase 3 multi-turn test suite (`scripts/test_agent_multiturn.py`) against the real OpenSearch-backed path end to end — all 4 paths still correct (resolved-on-step-1, resolved-on-step-2, escalate-after-2-attempts, safety-immediate-escalation). No regression from the Phase 1-validated behavior; the scoring mechanism changed, the grounding claim didn't.
 
 ## Phase 8 — Submission
 

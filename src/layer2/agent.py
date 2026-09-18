@@ -20,8 +20,8 @@ from strands.models.ollama import OllamaModel
 # sets this to http://host.docker.internal:11434 for exactly this reason.
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
+from src.layer1 import opensearch_retrieval
 from src.layer1.registration import Registration
-from src.layer1.retrieval import keyword_retrieve, load_sections
 from src.layer3b.tickets import Ticket, next_ticket_id
 
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
@@ -63,6 +63,7 @@ class Conversation:
     safety_flag: bool = False
     resolved: bool = False
     ticket: Ticket | None = None
+    retrieval_method: str = ""  # "opensearch" or "keyword_fallback" -- see opensearch_retrieval.retrieve()
 
 
 def _parse_numbered_steps(body: str, limit: int = MAX_ATTEMPTS) -> list[str]:
@@ -136,17 +137,18 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         return conv
 
     if _is_coverage_question(complaint):
-        sections = load_sections(_terms_for(registration.product_id))
+        doc_path = _terms_for(registration.product_id)
         source = "terms"
     else:
-        sections = load_sections(_manual_for(registration.product_id))
+        doc_path = _manual_for(registration.product_id)
         source = "manual"
 
-    heading, body = keyword_retrieve(complaint, sections)
+    heading, body, retrieval_method = opensearch_retrieval.retrieve(complaint, doc_path)
     available_steps = _parse_numbered_steps(body)
     conv = Conversation(
         registration=registration, complaint=complaint, source=source,
         section_heading=heading, section_body=body, available_steps=available_steps,
+        retrieval_method=retrieval_method,
     )
 
     if not available_steps:
