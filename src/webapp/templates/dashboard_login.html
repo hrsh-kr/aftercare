@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aftercare — Brand Login</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="dashboard-body login-body">
+  <div class="login-card">
+    <div class="login-mark">A</div>
+    <h1 class="login-title">Aftercare for Brands</h1>
+    <p class="login-copy">
+      Aftercare is one backend, but every brand's dashboard is its own —
+      ArcticAir never sees AquaSpin's tickets, and the other way around.
+      A real deployment would authenticate each brand's staff account;
+      this demo simulates that with a picker, then a real Cedar policy
+      decides what each session is allowed to see.
+    </p>
+    <div id="brand-list" class="login-brand-list"></div>
+  </div>
+
+  <script>
+    const brands = {{ brands | tojson }};
+    const list = document.getElementById("brand-list");
+    list.innerHTML = Object.entries(brands)
+      .map(([slug, name]) => `
+        <button class="login-brand-btn" data-slug="${slug}">
+          <span class="login-brand-dot">${name.slice(0, 2)}</span>
+          <span class="login-brand-name">${name} staff</span>
+        </button>`)
+      .join("");
+    list.querySelectorAll(".login-brand-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        sessionStorage.setItem("staffBrand", btn.dataset.slug);
+        window.location.href = `/dashboard/${btn.dataset.slug}`;
+      });
+    });
+  </script>
+</body>
+</html>

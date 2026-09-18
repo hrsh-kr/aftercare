@@ -3,33 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aftercare — Ops Dashboard</title>
+  <title>{{ brand_display }} — Aftercare Dashboard</title>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 <body class="dashboard-body">
   <div class="dash">
     <header class="dash-header">
-      <div class="brand-dot">A</div>
-      <div>
-        <div class="brand-name dash-title">Aftercare — Ops Dashboard</div>
-        <div class="brand-sub">Every conversation across every brand Aftercare couldn't resolve on its own</div>
+      <div class="brand-dot">{{ brand_display[:2] }}</div>
+      <div class="dash-header-text">
+        <div class="brand-name dash-title">{{ brand_display }} — Support Dashboard</div>
+        <div class="brand-sub" id="session-line">Checking authorization&hellip;</div>
       </div>
+      <a class="switch-brand-link" href="/dashboard">Switch brand</a>
     </header>
 
-    <section class="stat-row" id="stat-row"></section>
+    <div id="denied-panel" class="denied-panel" hidden>
+      <div class="denied-title">Access denied</div>
+      <p class="denied-copy" id="denied-copy"></p>
+      <a class="switch-brand-link" href="/dashboard">Log in as the right brand</a>
+    </div>
 
-    <section class="dash-section">
-      <h2>Open tickets</h2>
-      <div id="ticket-list" class="ticket-list"></div>
-    </section>
+    <div id="dash-content" hidden>
+      <section class="stat-row" id="stat-row"></section>
 
-    <section class="dash-section">
-      <h2>Product feedback</h2>
-      <div id="feedback-list" class="feedback-list"></div>
-    </section>
+      <section class="dash-section">
+        <h2>Open tickets</h2>
+        <div id="ticket-list" class="ticket-list"></div>
+      </section>
+
+      <section class="dash-section">
+        <h2>Product feedback</h2>
+        <div id="feedback-list" class="feedback-list"></div>
+      </section>
+    </div>
   </div>
 
+  <script>
+    window.__BRAND__ = {{ brand | tojson }};
+  </script>
   <script src="/static/dashboard.js"></script>
 </body>
 </html>

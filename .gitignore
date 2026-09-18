@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 GroundTruth/
+tools/cedar/cedar
+.aws-sam/
+data/tickets/

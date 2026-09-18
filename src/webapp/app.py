@@ -11,8 +11,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, abort, jsonify, render_template, request
 
+from src.authz.cedar_authz import CedarUnavailable, can_view_dashboard
 from src.layer1.registration import load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
 from src.layer3b.tickets import Ticket
@@ -35,14 +36,46 @@ def index():
 
 
 @app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html")
+def dashboard_login():
+    """The 'which brand's staff am I' picker -- same honesty pattern as
+    the customer picker on '/': a real login system would already know
+    who's signed in, this is a browser demo standing in for that. Picks
+    who Cedar treats as the principal for every dashboard call that follows."""
+    return render_template("dashboard_login.html", brands=agent_mod.BRAND_SLUGS)
 
 
-@app.route("/api/dashboard", methods=["GET"])
-def dashboard_data():
-    tickets = sorted(Ticket.load_all(), key=lambda t: t.ticket_id)
-    registrations = load_registrations()
+@app.route("/dashboard/<brand>")
+def dashboard(brand: str):
+    brand = brand.strip().lower()
+    if brand not in agent_mod.BRAND_SLUGS:
+        abort(404)
+    return render_template("dashboard.html", brand=brand, brand_display=agent_mod.BRAND_SLUGS[brand])
+
+
+@app.route("/api/dashboard/<brand>", methods=["GET"])
+def dashboard_data(brand: str):
+    """Brand-scoped, Cedar-authorized. staff_brand is who the request
+    claims to be logged in as (the dashboard login picker); brand is
+    whose data is being asked for, straight from the URL. These can
+    disagree -- e.g. an ArcticAir staff session hitting
+    /api/dashboard/aquaspin directly -- and Cedar is what actually
+    decides, not a Python if-statement guessing at the same logic."""
+    staff_brand = request.headers.get("X-Staff-Brand", "").strip().lower()
+    brand = brand.strip().lower()
+
+    try:
+        allowed = can_view_dashboard(staff_brand, brand)
+    except CedarUnavailable as exc:
+        return jsonify({"error": f"Authorization check unavailable: {exc}"}), 503
+
+    if not allowed:
+        return jsonify({"error": f"Not authorized to view {brand}'s dashboard as '{staff_brand or 'nobody'}'."}), 403
+
+    registrations = [r for r in load_registrations() if agent_mod.brand_for(r.product_id).lower() == brand]
+    tickets = sorted(
+        [t for t in Ticket.load_all() if t.product_id and agent_mod.brand_for(t.product_id).lower() == brand],
+        key=lambda t: t.ticket_id,
+    )
 
     warranty_counts = {"active": 0, "expired": 0}
     for r in registrations:
@@ -55,6 +88,7 @@ def dashboard_data():
 
     return jsonify(
         {
+            "brand": brand,
             "tickets": [
                 {
                     "ticket_id": t.ticket_id,

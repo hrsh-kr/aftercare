@@ -19,6 +19,7 @@ class Ticket:
     product_name: str
     serial_number: str
     issue_summary: str
+    product_id: str = ""  # e.g. "AC-CB-15T" -- which brand this ticket belongs to, by prefix
     attempts_tried: list[str] = field(default_factory=list)
     safety_flag: bool = False
     status: str = "new"

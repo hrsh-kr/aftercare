@@ -17,7 +17,13 @@ async function loadCustomerPicker() {
   const res = await fetch("/api/customers");
   const people = await res.json();
   customerList.innerHTML = people
-    .map((p) => `<button class="customer-btn" data-phone="${p.phone}">${p.name}</button>`)
+    .map(
+      (p) => `
+      <button class="customer-btn" data-phone="${p.phone}">
+        <span class="customer-avatar">${p.name[0]}</span>
+        <span>${p.name}</span>
+      </button>`
+    )
     .join("");
   customerList.querySelectorAll(".customer-btn").forEach((btn) => {
     btn.addEventListener("click", () => selectCustomer(btn.dataset.phone));
@@ -60,7 +66,7 @@ async function selectCustomer(selectedPhone) {
   composer.hidden = false;
 
   brandName.textContent = `${data.brand} Support`;
-  brandDot.textContent = data.brand[0];
+  brandDot.textContent = data.brand.slice(0, 2);
 
   const productLine = data.products.map((p) => p.product_name).join(", ");
   addBubble(`Hi ${data.customer_name}! I can see your ${productLine}. What can I help with?`, "agent");

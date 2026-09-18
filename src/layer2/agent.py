@@ -30,6 +30,7 @@ BRAND_BY_PREFIX = {
     "WM-": "AquaSpin",
     "AC-": "ArcticAir",
 }
+BRAND_SLUGS = {name.lower(): name for name in BRAND_BY_PREFIX.values()}  # "arcticair" -> "ArcticAir"
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
 COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
 MAX_ATTEMPTS = 2
@@ -197,6 +198,7 @@ def _escalate(conv: Conversation, reason: str) -> Ticket:
         customer_phone=conv.registration.customer_phone,
         product_name=conv.registration.product_name,
         serial_number=conv.registration.serial_number,
+        product_id=conv.registration.product_id,
         issue_summary=f"{conv.complaint} -- {reason}",
         attempts_tried=attempts,
         safety_flag=conv.safety_flag,

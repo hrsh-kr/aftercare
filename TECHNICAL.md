@@ -2,7 +2,16 @@
 
 The how. Read `DESIGN.md` first for the what and why.
 
-**Track: Build It.** Same approach as our first build: no AWS account, Strands Agents SDK orchestrating a local model via Ollama, plain local Python standing in for the AWS services it maps onto (Lambda, DynamoDB) rather than literally routing through LocalStack — see the reasoning in our earlier build, still holds here.
+**Track: Build It.** No AWS account, no card, no bill — built entirely on AWS's own open-source stack, run locally:
+
+| Tool | Used for |
+|---|---|
+| **Strands Agents SDK** | Orchestrates the support agent (Layer 2) against a local model via Ollama |
+| **Cedar** | Authorizes brand dashboard access — each brand's staff can only ever see their own tickets, enforced by a real Cedar policy evaluation, not an `if` statement (`policies/dashboard.cedar`, `src/authz/cedar_authz.py`) |
+| **AWS SAM Local** | Runs the core API as local Lambda functions behind an emulated API Gateway, proving the same logic is serverless-ready without deploying anywhere |
+| **OpenSearch** | Backs the manual/terms retrieval with real BM25 search instead of a naive keyword-overlap function, run as a local single-node container |
+
+Plain local Python stands in for the rest of what would otherwise be Lambda/DynamoDB, rather than literally routing through LocalStack — see the reasoning in our earlier build, still holds here.
 
 ---
 
@@ -28,7 +37,7 @@ flowchart TD
 | Strands agent + local model | Reads the complaint, retrieves the relevant manual chunk, extracts structured fields, generates a grounded suggestion or decides to escalate | The actual agent — the flagship mechanism |
 | Ticket store | Escalated complaints with full context | What the brand dashboard reads from |
 | Customer chat UI | Simulated WhatsApp-style conversation | Real logic, simulated channel — see `DESIGN.md` §8 for why |
-| Brand dashboard | Ticket queue, product feedback, warranty overview | The other half of the two-sided story |
+| Brand dashboard | Ticket queue, product feedback, warranty overview — scoped to one brand, Cedar-authorized | The other half of the two-sided story. Aftercare is one backend serving several brands; a brand's dashboard must never see another's data |
 
 ## 3. Data model
 

@@ -106,10 +106,45 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **Verified live:** 4 registered products, 3 open tickets (1 washing-machine smell after 2 real attempts, 2 AC safety escalations correctly badged), 4 warranty items active — all numbers traced back to real fixture data and real conversations run earlier in this session, nothing hand-typed into the dashboard itself.
 
+**Superseded by Phase 6.5 below** — this was a single dashboard aggregating all brands. Corrected once it became clear that's not how Aftercare actually works: Aftercare is a service provider, each brand it serves gets its own independent dashboard.
+
+## Phase 6.5 — Multi-brand correction: per-brand dashboards + Cedar authorization (done)
+
+**Why:** caught a real architecture mistake — Aftercare is a platform serving multiple brands, each brand's WhatsApp support and dashboard should be independent, not one shared cross-brand view. Also the point where the AWS OSS stack requirement (`Strands, Cedar, SAM Local, PartyRock, OpenSearch — no account, no card, no bill`) got checked against what was actually being used, which at that point was Strands alone.
+
+- [x] **Cedar CLI, the real thing, not the PyPI package.** `pip install cedar-policy` resolves to an empty 0.0.1 placeholder with no actual bindings — checked by importing it and inspecting `dir()`, confirmed empty. Used the real open-source Cedar CLI instead: prebuilt binary from `cedar-policy/cedar`'s GitHub releases (v4.13.0), downloaded via `scripts/install_cedar_cli.sh` to `tools/cedar/cedar` (gitignored — a 15MB platform binary, not vendored).
+- [x] `policies/dashboard.cedar` — one real policy: `permit(principal, action == Action::"viewDashboard", resource) when { principal.brand == resource.brand };`. Generic across brands, not one hardcoded permit per brand.
+- [x] `src/authz/cedar_authz.py` — shells out to the real Cedar CLI (`subprocess`), builds entities for both brands, returns the actual ALLOW/DENY decision. Fails closed (raises `CedarUnavailable`, which the route turns into a 503) if the binary is missing, rather than silently granting access — same honesty rule as the rest of the system.
+- [x] `src/layer3b/tickets.py`: added `product_id` to `Ticket` (was missing — tickets had no way to know which brand they belonged to) so dashboards can filter by brand.
+- [x] `src/layer2/agent.py`: added `BRAND_BY_PREFIX`, `BRAND_SLUGS`, `brand_for()`, `TERMS_BY_PREFIX` (replacing the old single `TERMS_PATH`) — coverage questions now route to the correct brand's terms file.
+- [x] Backend (`src/webapp/app.py`): `/dashboard` is now a brand-staff login picker (mirrors the customer picker's honesty pattern — a real system would already know who's logged in). `/dashboard/<brand>` renders that brand's dashboard. `/api/dashboard/<brand>` reads the claimed `X-Staff-Brand` session header, asks Cedar whether that principal may view this brand's resource, and only then filters registrations/tickets to that brand. A 403 with a plain-language reason on denial, not a silent empty result.
+- [x] Frontend: `dashboard_login.html` (new), `dashboard.html` rebuilt with a real "access denied" state, `dashboard.js` rewritten to send the staff-brand header and handle both the allow and deny paths honestly.
+
+**Tested live, the actual point of the exercise:** logged in as ArcticAir staff, viewed `/dashboard/arcticair` — correct data. Navigated directly to `/dashboard/aquaspin` while still logged in as ArcticAir — **Cedar denied it**, real 403, real "Access denied" panel, not a designed-away edge case. Logged in as AquaSpin staff properly — correct, isolated data. Ran a real safety-flagged AC complaint (Sameer Khan, burning smell) end to end — ticket TBB-0001 appeared on ArcticAir's dashboard, confirmed absent from AquaSpin's. Full tenant isolation, enforced by Cedar's actual evaluator, not a Python `if`.
+
+**Also fixed while in here:** same-letter brand initials — "ArcticAir" and "AquaSpin" both start with "A", so single-letter avatar badges (`brand-dot`, customer picker, login picker) were indistinguishable. Changed to two-letter slices (`Ar` / `Aq`) everywhere a brand initial is shown.
+
+**Design pass done at the same time, not deferred:** rebuilt both UIs' visual language rather than fixing the plumbing now and redesigning later — refined the color tokens (deeper accent, soft/strong variants, a real shadow scale), added the WhatsApp-style dotted chat background, avatar chips on the customer/brand pickers, a gradient chat header, bar-chart-style product feedback rows, and a left-accent-bar ticket card style (amber for safety). Still the restrained "product screen" mode from `SKILL.md`, not the landing page's drama — one accent, one hierarchy per screen, motion only on state change.
+
+**Not done as part of this phase, flagged honestly:** PartyRock needs a personal Amazon.com sign-in, which isn't something that can be done without the user directly — proposed either the user builds a small playground themselves (a few minutes, exact spec would be handed over) or it's noted as a deliberate skip in the submission writeup. Awaiting a call on this, not blocking anything else.
+
 ## Phase 7 — UI polish (Best UI matters here)
 
+- [x] Full visual pass on the chat UI and both dashboard screens (folded into Phase 6.5 above, since redoing the same templates twice would've been wasted work)
 - [ ] Landing page, per `SKILL.md`'s landing-page mode (not the product-screen mode) — the pitch, designed
-- [ ] Full pass on both UIs against `SKILL.md`'s design checklist
+
+## Phase 7.5 — SAM Local (not started)
+
+- [ ] `template.yaml` + `src/lambda_handlers.py` — thin Lambda-proxy adapters over the same `src/layer1`/`src/layer2`/`src/layer3b` modules Flask already calls, so there's one real implementation, not two
+- [ ] Verify `sam local start-api` actually serves the core endpoints (`/api/lookup`, `/api/start`, `/api/respond`, `/api/dashboard/<brand>`) — this needs to genuinely run, not just exist as an unused template
+- [ ] Document which server is "the demo" (Flask, for live interaction) vs. "the proof" (SAM Local, for serverless-readiness) — both real, different jobs
+
+## Phase 7.6 — OpenSearch-backed retrieval (not started)
+
+- [ ] Local single-node OpenSearch container (Docker + Java both confirmed present)
+- [ ] Index manual + terms sections per brand at startup via `opensearch-py`
+- [ ] Replace `keyword_retrieve()` in `src/layer1/retrieval.py`'s call site with real BM25 search, keeping the existing function as a documented, honest fallback if OpenSearch isn't reachable — not hidden, noted in `TECHNICAL.md`
+- [ ] Re-run Phase 1's grounding test against the OpenSearch-backed path to confirm retrieval quality didn't regress
 
 ## Phase 8 — Submission
 
@@ -128,3 +163,5 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - Ceiling fan fixture dropped and replaced with washing machine + AC — original troubleshooting wasn't hands-only doable. See Phase 1's rework note above.
 - Layer 2 redesigned from a one-shot "here's a suggestion" into a real multi-turn loop: one step, wait for a reply, escalate only after self-service was genuinely tried (capped at 2 attempts) — not a detail, this is now the actual spec in `DESIGN.md`/`TECHNICAL.md`.
 - Two brands, one product each (AquaSpin washing machine, ArcticAir AC), full flow first — scope updated from the original "one product" plan since both were explicitly wanted for the demo; more brands/products only if time remains after Phase 6.
+- Aftercare corrected from "one dashboard aggregating every brand" to "one backend, independent dashboards per brand" — this is the actual product shape (a service provider serving several brand clients), not a detail. See Phase 6.5.
+- Cedar's real integration is the CLI binary, not the `cedar-policy` PyPI package (confirmed empty). Vendoring the binary in git was rejected in favor of an install script (`scripts/install_cedar_cli.sh`) — it's a 15MB platform-specific artifact, a download step is more honest than committing a Mac ARM64 binary and pretending it's portable.

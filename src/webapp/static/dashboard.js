@@ -1,6 +1,37 @@
+const brand = window.__BRAND__;
+const staffBrand = sessionStorage.getItem("staffBrand") || "";
+
+const sessionLine = document.getElementById("session-line");
+const deniedPanel = document.getElementById("denied-panel");
+const deniedCopy = document.getElementById("denied-copy");
+const dashContent = document.getElementById("dash-content");
+
 async function loadDashboard() {
-  const res = await fetch("/api/dashboard");
+  if (!staffBrand) {
+    window.location.href = "/dashboard";
+    return;
+  }
+
+  const res = await fetch(`/api/dashboard/${brand}`, {
+    headers: { "X-Staff-Brand": staffBrand },
+  });
   const data = await res.json();
+
+  if (res.status === 403) {
+    sessionLine.textContent = `Denied`;
+    deniedCopy.textContent = data.error;
+    deniedPanel.hidden = false;
+    return;
+  }
+  if (!res.ok) {
+    sessionLine.textContent = "Error";
+    deniedCopy.textContent = data.error || "Something went wrong loading this dashboard.";
+    deniedPanel.hidden = false;
+    return;
+  }
+
+  sessionLine.textContent = `Logged in as ${staffBrand} staff · authorized by Cedar`;
+  dashContent.hidden = false;
 
   const statRow = document.getElementById("stat-row");
   statRow.innerHTML = `
@@ -37,8 +68,16 @@ async function loadDashboard() {
   if (data.product_feedback.length === 0) {
     feedbackList.innerHTML = `<p class="empty-state">No recurring issues yet.</p>`;
   } else {
+    const max = Math.max(...data.product_feedback.map((f) => f.count));
     feedbackList.innerHTML = data.product_feedback
-      .map((f) => `<div class="feedback-row"><span>${f.product_name}</span><span class="feedback-count">${f.count} ticket${f.count === 1 ? "" : "s"}</span></div>`)
+      .map(
+        (f) => `
+      <div class="feedback-row">
+        <span class="feedback-name">${f.product_name}</span>
+        <span class="feedback-bar-track"><span class="feedback-bar" style="width:${(f.count / max) * 100}%"></span></span>
+        <span class="feedback-count">${f.count} ticket${f.count === 1 ? "" : "s"}</span>
+      </div>`
+      )
       .join("");
   }
 }
