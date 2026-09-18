@@ -52,12 +52,12 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ---
 
-## Phase 2 — Layer 1: registration + lookup
+## Phase 2 — Layer 1: registration + lookup (done)
 
-- [ ] `src/layer1/registration.py`: load `fixtures/sales_data_windmere.csv` into a local store (reuse the JSON-file pattern from `archive/groundtruth/src/layer1/report.py` — same approach, proven to work)
-- [ ] Function: look up all registered products for a phone number
-- [ ] Function: compute warranty status — **reuse `compute_warranty_status()` from `scripts/test_agent_grounding.py` directly**, already validated per product type (washing machine: 2yr motor + 1yr parts; AC: 5yr compressor + 1yr parts) — don't re-derive this, it's proven
-- [ ] Test: look up each of the 4 fixture customers, confirm warranty status matches Phase 1's recorded output above
+- [x] `src/layer1/registration.py`: loads `fixtures/sales_data_windmere.csv` into memory as `Registration` records (kept simple — a list, not the JSON-file-per-record pattern from the first build, since this is one small CSV, not per-candidate reports; revisit if it needs to grow)
+- [x] `lookup_by_phone()`: returns all registered products for a phone number, `[]` for an unknown one — no fabrication, matches the honesty rule
+- [x] `compute_warranty_status()` **moved here from the test script** and made canonical — the test script now imports it instead of keeping its own copy, so the date math can't drift out of sync between the two
+- [x] Verified: loaded all 4 registrations, looked up a known phone (correct product + serial returned) and an unknown one (empty list, not an error or a guess), warranty status for all 4 matches Phase 1's recorded output exactly
 
 ## Phase 3 — Layer 2: the support agent (the flagship)
 

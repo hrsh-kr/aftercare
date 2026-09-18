@@ -15,11 +15,14 @@ Tests:
 
 import csv
 import re
-from datetime import date, datetime
+import sys
 from pathlib import Path
 
 from strands import Agent
 from strands.models.ollama import OllamaModel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.layer1.registration import compute_warranty_status  # noqa: E402 -- canonical impl, Phase 2
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
@@ -95,30 +98,8 @@ purchase). Their other-parts warranty is {parts_status} (1 year from purchase). 
 sentence telling them this. State only these two facts -- do not compute or restate any dates yourself."""
 
 
-def _add_years(d: date, years: int) -> date:
-    try:
-        return d.replace(year=d.year + years)
-    except ValueError:
-        return d.replace(month=2, day=28, year=d.year + years)
-
-
-def compute_warranty_status(purchase_date: str, product_id: str) -> tuple[str, str, str, int]:
-    """Deterministic date math, per product type -- washing machines get a
-    2-year motor warranty, ACs get a 5-year compressor warranty, both get
-    1 year on other parts. Never delegate this to the model."""
-    purchased = datetime.strptime(purchase_date, "%Y-%m-%d").date()
-    today = date.today()
-    if product_id.startswith("WM-"):
-        component, years = "motor", 2
-    else:
-        component, years = "compressor", 5
-    component_status = "active" if today < _add_years(purchased, years) else "expired"
-    parts_status = "active" if today < _add_years(purchased, 1) else "expired"
-    return component, component_status, parts_status, years
-
-
 def test_warranty(agent: Agent, name: str, purchase_date: str, product_id: str, product_name: str) -> None:
-    component, component_status, parts_status, years = compute_warranty_status(purchase_date, product_id)
+    component, years, component_status, parts_status = compute_warranty_status(purchase_date, product_id)
     print(f"CUSTOMER: {name} ({product_name}, purchased {purchase_date}) -> {component}: {component_status}, parts: {parts_status}")
     result = str(
         agent(
