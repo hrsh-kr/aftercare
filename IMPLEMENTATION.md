@@ -79,11 +79,22 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] `scripts/view_tickets.py` — plain CLI view, every ticket with full context (customer, product, issue, exactly what was already tried, safety flag)
 - [x] **Milestone reached: basic working prototype, confirmed end to end.** Registration lookup (Phase 2) → multi-turn agent conversation, real grounding, real escalation logic (Phase 3) → ticket, viewable with full context (Phase 4). Ran the whole chain for real, not simulated at any layer except the WhatsApp channel itself.
 
-## Phase 5 — Customer-facing chat UI
+## Phase 5 — Customer-facing chat UI (done)
 
-- [ ] Simulated WhatsApp-style web UI (per `DESIGN.md` — real logic, simulated channel)
-- [ ] Apply `SKILL.md`'s product-screen design rules (not the landing-page ones): one hierarchy, restrained type/spacing/color, purposeful motion only
-- [ ] Registration confirmation message, the complaint conversation, resolution updates
+- [x] `src/webapp/app.py` (Flask) + `templates/index.html` + `static/style.css` + `static/chat.js` — simulated chat UI, real logic underneath (calls straight into `src/layer1` and `src/layer2`, nothing mocked at this layer)
+- [x] Applied `SKILL.md`'s product-screen rules: one accent color, restrained type/spacing, motion only for new messages arriving
+- [x] Registration lookup screen, the complaint conversation, resolution/escalation states — all three visually distinct (white = waiting on agent, green = customer, amber = escalated to a ticket)
+- [x] `.claude/launch.json` added so the dev server runs via the Browser pane tool properly
+
+**Tested live in the browser, not just described:** ran the full Priya (washing machine) conversation through the real UI — lookup → complaint → step 1 (level check) → "still broken" → step 2 (load balance, genuinely different) → "fixed it" → resolved, composer correctly disabled. Separately ran Sameer's safety-flagged AC complaint through the real UI — immediate ticket (TBB-0003), correct amber styling, no troubleshooting attempted.
+
+**Two real bugs found and fixed while testing in the browser:**
+1. `[hidden]` elements (the composer, before lookup) were showing anyway — my own `.composer { display: flex }` rule was beating the browser's default `[hidden]` behavior in the cascade. Fixed with an explicit `[hidden] { display: none !important; }` rule.
+2. The phone-frame had a fixed `height: 720px` that overflowed short viewports. Changed to `height: min(720px, 92vh)`.
+
+**One cosmetic fix, not a bug:** the model occasionally wraps its answer in quote marks despite being asked not to add anything extra. Added `_clean()` in `app.py` to strip them before display, rather than fight the model's phrasing further.
+
+**One red herring, worth recording so it isn't re-investigated later:** the browser automation tool's synthetic "Return" keypress didn't reliably trigger the Enter-to-send handlers, and rapid batched click/type sequences occasionally raced ahead of React-free vanilla-JS state updates, producing a couple of confusing false negatives (an empty input value read immediately after a click). Confirmed the actual code is correct by dispatching a real `KeyboardEvent` via `javascript_tool` and by re-running each step with an explicit value-check in between. Not a product bug — a testing-tool artifact. Don't waste time chasing this again if it resurfaces; verify with a direct value check instead.
 
 ## Phase 6 — Brand dashboard
 

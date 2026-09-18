@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aftercare</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="phone-frame">
+    <header class="chat-header">
+      <div class="brand-dot">W</div>
+      <div>
+        <div class="brand-name">Windmere Support</div>
+        <div class="brand-sub">Usually replies instantly</div>
+      </div>
+    </header>
+
+    <main id="chat-body" class="chat-body">
+      <div id="lookup-screen" class="lookup-screen">
+        <p class="lookup-prompt">Enter your registered phone number to start.</p>
+        <input id="phone-input" type="tel" placeholder="+91 98765 43210" autocomplete="off">
+        <button id="lookup-btn">Continue</button>
+        <p id="lookup-error" class="lookup-error" hidden></p>
+      </div>
+      <div id="messages" class="messages" hidden></div>
+    </main>
+
+    <footer id="composer" class="composer" hidden>
+      <input id="message-input" type="text" placeholder="Type a message" autocomplete="off">
+      <button id="send-btn" aria-label="Send">&#10148;</button>
+    </footer>
+  </div>
+
+  <script src="/static/chat.js"></script>
+</body>
+</html>

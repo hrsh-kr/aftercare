@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aftercare-webapp",
+      "runtimeExecutable": "/Users/hrshkr/Downloads/amzn/.venv/bin/python",
+      "runtimeArgs": ["/Users/hrshkr/Downloads/amzn/src/webapp/app.py"],
+      "port": 5001
+    }
+  ]
+}
