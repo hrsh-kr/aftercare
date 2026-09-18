@@ -95,5 +95,6 @@ After each build milestone in `DESIGN.md`'s build order, check: does `README.md`
 - **`TECHNICAL.md`** — how, concretely: the pipeline, the data, what's real versus mocked.
 - **`README.md`** — the front door.
 - **`SKILL.md`** — this file.
+- **`IMPLEMENTATION.md`** — the live task checklist. Update it immediately after finishing each task, not in a batch — this is the file that lets a different session or model pick up cold.
 - **`source/aftercare/`** — the original product spec this build is based on. Reference only, not maintained during the build.
 - **`archive/groundtruth/`** — our first hackathon build, set aside when we pivoted. Not discarded, not part of this submission.

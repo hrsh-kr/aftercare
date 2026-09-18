@@ -18,6 +18,7 @@ Design locked, build starting. See `SKILL.md` for how we work, `DESIGN.md` §9 f
 | [`DESIGN.md`](DESIGN.md) | What we're building, and what we're not |
 | [`TECHNICAL.md`](TECHNICAL.md) | How it's built, in AWS terms |
 | [`SKILL.md`](SKILL.md) | How we design, write, and code |
+| [`IMPLEMENTATION.md`](IMPLEMENTATION.md) | Live task checklist — what's done, what's next |
 | `source/aftercare/` | The original product spec this build is based on — reference only |
 | `archive/groundtruth/` | Our first hackathon build (candidate-authenticity verification) — set aside, not discarded, in case any of it is useful later |
 
