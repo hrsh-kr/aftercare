@@ -6,12 +6,19 @@ Per DESIGN.md's honesty rules: never guess on safety, never invent a
 fix the manual doesn't support, escalate rather than keep guessing.
 """
 
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from strands import Agent
 from strands.models.ollama import OllamaModel
+
+# Overridable so a Lambda running inside SAM Local's Docker container can
+# reach the host machine's Ollama server -- "localhost" inside that
+# container means the container itself, not the host. The SAM template
+# sets this to http://host.docker.internal:11434 for exactly this reason.
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 from src.layer1.registration import Registration
 from src.layer1.retrieval import keyword_retrieve, load_sections
@@ -68,7 +75,7 @@ def _parse_numbered_steps(body: str, limit: int = MAX_ATTEMPTS) -> list[str]:
 
 
 def _build_agent(model_id: str = "qwen2.5-coder:7b") -> Agent:
-    return Agent(model=OllamaModel(host="http://localhost:11434", model_id=model_id), callback_handler=None)
+    return Agent(model=OllamaModel(host=OLLAMA_HOST, model_id=model_id), callback_handler=None)
 
 
 def _check_safety(complaint: str) -> bool:

@@ -1,0 +1,11 @@
+.venv/
+.git/
+.claude/
+archive/
+source/
+data/
+scripts/
+tools/cedar/
+__pycache__/
+*.pyc
+.aws-sam/

@@ -4,5 +4,7 @@ __pycache__/
 .env
 GroundTruth/
 tools/cedar/cedar
+tools/cedar-lambda/cedar
 .aws-sam/
 data/tickets/
+data/conversations/

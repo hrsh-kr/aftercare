@@ -15,12 +15,17 @@ scripts/install_cedar_cli.sh.
 """
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-CEDAR_BIN = ROOT / "tools" / "cedar" / "cedar"
+# Overridable so the SAM Local Lambda package can point at the
+# linux/aarch64 binary it bundles (tools/cedar-lambda/cedar) instead of
+# the host-native one Flask uses -- a macOS binary can't execute inside
+# that container. See scripts/install_cedar_cli.sh.
+CEDAR_BIN = Path(os.environ.get("CEDAR_BIN", str(ROOT / "tools" / "cedar" / "cedar")))
 POLICY_PATH = ROOT / "policies" / "dashboard.cedar"
 
 KNOWN_BRANDS = ["arcticair", "aquaspin"]

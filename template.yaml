@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Aftercare's core API as local Lambda functions behind API Gateway --
+  run entirely with `sam local start-api`, no AWS account, no deploy.
+  Proves the logic in src/webapp/api_core.py is serverless-ready. The
+  Flask app (src/webapp/app.py) is what the live demo actually runs;
+  this is the "it isn't just a Flask app" proof, same logic underneath.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        # Lambda's "localhost" is the container itself, not the host
+        # machine running Ollama -- see agent.py's OLLAMA_HOST.
+        OLLAMA_HOST: http://host.docker.internal:11434
+        # The bundled linux/aarch64 Cedar CLI, not the host's macOS one
+        # -- see cedar_authz.py's CEDAR_BIN.
+        CEDAR_BIN: /var/task/tools/cedar-lambda/cedar
+        # /var/task (the code mount) is read-only under real Lambda;
+        # only /tmp is writable. See tickets.py / api_core.py.
+        AFTERCARE_DATA_DIR: /tmp/aftercare-data
+
+Resources:
+  CustomersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.customers
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/customers
+            Method: get
+
+  LookupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.lookup
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/lookup
+            Method: post
+
+  ConversationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.conversation
+      # One function, not two -- /api/start and /api/respond need to
+      # share a warm container's /tmp to carry a conversation across
+      # turns. See lambda_handlers.py's conversation() docstring.
+      Events:
+        Start:
+          Type: Api
+          Properties:
+            Path: /api/start
+            Method: post
+        Respond:
+          Type: Api
+          Properties:
+            Path: /api/respond
+            Method: post
+
+  DashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.dashboard
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/dashboard/{brand}
+            Method: get
+
+Outputs:
+  ApiUrl:
+    Description: Local API Gateway base URL (after `sam local start-api`)
+    Value: http://127.0.0.1:3000

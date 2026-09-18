@@ -133,11 +133,29 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] Full visual pass on the chat UI and both dashboard screens (folded into Phase 6.5 above, since redoing the same templates twice would've been wasted work)
 - [ ] Landing page, per `SKILL.md`'s landing-page mode (not the product-screen mode) — the pitch, designed
 
-## Phase 7.5 — SAM Local (not started)
+## Phase 7.5 — SAM Local (done)
 
-- [ ] `template.yaml` + `src/lambda_handlers.py` — thin Lambda-proxy adapters over the same `src/layer1`/`src/layer2`/`src/layer3b` modules Flask already calls, so there's one real implementation, not two
-- [ ] Verify `sam local start-api` actually serves the core endpoints (`/api/lookup`, `/api/start`, `/api/respond`, `/api/dashboard/<brand>`) — this needs to genuinely run, not just exist as an unused template
-- [ ] Document which server is "the demo" (Flask, for live interaction) vs. "the proof" (SAM Local, for serverless-readiness) — both real, different jobs
+- [x] Extracted `src/webapp/api_core.py` — the actual route logic (lookup, start/respond conversation, brand dashboard), framework-agnostic. Both adapters call into this; neither has its own copy.
+- [x] `src/webapp/app.py` slimmed to a thin Flask adapter over `api_core` (no behavior change, verified live before/after)
+- [x] `template.yaml` + `src/lambda_handlers.py` — Lambda-proxy adapters over the same `api_core`, `Runtime: python3.12`, `Architectures: [arm64]`
+- [x] `sam build --use-container` (needed — host is Python 3.14/macOS, Lambda is 3.12/Linux; container build gets correct native wheels) + `sam local start-api`, genuinely running, not an unused template
+
+**Two real, non-obvious problems found by actually running it, not by inspection — both fixed for real reasons, not worked around:**
+
+1. **Cedar's CLI binary is platform-specific.** The macOS binary at `tools/cedar/cedar` can't execute inside the Lambda container's Amazon Linux runtime (`exec format error`). Fixed by downloading a second binary, `tools/cedar-lambda/cedar` (linux/aarch64), bundled into the Lambda package and pointed to via a `CEDAR_BIN` env var the SAM template sets (`cedar_authz.py` now reads `CEDAR_BIN` instead of a hardcoded path). `scripts/install_cedar_cli.sh` fetches both. Verified: the dashboard endpoint's Cedar ALLOW/DENY through `sam local start-api` matched the Flask/host-binary results exactly, cross-brand denial included.
+2. **`/var/task` (the Lambda code mount) is read-only.** `_save_conversation()` tried to `mkdir` a `data/conversations/` folder next to the code and crashed with `OSError: [Errno 30] Read-only file system`. This is real Lambda behavior, not a SAM Local quirk — only `/tmp` is writable. Fixed by making the data directory configurable (`AFTERCARE_DATA_DIR` env var, read by both `tickets.py` and `api_core.py`; defaults to the repo's `data/` for Flask, set to `/tmp/aftercare-data` for Lambda).
+3. **Found while fixing #2, more fundamental:** `/api/start` and `/api/respond` were two separate Lambda functions, each its own process with its own `/tmp` — an in-memory-turned-file-backed conversation store still never actually shared state between them, every single call, not just on a cold start. Merged them into one `ConversationFunction` (`src/lambda_handlers.py`'s `conversation()`, dispatching on `event["path"]`; `template.yaml` binds both `/api/start` and `/api/respond` to it) and ran `sam local start-api --warm-containers LAZY` so that one function's container — and its `/tmp` — actually persists across the start→respond turns of a conversation. **Documented honestly, not oversold:** this works because SAM Local's warm container happens to stay up for the session; real AWS Lambda never guarantees warm reuse across a genuine production conversation's turns (which could be minutes or hours apart), so a real deployment would back this with DynamoDB instead — same "plain Python stands in for the real AWS service" pattern already named in `TECHNICAL.md` for the rest of this build.
+
+**Verified live, full chain, through `sam local start-api`:** `/api/customers` (real data) → `/api/lookup` → `/api/start` (real Ollama call via `host.docker.internal`, real manual grounding) → `/api/respond` twice (step 2 offered, then resolved) → `/api/dashboard/arcticair` as arcticair staff (correct data) → `/api/dashboard/aquaspin` as arcticair staff (real Cedar 403). Every one of these is the same code path Flask runs, exercised through an actual emulated Lambda + API Gateway, not asserted to work.
+
+**Which server is which:** Flask (`src/webapp/app.py`, port 5001) is what the live demo runs — faster iteration, serves the HTML/JS too. SAM Local (`sam build --use-container && sam local start-api --warm-containers LAZY`, port 3000) is the serverless-readiness proof — JSON API only, no templates. Both real, different jobs, same `api_core.py` underneath.
+
+## Phase 7.6 — OpenSearch-backed retrieval (not started)
+
+- [ ] Local single-node OpenSearch container (Docker + Java both confirmed present)
+- [ ] Index manual + terms sections per brand at startup via `opensearch-py`
+- [ ] Replace `keyword_retrieve()` in `src/layer1/retrieval.py`'s call site with real BM25 search, keeping the existing function as a documented, honest fallback if OpenSearch isn't reachable — not hidden, noted in `TECHNICAL.md`
+- [ ] Re-run Phase 1's grounding test against the OpenSearch-backed path to confirm retrieval quality didn't regress
 
 ## Phase 7.6 — OpenSearch-backed retrieval (not started)
 

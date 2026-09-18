@@ -4,11 +4,18 @@ resolve something, or on a safety flag. What the brand dashboard
 """
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "tickets"
+# Overridable: real Lambda's code mount (/var/task) is read-only, only
+# /tmp is writable -- SAM Local enforces this too, caught it by actually
+# running against it (see IMPLEMENTATION.md Phase 7.5). The SAM template
+# sets AFTERCARE_DATA_DIR=/tmp/aftercare-data for the Lambda functions;
+# Flask keeps writing into the repo's data/ so it's easy to inspect.
+_DATA_ROOT = Path(os.environ.get("AFTERCARE_DATA_DIR", str(Path(__file__).resolve().parent.parent.parent / "data")))
+DATA_DIR = _DATA_ROOT / "tickets"
 
 
 @dataclass
