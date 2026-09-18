@@ -15,6 +15,7 @@ from flask import Flask, jsonify, render_template, request
 
 from src.layer1.registration import load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
+from src.layer3b.tickets import Ticket
 
 app = Flask(__name__)
 _agent = None  # built lazily, once, on first request -- avoids paying Ollama startup cost at import time
@@ -31,6 +32,47 @@ def get_agent():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
+
+
+@app.route("/api/dashboard", methods=["GET"])
+def dashboard_data():
+    tickets = sorted(Ticket.load_all(), key=lambda t: t.ticket_id)
+    registrations = load_registrations()
+
+    warranty_counts = {"active": 0, "expired": 0}
+    for r in registrations:
+        warranty_counts["active" if r.warranty_component_status == "active" else "expired"] += 1
+        warranty_counts["active" if r.warranty_parts_status == "active" else "expired"] += 1
+
+    product_feedback: dict[str, int] = {}
+    for t in tickets:
+        product_feedback[t.product_name] = product_feedback.get(t.product_name, 0) + 1
+
+    return jsonify(
+        {
+            "tickets": [
+                {
+                    "ticket_id": t.ticket_id,
+                    "customer_name": t.customer_name,
+                    "product_name": t.product_name,
+                    "issue_summary": t.issue_summary,
+                    "attempts_tried": t.attempts_tried,
+                    "safety_flag": t.safety_flag,
+                    "status": t.status,
+                    "created_at": t.created_at,
+                }
+                for t in tickets
+            ],
+            "warranty_counts": warranty_counts,
+            "product_feedback": [{"product_name": k, "count": v} for k, v in sorted(product_feedback.items(), key=lambda kv: -kv[1])],
+            "registered_count": len(registrations),
+        }
+    )
 
 
 @app.route("/api/lookup", methods=["POST"])

@@ -1,0 +1,106 @@
+.dashboard-body {
+  display: block;
+  padding: 32px;
+  background: var(--bg);
+}
+
+.dash {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dash-title { color: var(--text); font-size: 18px; }
+.dash-header .brand-sub { color: var(--text-muted); }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--frame);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.dash-section { margin-bottom: 32px; }
+
+.dash-section h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 12px;
+}
+
+.ticket-list, .feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-card {
+  background: var(--frame);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.ticket-card.safety { border-color: #fdba74; background: #fff7ed; }
+
+.ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.ticket-id { font-weight: 700; font-size: 14px; }
+.ticket-safety-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9a3412;
+  background: #fed7aa;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ticket-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+.ticket-issue { font-size: 14px; margin-bottom: 8px; }
+
+.ticket-attempts {
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+}
+
+.ticket-attempts ol { margin: 4px 0 0; padding-left: 18px; }
+
+.feedback-row {
+  display: flex;
+  justify-content: space-between;
+  background: var(--frame);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.feedback-count { color: var(--accent); font-weight: 700; }
+
+.empty-state { color: var(--text-muted); font-size: 14px; }

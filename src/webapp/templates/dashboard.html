@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aftercare — Windmere Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="dashboard-body">
+  <div class="dash">
+    <header class="dash-header">
+      <div class="brand-dot">W</div>
+      <div>
+        <div class="brand-name dash-title">Windmere Support Dashboard</div>
+        <div class="brand-sub">Every conversation Aftercare couldn't resolve on its own</div>
+      </div>
+    </header>
+
+    <section class="stat-row" id="stat-row"></section>
+
+    <section class="dash-section">
+      <h2>Open tickets</h2>
+      <div id="ticket-list" class="ticket-list"></div>
+    </section>
+
+    <section class="dash-section">
+      <h2>Product feedback</h2>
+      <div id="feedback-list" class="feedback-list"></div>
+    </section>
+  </div>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

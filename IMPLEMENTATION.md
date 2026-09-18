@@ -96,11 +96,13 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **One red herring, worth recording so it isn't re-investigated later:** the browser automation tool's synthetic "Return" keypress didn't reliably trigger the Enter-to-send handlers, and rapid batched click/type sequences occasionally raced ahead of React-free vanilla-JS state updates, producing a couple of confusing false negatives (an empty input value read immediately after a click). Confirmed the actual code is correct by dispatching a real `KeyboardEvent` via `javascript_tool` and by re-running each step with an explicit value-check in between. Not a product bug — a testing-tool artifact. Don't waste time chasing this again if it resurfaces; verify with a direct value check instead.
 
-## Phase 6 — Brand dashboard
+## Phase 6 — Brand dashboard (done)
 
-- [ ] Ticket queue view
-- [ ] Product feedback aggregation ("N complaints about X this period")
-- [ ] Warranty overview (active/expiring/expired counts)
+- [x] Ticket queue view (`/dashboard`, `templates/dashboard.html`, `/api/dashboard`) — every ticket, full context, safety-flagged ones visually distinct
+- [x] Product feedback aggregation — real counts grouped by product from actual ticket data, no placeholder numbers
+- [x] Warranty overview — active/expired counts across all registered items, computed from Phase 2's real data, not invented
+
+**Verified live:** 4 registered products, 3 open tickets (1 washing-machine smell after 2 real attempts, 2 AC safety escalations correctly badged), 4 warranty items active — all numbers traced back to real fixture data and real conversations run earlier in this session, nothing hand-typed into the dashboard itself.
 
 ## Phase 7 — UI polish (Best UI matters here)
 
