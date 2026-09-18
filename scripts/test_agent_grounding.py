@@ -14,7 +14,6 @@ Tests:
 """
 
 import csv
-import re
 import sys
 from pathlib import Path
 
@@ -23,6 +22,7 @@ from strands.models.ollama import OllamaModel
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.layer1.registration import compute_warranty_status  # noqa: E402 -- canonical impl, Phase 2
+from src.layer1.retrieval import load_sections, keyword_retrieve  # noqa: E402 -- canonical impl, Phase 3
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
@@ -31,33 +31,6 @@ MANUALS = {
     "washing_machine": FIXTURES / "manual_windmere_washing_machine.md",
     "ac": FIXTURES / "manual_windmere_ac.md",
 }
-
-
-def load_sections(path: Path) -> list[tuple[str, str]]:
-    text = path.read_text()
-    parts = re.split(r"\n(?=##+\s)", text)
-    sections = []
-    for part in parts:
-        lines = part.strip().splitlines()
-        if not lines:
-            continue
-        heading = lines[0].lstrip("#").strip()
-        body = "\n".join(lines[1:]).strip()
-        if body:
-            sections.append((heading, body))
-    return sections
-
-
-def keyword_retrieve(query: str, sections: list[tuple[str, str]]) -> tuple[str, str]:
-    query_words = set(re.findall(r"\w+", query.lower()))
-    scored = []
-    for heading, body in sections:
-        section_words = set(re.findall(r"\w+", (heading + " " + body).lower()))
-        overlap = len(query_words & section_words)
-        scored.append((overlap, heading, body))
-    scored.sort(reverse=True)
-    _, heading, body = scored[0]
-    return heading, body
 
 
 def check_safety(complaint: str) -> bool:

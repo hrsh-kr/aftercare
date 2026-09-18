@@ -59,17 +59,23 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] `compute_warranty_status()` **moved here from the test script** and made canonical — the test script now imports it instead of keeping its own copy, so the date math can't drift out of sync between the two
 - [x] Verified: loaded all 4 registrations, looked up a known phone (correct product + serial returned) and an unknown one (empty list, not an error or a guess), warranty status for all 4 matches Phase 1's recorded output exactly
 
-## Phase 3 — Layer 2: the support agent (the flagship)
+## Phase 3 — Layer 2: the support agent (the flagship) (done)
 
-- [ ] `src/layer2/agent.py`: implement the **multi-turn** loop from `TECHNICAL.md` section 4 / `DESIGN.md` section 4 — one step at a time, wait for a reply, escalate only after self-service was actually tried (cap: 2 attempts). This is a real state machine now, not a single request/response — reuse the retrieval and prompt patterns validated in `scripts/test_agent_grounding.py`, but that script only tested the *first* step; this phase needs to handle the reply and decide next-step-vs-escalate
-- [ ] Safety check runs before any model call (already proven in Phase 1)
-- [ ] Source routing: coverage question → `terms_windmere.md`, troubleshooting → the matching product manual (`manual_windmere_washing_machine.md` or `manual_windmere_ac.md` — routing by the registration's `product_id`, not by guessing from the complaint text)
-- [ ] Escalation logic: no relevant chunk found, OR two self-service attempts both failed, OR safety-flagged → create a ticket with what was already tried
-- [ ] New test needed here, not just a rerun of Phase 1's: simulate a customer reply of "still not working" after the first step, confirm it offers the *second* real step from the manual (not a repeat of the first, not a guess) and only escalates after that one also fails
+- [x] `src/layer2/agent.py`: the multi-turn loop — `start()` + `respond()`, a real `Conversation` state machine
+- [x] Safety check runs before any model call
+- [x] Source routing: coverage question → `terms_windmere.md`, troubleshooting → the matching manual by `product_id` prefix (`WM-` / `AC-`), not by guessing from complaint text
+- [x] Escalation logic + `src/layer3b/tickets.py` (built now, not deferred to Phase 4 — escalation needs somewhere real to write to)
+- [x] `scripts/test_agent_multiturn.py`: 4 paths tested through the real agent, not just direct model calls
+
+**A second real bug found and fixed, same lesson as Phase 1's warranty math, in a new place:** the first version asked the model to judge "does a further self-service step exist" in free text. It didn't follow the requested format at all (returned its own made-up labels, "NO_FURTHER_STEPS" / "ELEVATE_TO_TECHNICIAN"), and its judgment was also wrong — it said there was no further step for the AC cooling case when the manual clearly has a second one (check the outdoor unit). Root cause: this is a structural fact the document already states outright (the manuals write troubleshooting as explicit numbered lists), not something to ask a model to infer.
+
+**Fix:** added `_parse_numbered_steps()` — parses the numbered list directly from each section with a regex, deterministically, capped at `MAX_ATTEMPTS`. The model's only remaining job is phrasing a step as a friendly message; it no longer decides which step or whether one exists. Re-ran all 4 paths: all correct, including the AC case now correctly offering the outdoor-unit check as attempt 2 before resolving.
+
+**Pattern worth naming, now that it's happened twice:** whenever a manual/terms document already states something as a fact or a structure (a date, a numbered list, a yes/no policy rule), parse or compute it directly — ask the model only to explain or phrase, never to re-derive something the source document already settled. Check any new prompt against this before writing it, not after a bug shows up.
 
 ## Phase 4 — Basic ticket view (smallest complete story)
 
-- [ ] `src/layer3b/tickets.py`: store + retrieve escalated tickets, matching the `tickets` table in `TECHNICAL.md`
+- [x] `src/layer3b/tickets.py` — built during Phase 3, since escalation needed somewhere real to write to. `Ticket.load_all()` already retrieves everything needed for a view.
 - [ ] A plain-text or simple CLI view of one ticket with full context (product, customer, complaint, what was tried)
 - [ ] **Milestone: this is "basic working prototype" — run the whole thing end to end once here and confirm it before moving to UI.**
 

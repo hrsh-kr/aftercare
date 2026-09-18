@@ -1,0 +1,15 @@
+{
+  "ticket_id": "TBB-0001",
+  "customer_name": "Ananya Iyer",
+  "customer_phone": "+919845098450",
+  "product_name": "Windmere FrontClean 700 Washing Machine",
+  "serial_number": "WM-FC-79345",
+  "issue_summary": "My clothes still smell bad after every wash -- 2 self-service attempts tried, issue persists.",
+  "attempts_tried": [
+    "Hi! To fix your clothes still smelling bad after every wash, please clean the lint filter (Section 3) \u2014 remove it, rinse thoroughly under running water, and reinsert firmly. Let us know if this helps!",
+    "Hi! To fix your clothes still smelling bad after every wash, please run a descaling cycle (Section 3) if the filter was already clean or the smell persists. This clears mineral buildup a regular filter clean alone won\u2019t fix. Let us know if this helps!"
+  ],
+  "safety_flag": false,
+  "status": "new",
+  "created_at": "2026-09-18T11:58:56.602844"
+}
