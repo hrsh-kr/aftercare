@@ -22,10 +22,11 @@
 - [x] `SKILL.md` carried over from the first build, lightly updated (still fully applicable — the four-voice mapping, design modes, build order, dual-audience principle)
 - [x] Groundtruth (first idea, candidate-authenticity verification) archived, not deleted, at `archive/groundtruth/` — working code, in case anything is reusable later
 - [x] Original product spec preserved at `source/aftercare/` for reference
-- [x] Fixtures authored at `fixtures/`:
-  - [x] `manual_windmere_cyclone1200.md` — product manual, fictional brand, real troubleshooting depth
-  - [x] `terms_windmere.md` — warranty terms & conditions, same fictional brand
-  - [x] `sales_data_windmere.csv` — 4 customers, mixed warranty states (active / partially expired / fully expired)
+- [x] Fixtures authored at `fixtures/` — **reworked once already, see decision log:** dropped the ceiling fan (troubleshooting required tools/ladder work nobody does over chat), replaced with washing machine + AC, both genuinely DIY-fixable, researched against real common-fault patterns, not invented:
+  - [x] `manual_windmere_washing_machine.md` — drum noise (level + load balance, real DIY steps), foul smell/residue (lint filter, descaling), no-start, safety
+  - [x] `manual_windmere_ac.md` — not cooling (filter clean), foul smell (drain + filter), water dripping, safety
+  - [x] `terms_windmere.md` — multi-product warranty terms (washing machine: 2yr motor; AC: 5yr compressor; both: 1yr parts)
+  - [x] `sales_data_windmere.csv` — 4 customers across both products, mixed warranty states
 
 ---
 
@@ -47,22 +48,24 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **Decision, going into Layer 1:** the registration/warranty lookup (`src/layer1/registration.py`, Phase 2 below) must compute status in Python from the start — this isn't a detail to get right later, it's now a validated requirement.
 
+**Reworked once, for realism (see decision log):** the ceiling fan fixture was dropped — its troubleshooting steps (check blade screws, check down-rod seating) require a ladder and a screwdriver, not something a customer does over chat. Rebuilt around washing machine (drum noise, foul smell) and AC (not cooling, foul smell), researched against real common-fault patterns — both are genuinely hands-only fixable. Re-ran the full test suite against the new fixtures and the new one-step-at-a-time prompt design (see Layer 2's updated spec in `DESIGN.md`/`TECHNICAL.md`): all 5 cases correct on the first run — washing machine drum noise and AC cooling both correctly retrieved from the right manual (not confused with each other despite both mentioning "filter"), each gave exactly one doable step and asked for a reply rather than dumping the whole section, warranty math correct across two different component-warranty lengths (2yr motor, 5yr compressor). No further fixes needed before Phase 2.
+
 ---
 
 ## Phase 2 — Layer 1: registration + lookup
 
 - [ ] `src/layer1/registration.py`: load `fixtures/sales_data_windmere.csv` into a local store (reuse the JSON-file pattern from `archive/groundtruth/src/layer1/report.py` — same approach, proven to work)
 - [ ] Function: look up all registered products for a phone number
-- [ ] Function: compute warranty status (active / expiring within 30 days / expired) from purchase date + warranty rules in `terms_windmere.md` (motor 3yr, parts 1yr — two different expiry dates per product)
-- [ ] Test: look up each of the 4 fixture customers, confirm warranty status matches what you'd compute by hand
+- [ ] Function: compute warranty status — **reuse `compute_warranty_status()` from `scripts/test_agent_grounding.py` directly**, already validated per product type (washing machine: 2yr motor + 1yr parts; AC: 5yr compressor + 1yr parts) — don't re-derive this, it's proven
+- [ ] Test: look up each of the 4 fixture customers, confirm warranty status matches Phase 1's recorded output above
 
 ## Phase 3 — Layer 2: the support agent (the flagship)
 
-- [ ] `src/layer2/agent.py`: implement the loop from `TECHNICAL.md` section 4, using whatever retrieval approach Phase 1 validated
-- [ ] Safety check runs before any model call (see Phase 1, item 4)
-- [ ] Source routing: coverage question → `terms_windmere.md`, troubleshooting → `manual_windmere_cyclone1200.md`
-- [ ] Escalation logic: no relevant chunk found, OR suggestion doesn't resolve it, OR safety-flagged → create a ticket
-- [ ] Test against all cases from Phase 1's script, now through the full agent loop, not just direct model calls
+- [ ] `src/layer2/agent.py`: implement the **multi-turn** loop from `TECHNICAL.md` section 4 / `DESIGN.md` section 4 — one step at a time, wait for a reply, escalate only after self-service was actually tried (cap: 2 attempts). This is a real state machine now, not a single request/response — reuse the retrieval and prompt patterns validated in `scripts/test_agent_grounding.py`, but that script only tested the *first* step; this phase needs to handle the reply and decide next-step-vs-escalate
+- [ ] Safety check runs before any model call (already proven in Phase 1)
+- [ ] Source routing: coverage question → `terms_windmere.md`, troubleshooting → the matching product manual (`manual_windmere_washing_machine.md` or `manual_windmere_ac.md` — routing by the registration's `product_id`, not by guessing from the complaint text)
+- [ ] Escalation logic: no relevant chunk found, OR two self-service attempts both failed, OR safety-flagged → create a ticket with what was already tried
+- [ ] New test needed here, not just a rerun of Phase 1's: simulate a customer reply of "still not working" after the first step, confirm it offers the *second* real step from the manual (not a repeat of the first, not a guess) and only escalates after that one also fails
 
 ## Phase 4 — Basic ticket view (smallest complete story)
 
@@ -99,5 +102,8 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ## Decisions made along the way (add to this as you go)
 
-- Fictional brand ("Windmere") chosen over real brand names for fixture data — see commit history and `PITCH.md` for the real-brand pain examples used in narrative only.
-- One brand, one product, full flow first — per explicit scope decision, more products only if time remains after Phase 6.
+- Fictional brand ("Windmere") chosen over real brand names for fixture data.
+- Real brand names (well-known AC/washing machine/speaker brands) used only as narrative texture in `PITCH.md`, never named explicitly in the doc itself — generic phrasing ("one of India's best-known AC brands") plus a real screenshot with the logo blacked out for the actual demo video. Real enough to be credible, not attached to a specific trademark.
+- Ceiling fan fixture dropped and replaced with washing machine + AC — original troubleshooting wasn't hands-only doable. See Phase 1's rework note above.
+- Layer 2 redesigned from a one-shot "here's a suggestion" into a real multi-turn loop: one step, wait for a reply, escalate only after self-service was genuinely tried (capped at 2 attempts) — not a detail, this is now the actual spec in `DESIGN.md`/`TECHNICAL.md`.
+- One brand, two products (washing machine + AC), full flow first — scope updated from the original "one product" plan since both were explicitly wanted for the demo; more products only if time remains after Phase 6.

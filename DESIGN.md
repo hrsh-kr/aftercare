@@ -50,12 +50,13 @@ This is the piece nothing else works without — has to be solid before anything
 
 Sits between the registration data and both views. This is the flagship — the one thing that makes this more than a lookup table with a chat window on top.
 
-**What it does, in order:**
+**What it does, in order — a real back-and-forth, not a one-shot answer:**
 1. Reads the customer's free-form complaint — not a menu of canned options, whatever they actually type.
-2. Decides which source it needs: a coverage/warranty question retrieves from the brand's terms & conditions; a "something's wrong with it" complaint retrieves from that exact product's manual. Same RAG pattern either way: retrieve the grounded passage, add it to context, generate the next step.
-3. Extracts structured fields from the complaint (issue type, how long it's been happening, severity) *and* attempts a first real answer grounded in whichever source actually applies — not a generic "have you tried turning it off and on," and not a guess about what the policy covers.
-4. Checks the suggestion against the safety rule below before ever sending it.
-5. If neither source clearly covers what's being asked, or the first attempt doesn't resolve it, escalates to a structured ticket — product, history, exact issue, what was already tried — instead of guessing further.
+2. Checks for safety language first, before anything else (see the rule below) — this check never depends on the model choosing to notice.
+3. Decides which source it needs: a coverage/warranty question retrieves from the brand's terms & conditions; a "something's wrong with it" complaint retrieves from that exact product's manual.
+4. Gives the customer **one specific, doable-by-hand step** — not a wall of steps, not "have you tried turning it off and on" — grounded in what the manual actually says works for this exact symptom, and asks them to try it and report back.
+5. Waits for their answer. **Fixed:** confirms and closes, logged as self-resolved, no ticket. **Still broken:** either offers the one next real step if the manual has one (capped at two self-service attempts — this isn't meant to stall someone indefinitely), or, if the symptom described matches what the manual flags as not self-fixable (e.g., a drum with mechanical play, cooling that doesn't improve after a clean filter), escalates immediately.
+6. Escalates to a structured ticket with the product, history, exact issue, and exactly what was already tried and didn't work — never a guess dressed up as a third attempt.
 
 **AWS:** the local model, orchestrated through Strands, does the reading, retrieval, and generation. DynamoDB-shaped storage holds the full conversation, not just a final ticket.
 

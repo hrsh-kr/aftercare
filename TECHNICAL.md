@@ -42,7 +42,7 @@ flowchart TD
 `brand_id` · `chunk_id` · `section_title` · `text`
 
 **`conversations`** — one row per message exchanged.
-`registration_id` · `turn_number` · `role` (customer/agent) · `message` · `grounded_chunk_id` (if any) · `extracted_fields` (issue type, duration, severity) · `safety_flag` (bool)
+`registration_id` · `turn_number` · `role` (customer/agent) · `message` · `grounded_chunk_id` (if any) · `extracted_fields` (issue type, duration, severity) · `safety_flag` (bool) · `attempt_number` (which self-service step this is, capped at 2) · `outcome` (resolved / still_broken / escalated, set once the customer replies)
 
 **`tickets`** — created only on escalation.
 `ticket_id` · `registration_id` · `issue_summary` · `conversation_ref` · `status` (new/assigned/scheduled/resolved) · `created_at` · `resolution_notes`
@@ -51,13 +51,16 @@ flowchart TD
 
 The core loop, specified the same way we specified M.1 last time — because the discipline of writing it out precisely is what made that one reliable:
 
-1. **Look up the registration** by phone number — product, purchase date, warranty status, prior conversation if any.
-2. **Read the complaint.** Check first, before anything else, for safety-relevant language (sparking, burning smell, exposed wiring, gas, shock) — a keyword/pattern check runs *before* the model touches it, because escalation on safety must never depend on the model choosing to notice.
-3. **If not safety-flagged:** decide whether this is a coverage question (retrieve from that brand's terms) or a troubleshooting question (retrieve from that product's manual), then retrieve the most relevant chunk (embedding or keyword retrieval — see open question below), extract structured fields (issue type, duration, severity), and generate a suggestion — but only if the retrieved chunk actually addresses the issue. If nothing in the relevant source is clearly relevant, that's the signal to escalate, not a prompt to improvise.
-4. **Score whether the suggestion is genuinely grounded** in the retrieved text, not just plausible-sounding, before sending it — same "score what was actually said against real evidence" discipline as our claim-matching work before.
-5. **If resolved:** confirm with the customer. **If not, or safety-flagged, or ungrounded:** create a ticket with everything gathered so far.
+1. **Look up the registration** by phone number — product, purchase date, warranty status (computed, never by the model — see Phase 1's result below), prior conversation if any.
+2. **Read the complaint.** Check first, before anything else, for safety-relevant language (sparking, burning smell, exposed wiring, gas, shock) — a keyword/pattern check runs *before* the model touches it.
+3. **If not safety-flagged:** decide whether this is a coverage question (retrieve from that brand's terms) or a troubleshooting question (retrieve from that product's manual), retrieve the most relevant chunk (keyword retrieval — validated in Phase 1, see `IMPLEMENTATION.md`), and generate **one specific, doable-by-hand step**, not a full list — the manuals are written with an explicit "step 1, step 2, escalate" progression specifically so the agent hands these out one at a time, not all at once.
+4. **Send that one step, and stop — wait for the customer's reply**, rather than assuming it worked.
+5. **On their reply:** confirms resolved → close out, log as self-resolved, no ticket. Still broken and the manual has a next step (cap: two self-service attempts total) → send that one. Still broken and the manual has no more steps, or the symptom matches what the manual flags as not self-fixable → escalate.
+6. **Escalate** with a ticket containing the product, history, the exact complaint, and exactly which steps were already tried and didn't work.
 
-**Open question, worth resolving with a quick test before building further:** keyword-based manual retrieval (fast, no embedding infra needed) versus embedding-based retrieval (better recall on paraphrased complaints, more setup). Test both against a real manual before committing — same "prove it before you build on it" rule as always.
+This is a genuinely different shape from M.1's loop in our first build — that one drilled deeper on a single question to test understanding; this one hands out real-world actions one at a time and only escalates once self-service has actually been tried, not skipped.
+
+**Retrieval:** keyword overlap, not embeddings — validated against a real, deliberately-similar-sounding pair of complaints in Phase 1 (see `IMPLEMENTATION.md`), no need for embedding infrastructure given that result.
 
 ## 5. API sketch
 
@@ -96,9 +99,10 @@ POST /tickets/{ticket_id}/status
 ## 8. Demo script
 
 1. Open on the real, felt moment: re-explaining your product to support from scratch, every single time.
-2. Show registration happening invisibly at the point of sale — customer does nothing.
-3. A customer messages with a real complaint, in their own words. Show the agent ground a specific fix in the actual manual, cited.
-4. A second case: a complaint the manual doesn't clearly cover — show it escalate honestly instead of guessing.
-5. A third case: a safety-flagged complaint — show the immediate escalation, no troubleshooting attempt at all.
-6. Switch to the brand dashboard: the ticket, full context attached, plus the product-feedback view showing a recurring issue.
-7. Close on what a plain support inbox can never produce: a system that gets smarter about the product with every conversation, because it's the same system every time.
+2. **The before:** a real screenshot of a well-known appliance brand's actual support page — logo blacked out, since we're not naming them — showing the genuine broken or maze-like experience (a form that doesn't submit, a phone tree that goes nowhere). This is the contrast the whole pitch rests on, so it comes first, not last.
+3. **The after:** show registration happening invisibly at the point of sale — customer does nothing.
+4. A washing-machine drum-noise complaint, in the customer's own words. Show the agent give one real step (check it's level, spread the load), wait for a reply, and close it out — resolved, no ticket, no human involved.
+5. An AC cooling complaint that isn't fixed by the first step — show the second, different step offered, and this time it's still broken: show it escalate with exactly what was already tried, not a guess dressed up as a third attempt.
+6. A safety-flagged complaint (burning smell) — show the immediate escalation, zero troubleshooting attempt.
+7. Switch to the brand dashboard: the ticket, full context attached, plus the product-feedback view showing a recurring issue.
+8. Close on what a plain support inbox can never produce: a system that gets smarter about the product with every conversation, because it's the same system every time.
