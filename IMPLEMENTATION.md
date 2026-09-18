@@ -29,24 +29,23 @@
 
 ---
 
-## Phase 1 — De-risk the core mechanism (next task)
+## Phase 1 — De-risk the core mechanism (done)
 
 **Why this is first:** everything else is CRUD and UI. This is the one part we don't yet know works.
 
-- [ ] Write `scripts/test_agent_grounding.py`: a plain script, no Strands agent loop yet, just direct model calls, that tests:
-  1. Given a complaint that matches Section 5.1 of the manual ("grinding noise"), does the model retrieve/cite the right section and correctly identify it as a mechanical/bracket issue, not a motor fault?
-  2. Given a complaint that matches Section 5.2 ("clicking noise"), does it correctly distinguish this from the grinding case (different root cause, both covered, but they read similarly to a naive keyword match — this is the actual test of grounding vs. pattern-matching)?
-  3. Given "is my fan still under warranty" for each of the 4 customers in `sales_data_windmere.csv`, does it correctly retrieve from `terms_windmere.md` and compute the right answer per customer (active / expired)?
-  4. Given a complaint containing "burning smell", does it flag `safety=true` and refuse to attempt troubleshooting — test this before any model call, per `TECHNICAL.md` section 4 step 2 (keyword check runs first, doesn't depend on the model choosing to notice)
-- [ ] Run it. Record actual output in this file below (not just "passed" — the real model output, like we did for the first build's de-risking test)
-- [ ] Decide keyword vs. embedding retrieval (open question in `TECHNICAL.md` section 4) based on what actually happens in step 2 above — grinding vs. clicking is the real test since they're lexically similar
+- [x] Write `scripts/test_agent_grounding.py`
+- [x] Run it, twice — once with a real bug, once fixed (see below)
+- [x] Retrieval decision: **keyword overlap, not embeddings.** Grinding vs. clicking — the real test, since they're lexically similar but have different root causes — retrieved the correct manual section both times. No need for embedding infra given this result.
 
-**Result (fill in after running):**
-```
-<paste actual output here>
-```
+**What actually happened (both runs):**
 
-**Decision:** retrieval approach chosen: _______ (fill in after the test)
+Run 1 — troubleshooting grounding: **worked correctly, no changes needed.** Grinding correctly traced to "misalignment of blades or loose mounting screw" (manual 5.1). Clicking correctly traced to "bent blade or shifted balancing weight" (manual 5.2) — a genuinely different, correctly-distinguished root cause, not just a reworded version of the grinding answer. Safety case (burning smell) correctly flagged before any model call, zero troubleshooting attempt.
+
+Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to compute motor/parts expiry directly from purchase dates in the prompt. Priya Sharma came back exactly backwards (said motor expired/parts active; the real answer is the reverse). Ananya Iyer came back with parts marked active when the 1-year parts warranty had already lapsed by 29 days. This is the same lesson from the ClaimCast discussion, applied too late the first time: never let the model perform the deterministic calculation.
+
+**Fix:** moved warranty status to plain Python date arithmetic (`compute_warranty_status()` in the script). The model's only job now is phrasing an answer from numbers it's handed, never computing them. Run 2, same 4 customers, all four correct.
+
+**Decision, going into Layer 1:** the registration/warranty lookup (`src/layer1/registration.py`, Phase 2 below) must compute status in Python from the start — this isn't a detail to get right later, it's now a validated requirement.
 
 ---
 
