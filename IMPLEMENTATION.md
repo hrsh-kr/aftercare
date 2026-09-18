@@ -73,11 +73,11 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **Pattern worth naming, now that it's happened twice:** whenever a manual/terms document already states something as a fact or a structure (a date, a numbered list, a yes/no policy rule), parse or compute it directly — ask the model only to explain or phrase, never to re-derive something the source document already settled. Check any new prompt against this before writing it, not after a bug shows up.
 
-## Phase 4 — Basic ticket view (smallest complete story)
+## Phase 4 — Basic ticket view (smallest complete story) (done)
 
 - [x] `src/layer3b/tickets.py` — built during Phase 3, since escalation needed somewhere real to write to. `Ticket.load_all()` already retrieves everything needed for a view.
-- [ ] A plain-text or simple CLI view of one ticket with full context (product, customer, complaint, what was tried)
-- [ ] **Milestone: this is "basic working prototype" — run the whole thing end to end once here and confirm it before moving to UI.**
+- [x] `scripts/view_tickets.py` — plain CLI view, every ticket with full context (customer, product, issue, exactly what was already tried, safety flag)
+- [x] **Milestone reached: basic working prototype, confirmed end to end.** Registration lookup (Phase 2) → multi-turn agent conversation, real grounding, real escalation logic (Phase 3) → ticket, viewable with full context (Phase 4). Ran the whole chain for real, not simulated at any layer except the WhatsApp channel itself.
 
 ## Phase 5 — Customer-facing chat UI
 
