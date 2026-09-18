@@ -6,13 +6,13 @@
 
 ## The problem
 
-Something in your house breaks. A fan starts grinding. A geyser stops heating. You dig out a WhatsApp number from a box you kept, or you don't, and you message the brand.
+Something in your house breaks. A washing machine starts banging on every spin cycle. An AC stops cooling in the middle of a heatwave. You dig out a WhatsApp number from a box you kept, or you don't, and you message the brand.
 
-"Hi, my fan is making a noise."
+"Hi, my washing machine is making a noise."
 
 "Sure, can you share the model number?"
 
-You don't have it. You get up, find the fan, read tiny text off a sticker on the underside, type it in.
+You don't have it. You get up, find the machine, read tiny text off a sticker behind the door, type it in.
 
 "When did you purchase this?"
 
@@ -20,13 +20,13 @@ You don't remember exactly. You dig through email for the order confirmation. Yo
 
 "Do you have proof of purchase?"
 
-You screenshot the invoice. You send it. Fifteen minutes have passed and you haven't even described what's actually wrong yet — you've just proven, from scratch, that you own the thing you're asking about. Every single time you contact them, for the life of the product, you do this again. The brand has all of this information already. They sold you the fan. They know when. They have no way to connect that sale to the stranger messaging them at 9pm with a grinding noise.
+You screenshot the invoice. You send it. Fifteen minutes have passed and you haven't even described what's actually wrong yet — you've just proven, from scratch, that you own the thing you're asking about. Every single time you contact them, for the life of the product, you do this again. The brand has all of this information already. They sold you the machine. They know when. They have no way to connect that sale to the stranger messaging them at 9pm with a banging noise.
 
 This isn't one brand's problem, and it isn't one appliance's problem. It's a customer of one of India's best-known AC brands opening the company's own service-request page during a heatwave, filling out the whole form, and finding the submit button simply doesn't work — no error, just nothing happens, so they're back to hunting for a phone number. It's a washing machine owner calling the number on the box, getting a dead line, then a general sales office, then a hold queue, then — if the day is going well — a transfer to someone who can actually help, forty minutes in. It's a speaker or an earphone brand where the only proof a product is still under warranty is a receipt from fourteen months ago that may or may not still be findable. Different brands, different products, the exact same failure underneath: the company that sold you the thing has no way to recognize you when you come back with a problem. (In the actual demo, this is a real screenshot, logo blacked out — we're not naming names, the pattern speaks for itself.)
 
 This isn't a rare, unlucky interaction. It's the default shape of after-sales support for nearly every appliance, gadget, and physical product sold in India — the customer becomes the one responsible for proving their own history to a company that already has it on file. The support agent on the other end isn't being difficult. They're starting from zero on every single conversation, because nothing connects the person typing to the product they bought.
 
-Go one layer deeper and the real problem isn't the support conversation at all — it's that nobody actually keeps track of what they own. The invoice is a PDF buried three folders deep in an inbox from eighteen months ago. The warranty card, if it still exists, is in a drawer nobody's opened since the day the fan was installed. The serial number is a sticker on the underside of an appliance mounted on a ceiling. Ask most people "when does your AC's warranty end, and where's the proof," and the honest answer is: no idea, and I'd have to go looking. A cloud drive doesn't fix this — it stores the PDF, but it doesn't know it's an invoice, doesn't know what it's proof of, doesn't know when the warranty on it runs out. The burden of organizing, naming, and remembering still sits entirely with the person least equipped to carry it, at the exact moment — something's broken, they're frustrated — when they have the least patience for it.
+Go one layer deeper and the real problem isn't the support conversation at all — it's that nobody actually keeps track of what they own. The invoice is a PDF buried three folders deep in an inbox from eighteen months ago. The warranty card, if it still exists, is in a drawer nobody's opened since the day the machine was delivered. The serial number is a sticker tucked behind a door or under a panel nobody thinks to check until it's needed. Ask most people "when does your AC's warranty end, and where's the proof," and the honest answer is: no idea, and I'd have to go looking. A cloud drive doesn't fix this — it stores the PDF, but it doesn't know it's an invoice, doesn't know what it's proof of, doesn't know when the warranty on it runs out. The burden of organizing, naming, and remembering still sits entirely with the person least equipped to carry it, at the exact moment — something's broken, they're frustrated — when they have the least patience for it.
 
 Multiply this by every appliance in every home, every year something breaks. The brand loses time triaging basic facts instead of solving the actual problem. The customer loses patience before the real conversation even starts. Neither side wanted this — it's just what happens when a sale and a support conversation live in two systems that have never once talked to each other.
 

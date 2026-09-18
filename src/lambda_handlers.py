@@ -1,10 +1,14 @@
 """Lambda handlers for SAM Local -- same core logic as the Flask app
 (src/webapp/api_core.py, what the live demo actually runs), wrapped for
-API Gateway's proxy-integration event shape. Run locally with
-`sam local start-api`, no AWS account, no deployment -- this exists to
-prove the logic is serverless-ready, not to replace the Flask demo.
+API Gateway's proxy-integration event shape. Run locally, no AWS
+account, no deployment -- this exists to prove the logic is
+serverless-ready, not to replace the Flask demo.
 
-    sam build && sam local start-api
+    sam build --use-container   # container build: this host may not match
+                                 # Lambda's python3.12/linux/arm64 runtime
+    sam local start-api --warm-containers LAZY   # LAZY: /api/start and
+                                 # /api/respond share one function's warm
+                                 # container, see conversation()'s docstring
     curl http://127.0.0.1:3000/api/customers
 """
 

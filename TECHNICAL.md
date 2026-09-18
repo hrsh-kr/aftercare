@@ -41,20 +41,30 @@ flowchart TD
 
 ## 3. Data model
 
-**`registrations`** — one row per product a customer owns.
-`registration_id` (key) · `customer_phone` · `customer_name` · `brand_id` · `product_id` · `serial_number` · `purchase_date` · `retailer` · `warranty_end_date` · `warranty_status` (computed: active/expiring/expired)
+This section was the pre-build sketch. It drifted from what actually
+got built (no `chunk_id`, no `brand_id` field, a two-part warranty
+model this didn't anticipate) and stayed unfixed for a while — caught
+in a later audit pass. **`FLOW.md` §6 has the real dataclasses,
+field-for-field; this is the short version:**
 
-**`manuals`** — chunked manual content per product, for troubleshooting questions.
-`product_id` · `chunk_id` · `section_title` · `text`
+- **Registration** — one per product a customer owns, loaded from a
+  CSV fixture. No `brand_id` column — brand is derived from
+  `product_id`'s prefix (`catalog.py`), not stored. Warranty status is
+  two-part (a component warranty — motor or compressor, product-type
+  dependent — and a flat 1-year parts warranty), computed at load
+  time, never by the model.
+- **Conversation / Turn** — one JSON file per conversation
+  (`data/conversations/`), not a per-message row. Holds the full turn
+  history, the retrieved section, which retrieval method actually
+  answered, and an optional final `Ticket`.
+- **Ticket** — one JSON file per ticket (`data/tickets/`), created
+  only on escalation, carrying `product_id` so a brand's dashboard can
+  filter to its own tickets only.
 
-**`terms`** — chunked terms & conditions per brand, for coverage/warranty questions.
-`brand_id` · `chunk_id` · `section_title` · `text`
-
-**`conversations`** — one row per message exchanged.
-`registration_id` · `turn_number` · `role` (customer/agent) · `message` · `grounded_chunk_id` (if any) · `extracted_fields` (issue type, duration, severity) · `safety_flag` (bool) · `attempt_number` (which self-service step this is, capped at 2) · `outcome` (resolved / still_broken / escalated, set once the customer replies)
-
-**`tickets`** — created only on escalation.
-`ticket_id` · `registration_id` · `issue_summary` · `conversation_ref` · `status` (new/assigned/scheduled/resolved) · `created_at` · `resolution_notes`
+**`manuals`/`terms`** aren't chunked into a table at all — they're
+markdown files (`fixtures/`), split into `(heading, body)` sections at
+retrieval time and indexed into OpenSearch as-is (`{path, heading,
+body}`). See `FLOW.md` §5.
 
 ## 4. The support agent, concretely
 
@@ -62,31 +72,34 @@ The core loop, specified the same way we specified M.1 last time — because the
 
 1. **Look up the registration** by phone number — product, purchase date, warranty status (computed, never by the model — see Phase 1's result below), prior conversation if any.
 2. **Read the complaint.** Check first, before anything else, for safety-relevant language (sparking, burning smell, exposed wiring, gas, shock) — a keyword/pattern check runs *before* the model touches it.
-3. **If not safety-flagged:** decide whether this is a coverage question (retrieve from that brand's terms) or a troubleshooting question (retrieve from that product's manual), retrieve the most relevant chunk (keyword retrieval — validated in Phase 1, see `IMPLEMENTATION.md`), and generate **one specific, doable-by-hand step**, not a full list — the manuals are written with an explicit "step 1, step 2, escalate" progression specifically so the agent hands these out one at a time, not all at once.
+3. **If not safety-flagged:** decide whether this is a coverage question (retrieve from that brand's terms) or a troubleshooting question (retrieve from that product's manual), retrieve the most relevant section (real OpenSearch BM25 search now, with a keyword-overlap fallback if it's unreachable — keyword overlap was the original Phase 1 mechanism, still validated, see `IMPLEMENTATION.md`), and generate **one specific, doable-by-hand step**, not a full list — the manuals are written with an explicit "step 1, step 2, escalate" progression specifically so the agent hands these out one at a time, not all at once.
 4. **Send that one step, and stop — wait for the customer's reply**, rather than assuming it worked.
 5. **On their reply:** confirms resolved → close out, log as self-resolved, no ticket. Still broken and the manual has a next step (cap: two self-service attempts total) → send that one. Still broken and the manual has no more steps, or the symptom matches what the manual flags as not self-fixable → escalate.
 6. **Escalate** with a ticket containing the product, history, the exact complaint, and exactly which steps were already tried and didn't work.
 
 This is a genuinely different shape from M.1's loop in our first build — that one drilled deeper on a single question to test understanding; this one hands out real-world actions one at a time and only escalates once self-service has actually been tried, not skipped.
 
-**Retrieval:** keyword overlap, not embeddings — validated against a real, deliberately-similar-sounding pair of complaints in Phase 1 (see `IMPLEMENTATION.md`), no need for embedding infrastructure given that result.
+**Retrieval:** BM25 (OpenSearch), not embeddings — the original Phase 1 mechanism was keyword overlap, validated against a real, deliberately-similar-sounding pair of complaints (see `IMPLEMENTATION.md`); OpenSearch replaced the scoring mechanism later without relitigating that no need for embedding infrastructure given that result, and keyword overlap is now the honest fallback if OpenSearch is unreachable.
 
-## 5. API sketch
+## 5. API, as actually built
+
+This was also a pre-build sketch (`/register`, `/message`,
+`/tickets/{brand_id}`) that never matched the real routes — registration
+happens by loading a CSV fixture, not a `/register` call, since there's
+no real point-of-sale integration in this build. The real routes,
+served identically by Flask (`src/webapp/app.py`) and by SAM Local
+(`src/lambda_handlers.py`, same logic in `src/webapp/api_core.py`):
 
 ```
-POST /register        { brand_id, customer_phone, customer_name, product_id, serial_number, purchase_date, retailer }
-                       -> { registration_id, warranty_end_date }
-
-POST /message          { registration_id, message }
-                       -> { reply, resolved: bool, ticket_id: str | null }
-
-GET  /tickets/{brand_id}
-                       -> [ { ticket_id, product, issue_summary, status, created_at }, ... ]   # powers the brand dashboard
-
-POST /tickets/{ticket_id}/status
-                       { status, resolution_notes }
-                       -> { updated: true }
+GET  /api/customers                         -> [ { phone, name }, ... ]
+POST /api/lookup        { phone }           -> { found, customer_name, brand, products[] }
+POST /api/start         { phone, complaint } -> { conversation_id, status, message, ticket_id? }
+POST /api/respond       { conversation_id, reply } -> { status, message, ticket_id? }
+GET  /api/dashboard/{brand}   [X-Staff-Brand header] -> { tickets[], warranty_counts, product_feedback[], registered_count }
+                              -- 403 if Cedar denies the staff_brand/brand pair, 503 if Cedar's unreachable
 ```
+
+Full request-by-request behavior in `FLOW.md` §2.
 
 ## 6. Build order
 

@@ -1,6 +1,16 @@
 const brand = window.__BRAND__;
 const staffBrand = sessionStorage.getItem("staffBrand") || "";
 
+// Ticket fields include raw customer-typed complaint text (issue_summary,
+// attempts_tried) -- rendered via innerHTML below for the bar-chart/badge
+// markup, so it must be escaped. Otherwise a complaint like
+// "<img src=x onerror=...>" would execute in the dashboard viewer's browser.
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = String(value);
+  return div.innerHTML;
+}
+
 const sessionLine = document.getElementById("session-line");
 const deniedPanel = document.getElementById("denied-panel");
 const deniedCopy = document.getElementById("denied-copy");
@@ -49,14 +59,14 @@ async function loadDashboard() {
         (t) => `
       <div class="ticket-card ${t.safety_flag ? "safety" : ""}">
         <div class="ticket-top">
-          <span class="ticket-id">${t.ticket_id}</span>
+          <span class="ticket-id">${escapeHtml(t.ticket_id)}</span>
           ${t.safety_flag ? '<span class="ticket-safety-badge">SAFETY</span>' : ""}
         </div>
-        <div class="ticket-meta">${t.customer_name} · ${t.product_name}</div>
-        <div class="ticket-issue">${t.issue_summary}</div>
+        <div class="ticket-meta">${escapeHtml(t.customer_name)} · ${escapeHtml(t.product_name)}</div>
+        <div class="ticket-issue">${escapeHtml(t.issue_summary)}</div>
         ${
           t.attempts_tried.length
-            ? `<div class="ticket-attempts">Already tried:<ol>${t.attempts_tried.map((a) => `<li>${a}</li>`).join("")}</ol></div>`
+            ? `<div class="ticket-attempts">Already tried:<ol>${t.attempts_tried.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ol></div>`
             : `<div class="ticket-attempts">Escalated immediately, no self-service attempted.</div>`
         }
       </div>`
@@ -73,7 +83,7 @@ async function loadDashboard() {
       .map(
         (f) => `
       <div class="feedback-row">
-        <span class="feedback-name">${f.product_name}</span>
+        <span class="feedback-name">${escapeHtml(f.product_name)}</span>
         <span class="feedback-bar-track"><span class="feedback-bar" style="width:${(f.count / max) * 100}%"></span></span>
         <span class="feedback-count">${f.count} ticket${f.count === 1 ? "" : "s"}</span>
       </div>`

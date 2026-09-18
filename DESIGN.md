@@ -2,7 +2,7 @@
 
 One system, three layers, two audiences — same shape that worked for us before. What we're building, and what we're deliberately not.
 
-**Track: Build It, competing for Best UI too.** No AWS account needed — everything below runs locally, using AWS's own open-source tooling (Strands Agents SDK + a local model), the same approach as our earlier build.
+**Track: Build It, competing for Best UI too.** No AWS account needed — everything below runs locally, using AWS's own open-source tooling: Strands Agents SDK (the agent), Cedar (brand-dashboard authorization), AWS SAM Local (the same API as real Lambda functions), and OpenSearch (retrieval). Full mapping in `TECHNICAL.md`, exact wiring in `FLOW.md`.
 
 **Scope assumption: a small number of brands, fully onboarded.** We assume each brand already gave us their product catalog structure, their sales data, and their terms & conditions — the way any real integration would start. The demo runs two independent brands (an AC line and a washing-machine line) to show the model generalizes across products, not one company's whole appliance catalog under a single umbrella name. We build the complete flow end to end before considering any other scenario. One feature that runs beats five that almost do.
 
@@ -40,7 +40,7 @@ One engine, one agent, two thin views. Not four products.
 2. Looks a customer up by phone number the moment they message, and pulls every product they've registered plus their history with each.
 3. Computes warranty status deterministically — active, expiring, expired. No model involved; this is arithmetic on dates.
 
-**AWS:** Lambda-shaped function doing lookup and warranty math (plain local Python for this build — see `TECHNICAL.md` for why). DynamoDB-shaped storage for the records.
+**AWS:** the lookup and warranty math run as a real Lambda function under SAM Local (`src/lambda_handlers.py`), and as plain local Python under the Flask demo (same underlying code — see `TECHNICAL.md`/`FLOW.md`). DynamoDB-shaped storage for the records is still plain local Python (a CSV fixture, JSON files) — that part didn't get a local open-source equivalent, same reasoning as our earlier build.
 
 This is the piece nothing else works without — has to be solid before anything else gets attention.
 
@@ -58,7 +58,7 @@ Sits between the registration data and both views. This is the flagship — the 
 5. Waits for their answer. **Fixed:** confirms and closes, logged as self-resolved, no ticket. **Still broken:** either offers the one next real step if the manual has one (capped at two self-service attempts — this isn't meant to stall someone indefinitely), or, if the symptom described matches what the manual flags as not self-fixable (e.g., a drum with mechanical play, cooling that doesn't improve after a clean filter), escalates immediately.
 6. Escalates to a structured ticket with the product, history, exact issue, and exactly what was already tried and didn't work — never a guess dressed up as a third attempt.
 
-**AWS:** the local model, orchestrated through Strands, does the reading, retrieval, and generation. DynamoDB-shaped storage holds the full conversation, not just a final ticket.
+**AWS:** the local model, orchestrated through Strands, does the reading and generation; OpenSearch (real BM25, local single-node) does the retrieval, with an honest fallback if it's unreachable. DynamoDB-shaped storage (plain JSON files) holds the full conversation, not just a final ticket.
 
 ---
 
@@ -70,7 +70,9 @@ A chat interface, styled like the WhatsApp conversation it's standing in for (se
 
 ## 6. Layer 3b — Brand view
 
-**Ticket dashboard.** Every escalated complaint: product, customer, full history, what the agent already tried, current status.
+Aftercare is a service provider, not a single company — each brand gets its own dashboard, and one brand's staff can never see another's. That boundary is enforced by a real Cedar policy evaluation (`policies/dashboard.cedar`), not an `if` in a route handler — a brand's dashboard request is a genuine authorization decision, principal (which brand's staff is logged in, simulated with a picker) against resource (which brand's data is being asked for).
+
+**Ticket dashboard.** Every escalated complaint for *that brand only*: product, customer, full history, what the agent already tried, current status.
 
 **Product feedback.** The thing a plain support inbox can't produce: which issue keeps recurring on which product, and how often.
 
@@ -95,7 +97,7 @@ A chat interface, styled like the WhatsApp conversation it's standing in for (se
 - No service-technician dispatch or marketplace — Aftercare produces the ticket; the brand's own team handles the visit.
 - No general CRM, marketing, or sales features — post-purchase support only.
 - No multi-language support in this build — a real, valuable next step, not in scope for four days.
-- No login system unless there's time left after everything above works.
+- No real authentication. Both the customer picker and the brand-staff login are simulated identity, disclosed as such in the UI — what's real is what happens *after* identity is established (Cedar's authorization decision), not the login screen itself.
 
 ---
 

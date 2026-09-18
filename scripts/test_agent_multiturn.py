@@ -9,8 +9,12 @@ Three paths, per IMPLEMENTATION.md:
 4. Safety-flagged from the start -> immediate ticket, no steps offered
 """
 
-from src.layer1.registration import load_registrations
-from src.layer2 import agent as agent_mod
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.layer1.registration import load_registrations  # noqa: E402
+from src.layer2 import agent as agent_mod  # noqa: E402
 
 
 def print_conversation(conv) -> None:

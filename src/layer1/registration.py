@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
+from src.layer1.catalog import warranty_component_for
+
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
 SALES_DATA = FIXTURES / "sales_data.csv"
 
@@ -40,16 +42,14 @@ def _add_years(d: date, years: int) -> date:
 
 
 def compute_warranty_status(purchase_date: str, product_id: str) -> tuple[str, int, str, str]:
-    """Deterministic date math, per product type. Washing machines
-    (product_id starts WM-) get a 2-year motor warranty; ACs (AC-)
-    get a 5-year compressor warranty. Both get 1 year on other parts.
-    Returns (component, component_years, component_status, parts_status)."""
+    """Deterministic date math, per product type (see catalog.py's
+    WARRANTY_BY_PREFIX -- e.g. washing machines get a 2-year motor
+    warranty, ACs a 5-year compressor warranty). Every product also
+    gets a flat 1-year parts warranty. Returns (component,
+    component_years, component_status, parts_status)."""
     purchased = datetime.strptime(purchase_date, "%Y-%m-%d").date()
     today = date.today()
-    if product_id.startswith("WM-"):
-        component, years = "motor", 2
-    else:
-        component, years = "compressor", 5
+    component, years = warranty_component_for(product_id)
     component_status = "active" if today < _add_years(purchased, years) else "expired"
     parts_status = "active" if today < _add_years(purchased, 1) else "expired"
     return component, years, component_status, parts_status

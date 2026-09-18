@@ -64,6 +64,7 @@ def _load_conversation(conv_id: str) -> agent_mod.Conversation | None:
         safety_flag=data["safety_flag"],
         resolved=data["resolved"],
         ticket=Ticket(**data["ticket"]) if data["ticket"] else None,
+        retrieval_method=data.get("retrieval_method", ""),
     )
 
 

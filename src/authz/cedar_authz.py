@@ -20,6 +20,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from src.layer1.catalog import BRAND_SLUGS
+
 ROOT = Path(__file__).resolve().parent.parent.parent
 # Overridable so the SAM Local Lambda package can point at the
 # linux/aarch64 binary it bundles (tools/cedar-lambda/cedar) instead of
@@ -28,7 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 CEDAR_BIN = Path(os.environ.get("CEDAR_BIN", str(ROOT / "tools" / "cedar" / "cedar")))
 POLICY_PATH = ROOT / "policies" / "dashboard.cedar"
 
-KNOWN_BRANDS = ["arcticair", "aquaspin"]
+KNOWN_BRANDS = list(BRAND_SLUGS.keys())  # derived from catalog.py, not a separate hardcoded list
 
 
 class CedarUnavailable(RuntimeError):
@@ -71,4 +73,8 @@ def can_view_dashboard(staff_brand: str, requested_brand: str) -> bool:
     finally:
         Path(entities_path).unlink(missing_ok=True)
 
-    return "ALLOW" in result.stdout
+    # Cedar's CLI exits 0 for ALLOW, non-zero for DENY *and* for a request
+    # error (e.g. an unmapped principal/resource) -- checking the exit code
+    # instead of scanning stdout for "ALLOW" means an error message that
+    # happens to contain that substring can never be misread as a grant.
+    return result.returncode == 0

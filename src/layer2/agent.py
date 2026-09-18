@@ -9,10 +9,14 @@ fix the manual doesn't support, escalate rather than keep guessing.
 import os
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from strands import Agent
 from strands.models.ollama import OllamaModel
+
+from src.layer1 import opensearch_retrieval
+from src.layer1.catalog import BRAND_SLUGS, brand_for, manual_for, terms_for
+from src.layer1.registration import Registration
+from src.layer3b.tickets import Ticket, next_ticket_id
 
 # Overridable so a Lambda running inside SAM Local's Docker container can
 # reach the host machine's Ollama server -- "localhost" inside that
@@ -20,24 +24,6 @@ from strands.models.ollama import OllamaModel
 # sets this to http://host.docker.internal:11434 for exactly this reason.
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
-from src.layer1 import opensearch_retrieval
-from src.layer1.registration import Registration
-from src.layer3b.tickets import Ticket, next_ticket_id
-
-FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
-MANUAL_BY_PREFIX = {
-    "WM-": FIXTURES / "manual_aquaspin.md",
-    "AC-": FIXTURES / "manual_arcticair.md",
-}
-TERMS_BY_PREFIX = {
-    "WM-": FIXTURES / "terms_aquaspin.md",
-    "AC-": FIXTURES / "terms_arcticair.md",
-}
-BRAND_BY_PREFIX = {
-    "WM-": "AquaSpin",
-    "AC-": "ArcticAir",
-}
-BRAND_SLUGS = {name.lower(): name for name in BRAND_BY_PREFIX.values()}  # "arcticair" -> "ArcticAir"
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
 COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
 MAX_ATTEMPTS = 2
@@ -89,30 +75,6 @@ def _is_coverage_question(complaint: str) -> bool:
     return any(kw in lower for kw in COVERAGE_KEYWORDS)
 
 
-def _manual_for(product_id: str) -> Path:
-    for prefix, path in MANUAL_BY_PREFIX.items():
-        if product_id.startswith(prefix):
-            return path
-    raise ValueError(f"No manual mapped for product_id {product_id}")
-
-
-def _terms_for(product_id: str) -> Path:
-    for prefix, path in TERMS_BY_PREFIX.items():
-        if product_id.startswith(prefix):
-            return path
-    raise ValueError(f"No terms mapped for product_id {product_id}")
-
-
-def brand_for(product_id: str) -> str:
-    """ArcticAir and AquaSpin are two independent brands, each with
-    their own manual, terms, and support line -- there is no shared
-    parent company in this demo."""
-    for prefix, brand in BRAND_BY_PREFIX.items():
-        if product_id.startswith(prefix):
-            return brand
-    raise ValueError(f"No brand mapped for product_id {product_id}")
-
-
 PHRASE_STEP_PROMPT = """A customer's complaint: "{complaint}"
 
 The one step to give them, taken directly from the manual: "{raw_step}"
@@ -137,10 +99,10 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         return conv
 
     if _is_coverage_question(complaint):
-        doc_path = _terms_for(registration.product_id)
+        doc_path = terms_for(registration.product_id)
         source = "terms"
     else:
-        doc_path = _manual_for(registration.product_id)
+        doc_path = manual_for(registration.product_id)
         source = "manual"
 
     heading, body, retrieval_method = opensearch_retrieval.retrieve(complaint, doc_path)

@@ -82,16 +82,15 @@ async function sendMessage() {
   messageInput.value = "";
   setComposerEnabled(false);
 
+  const isFirstComplaint = awaitingFirstComplaint;
   let data;
-  if (awaitingFirstComplaint) {
+  if (isFirstComplaint) {
     const res = await fetch("/api/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, complaint: text }),
     });
     data = await res.json();
-    conversationId = data.conversation_id;
-    awaitingFirstComplaint = false;
   } else {
     const res = await fetch("/api/respond", {
       method: "POST",
@@ -102,8 +101,19 @@ async function sendMessage() {
   }
 
   if (data.error) {
+    // Don't flip awaitingFirstComplaint/conversationId on a failed call --
+    // a retry needs to hit the same endpoint again, not /api/respond with
+    // no valid conversation_id. And don't leave the composer dead: without
+    // this, an error here was a permanent dead end.
     addBubble(data.error, "system");
+    setComposerEnabled(true);
+    messageInput.focus();
     return;
+  }
+
+  if (isFirstComplaint) {
+    conversationId = data.conversation_id;
+    awaitingFirstComplaint = false;
   }
 
   const cls = data.status === "escalated" ? "ticket" : "agent";

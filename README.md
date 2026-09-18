@@ -8,7 +8,7 @@ Built for **First Commit** (WeMakeDevs × AWS, Bharat Builds Tour). **Build It t
 
 ## Status
 
-Design locked, build starting. See `SKILL.md` for how we work, `DESIGN.md` §9 for the build order.
+Built and running locally — chat UI, brand dashboards, the full agent loop, and all four AWS OSS tools wired in for real. See `IMPLEMENTATION.md` for the phase-by-phase record, `FLOW.md` for exactly how it works today.
 
 ## The docs
 
@@ -17,6 +17,7 @@ Design locked, build starting. See `SKILL.md` for how we work, `DESIGN.md` §9 f
 | [`PITCH.md`](PITCH.md) | Why does this matter, why now |
 | [`DESIGN.md`](DESIGN.md) | What we're building, and what we're not |
 | [`TECHNICAL.md`](TECHNICAL.md) | How it's built, in AWS terms |
+| [`FLOW.md`](FLOW.md) | How it actually works, as built — request-by-request, file-by-file |
 | [`SKILL.md`](SKILL.md) | How we design, write, and code |
 | [`IMPLEMENTATION.md`](IMPLEMENTATION.md) | Live task checklist — what's done, what's next |
 | `source/aftercare/` | The original product spec this build is based on — reference only |
@@ -24,8 +25,8 @@ Design locked, build starting. See `SKILL.md` for how we work, `DESIGN.md` §9 f
 
 ## In one sentence
 
-One engine registers products and looks them up by phone number. One agent reads a complaint, grounds a real fix in that product's actual manual, and escalates honestly when it can't help. Two views sit on top — the customer's chat, the brand's dashboard. Full picture in `DESIGN.md`.
+One engine registers products and looks them up by phone number. One agent reads a complaint, grounds a real fix in that product's actual manual, and escalates honestly when it can't help. Aftercare is the shared backend; each brand (ArcticAir, AquaSpin) gets its own customer chat and its own Cedar-authorized dashboard, never seeing the other's data. Full picture in `DESIGN.md`, exact mechanics in `FLOW.md`.
 
 ## Stack
 
-Strands Agents SDK + a local model (Ollama), plain local Python standing in for Lambda/DynamoDB. No AWS account required. Full mapping in `TECHNICAL.md`.
+Strands Agents SDK (the agent) + Cedar (brand-dashboard authorization) + AWS SAM Local (the same core API as real Lambda functions) + OpenSearch (BM25 retrieval) + a local model via Ollama. No AWS account, no card, no bill. Full mapping in `TECHNICAL.md`, exact wiring in `FLOW.md` §5.

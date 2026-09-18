@@ -1,6 +1,7 @@
 """Escalated complaints -- created only when self-service didn't
-resolve something, or on a safety flag. What the brand dashboard
-(Phase 6) reads from.
+resolve something, or on a safety flag. What each brand's own
+dashboard (Cedar-authorized, src/webapp/api_core.py's dashboard_data())
+reads from, filtered to that brand via product_id.
 """
 
 import json

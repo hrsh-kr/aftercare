@@ -1,10 +1,13 @@
-"""Section loading + keyword retrieval, shared by Layer 1's claim
-checks and Layer 2's agent. Moved here from the test script once it
-became shared logic, same reasoning as registration.py.
+"""Section loading + keyword retrieval. Moved here from the test script
+once it became shared logic, same reasoning as registration.py.
 
 Keyword overlap, not embeddings -- validated in Phase 1
 (IMPLEMENTATION.md): grinding vs. clicking, lexically similar but
 different root causes, both retrieved correctly on the first try.
+`load_sections()` is still used directly (opensearch_retrieval.py
+indexes with it); `keyword_retrieve()` is now the fallback scorer for
+when OpenSearch isn't reachable, not the primary path -- see
+opensearch_retrieval.py's retrieve().
 """
 
 import re

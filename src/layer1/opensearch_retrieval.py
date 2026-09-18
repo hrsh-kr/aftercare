@@ -15,18 +15,17 @@ from pathlib import Path
 
 from opensearchpy import OpenSearch
 
+from src.layer1.catalog import MANUAL_BY_PREFIX, TERMS_BY_PREFIX
 from src.layer1.retrieval import keyword_retrieve, load_sections
 
 OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST", "http://localhost:9200")
 INDEX_NAME = "aftercare-sections"
 
-FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
-ALL_DOCS = [
-    FIXTURES / "manual_arcticair.md",
-    FIXTURES / "manual_aquaspin.md",
-    FIXTURES / "terms_arcticair.md",
-    FIXTURES / "terms_aquaspin.md",
-]
+# Every document that might ever be retrieved from -- indexed once,
+# up front, rather than lazily per-brand, so a fresh index always has
+# the full catalog. Derived from catalog.py, not a separate hardcoded
+# list, so a new brand only needs adding in one place.
+ALL_DOCS = list(MANUAL_BY_PREFIX.values()) + list(TERMS_BY_PREFIX.values())
 
 _client: OpenSearch | None = None
 _indexed = False
