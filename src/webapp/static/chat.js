@@ -1,17 +1,68 @@
-const lookupScreen = document.getElementById("lookup-screen");
+const lookupPhone = document.getElementById("lookup-phone");
+const splitView = document.getElementById("split-view");
 const customerList = document.getElementById("customer-list");
 const lookupError = document.getElementById("lookup-error");
-const chatBody = document.getElementById("chat-body");
-const messagesEl = document.getElementById("messages");
+
+const chatBodyCustomer = document.getElementById("chat-body-customer");
+const messagesCustomer = document.getElementById("messages");
+const chatBodyBrand = document.getElementById("chat-body-brand");
+const messagesBrand = document.getElementById("messages-brand");
+
 const composer = document.getElementById("composer");
 const messageInput = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
+
 const brandDot = document.getElementById("brand-dot");
 const brandName = document.getElementById("brand-name");
+const brandDotLeft = document.getElementById("brand-dot-left");
+const brandNameLeft = document.getElementById("brand-name-left");
+const brandPaneLabel = document.getElementById("brand-pane-label");
+const dashboardLink = document.getElementById("dashboard-link");
 
 let phone = null;
+let brandSlug = null;
 let conversationId = null;
 let awaitingFirstComplaint = false;
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Two panes render the SAME conversation, mirrored -- a message the
+// customer sends is "mine" on their own phone and "theirs" (received)
+// on the brand's side, and vice versa for the agent's reply. That
+// mirroring is the entire point of this view: one real conversation,
+// shown from both sides, the way an actual WhatsApp exchange would
+// look on two separate phones.
+function appendBubble(container, scrollHost, text, alignment, modifier) {
+  const el = document.createElement("div");
+  el.className = `bubble ${alignment}${modifier ? " " + modifier : ""}`;
+  el.textContent = text;
+  container.appendChild(el);
+  scrollHost.scrollTop = scrollHost.scrollHeight;
+  return el;
+}
+
+function showTyping() {
+  const el = document.createElement("div");
+  el.className = "bubble theirs typing";
+  el.innerHTML = "<span class=\"dot\"></span><span class=\"dot\"></span><span class=\"dot\"></span>";
+  messagesCustomer.appendChild(el);
+  chatBodyCustomer.scrollTop = chatBodyCustomer.scrollHeight;
+  return el;
+}
+
+// from: "customer" | "agent" -- who authored the message. modifier is
+// an extra class (e.g. "ticket") layered on top of the mine/theirs
+// alignment for escalation styling.
+async function deliver(text, from, modifier) {
+  const senderContainer = from === "customer" ? [messagesCustomer, chatBodyCustomer] : [messagesBrand, chatBodyBrand];
+  const receiverContainer = from === "customer" ? [messagesBrand, chatBodyBrand] : [messagesCustomer, chatBodyCustomer];
+
+  appendBubble(senderContainer[0], senderContainer[1], text, "mine", modifier);
+  await delay(350); // sells the "sent -> received on the other phone" beat
+  appendBubble(receiverContainer[0], receiverContainer[1], text, "theirs", modifier);
+}
 
 async function loadCustomerPicker() {
   const res = await fetch("/api/customers");
@@ -30,14 +81,6 @@ async function loadCustomerPicker() {
   });
 }
 loadCustomerPicker();
-
-function addBubble(text, cls) {
-  const el = document.createElement("div");
-  el.className = `bubble ${cls}`;
-  el.textContent = text;
-  messagesEl.appendChild(el);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
 
 function setComposerEnabled(enabled) {
   messageInput.disabled = !enabled;
@@ -61,15 +104,20 @@ async function selectCustomer(selectedPhone) {
   }
 
   phone = selectedPhone;
-  lookupScreen.hidden = true;
-  messagesEl.hidden = false;
-  composer.hidden = false;
+  brandSlug = data.brand.toLowerCase();
+  lookupPhone.hidden = true;
+  splitView.hidden = false;
 
+  const initials = data.brand.slice(0, 2);
   brandName.textContent = `${data.brand} Support`;
-  brandDot.textContent = data.brand.slice(0, 2);
+  brandDot.textContent = initials;
+  brandNameLeft.innerHTML = `${data.brand}<span class="business-badge">Business</span>`;
+  brandDotLeft.textContent = initials;
+  brandPaneLabel.textContent = data.brand;
+  dashboardLink.href = `/dashboard/${brandSlug}`;
 
   const productLine = data.products.map((p) => p.product_name).join(", ");
-  addBubble(`Hi ${data.customer_name}! I can see your ${productLine}. What can I help with?`, "agent");
+  await deliver(`Hi ${data.customer_name}! I can see your ${productLine}. What can I help with?`, "agent");
   awaitingFirstComplaint = true;
   setComposerEnabled(true);
   messageInput.focus();
@@ -78,11 +126,13 @@ async function selectCustomer(selectedPhone) {
 async function sendMessage() {
   const text = messageInput.value.trim();
   if (!text) return;
-  addBubble(text, "customer");
   messageInput.value = "";
   setComposerEnabled(false);
 
   const isFirstComplaint = awaitingFirstComplaint;
+  await deliver(text, "customer");
+
+  const typingBubble = showTyping();
   let data;
   if (isFirstComplaint) {
     const res = await fetch("/api/start", {
@@ -99,13 +149,14 @@ async function sendMessage() {
     });
     data = await res.json();
   }
+  typingBubble.remove();
 
   if (data.error) {
     // Don't flip awaitingFirstComplaint/conversationId on a failed call --
     // a retry needs to hit the same endpoint again, not /api/respond with
     // no valid conversation_id. And don't leave the composer dead: without
     // this, an error here was a permanent dead end.
-    addBubble(data.error, "system");
+    appendBubble(messagesCustomer, chatBodyCustomer, data.error, "theirs", "system");
     setComposerEnabled(true);
     messageInput.focus();
     return;
@@ -116,8 +167,12 @@ async function sendMessage() {
     awaitingFirstComplaint = false;
   }
 
-  const cls = data.status === "escalated" ? "ticket" : "agent";
-  addBubble(data.message, cls);
+  const modifier = data.status === "escalated" ? "ticket" : undefined;
+  await deliver(data.message, "agent", modifier);
+
+  if (data.status === "escalated") {
+    dashboardLink.hidden = false;
+  }
 
   if (data.status === "resolved" || data.status === "escalated") {
     setComposerEnabled(false);

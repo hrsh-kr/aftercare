@@ -7,29 +7,69 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="phone-frame">
-    <header class="chat-header">
-      <div id="brand-dot" class="brand-dot">A</div>
-      <div>
-        <div id="brand-name" class="brand-name">Aftercare</div>
-        <div class="brand-sub">Usually replies instantly</div>
-      </div>
-    </header>
+  <div id="stage" class="stage">
 
-    <main id="chat-body" class="chat-body">
-      <div id="lookup-screen" class="lookup-screen">
-        <p class="lookup-prompt">In real WhatsApp, we'd already know who's messaging from the number itself &mdash;
-          nothing to type. This is a browser demo standing in for that, so pick who you're simulating:</p>
-        <div id="customer-list" class="customer-list"></div>
-        <p id="lookup-error" class="lookup-error" hidden></p>
-      </div>
-      <div id="messages" class="messages" hidden></div>
-    </main>
+    <div id="lookup-phone" class="phone-frame">
+      <header class="chat-header">
+        <div class="brand-dot">A</div>
+        <div>
+          <div class="brand-name">Aftercare</div>
+          <div class="brand-sub">Usually replies instantly</div>
+        </div>
+      </header>
+      <main class="chat-body">
+        <div class="lookup-screen">
+          <p class="lookup-prompt">In real WhatsApp, we'd already know who's messaging from the number itself &mdash;
+            nothing to type. This is a browser demo standing in for that, so pick who you're simulating:</p>
+          <div id="customer-list" class="customer-list"></div>
+          <p id="lookup-error" class="lookup-error" hidden></p>
+        </div>
+      </main>
+    </div>
 
-    <footer id="composer" class="composer" hidden>
-      <input id="message-input" type="text" placeholder="Type a message" autocomplete="off">
-      <button id="send-btn" aria-label="Send">&#10148;</button>
-    </footer>
+    <div id="split-view" class="split-view" hidden>
+
+      <div class="pane">
+        <div class="pane-label">🏢 <span id="brand-pane-label">Brand</span>'s WhatsApp Business</div>
+        <div class="phone-frame">
+          <header class="chat-header business-header">
+            <div id="brand-dot-left" class="brand-dot">A</div>
+            <div>
+              <div id="brand-name-left" class="brand-name">Brand<span class="business-badge">Business</span></div>
+              <div class="brand-sub">Same conversation, their side</div>
+            </div>
+          </header>
+          <main id="chat-body-brand" class="chat-body">
+            <div id="messages-brand" class="messages"></div>
+          </main>
+          <footer class="composer-note">
+            <span class="composer-note-text">🤖 No human is typing here &mdash; Aftercare's agent is replying automatically</span>
+            <a id="dashboard-link" class="dashboard-link" href="#" hidden>Open dashboard &rarr;</a>
+          </footer>
+        </div>
+      </div>
+
+      <div class="pane">
+        <div class="pane-label">📱 Customer's WhatsApp</div>
+        <div class="phone-frame">
+          <header class="chat-header">
+            <div id="brand-dot" class="brand-dot">A</div>
+            <div>
+              <div id="brand-name" class="brand-name">Aftercare</div>
+              <div class="brand-sub">Usually replies instantly</div>
+            </div>
+          </header>
+          <main id="chat-body-customer" class="chat-body">
+            <div id="messages" class="messages"></div>
+          </main>
+          <footer id="composer" class="composer">
+            <input id="message-input" type="text" placeholder="Type a message" autocomplete="off">
+            <button id="send-btn" aria-label="Send">&#10148;</button>
+          </footer>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script src="/static/chat.js"></script>

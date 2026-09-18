@@ -30,7 +30,17 @@ authorization, the escalation logic — is real.
 
 ## 2. Request-by-request walkthrough
 
-### Customer side (`/`, `index.html` + `chat.js`)
+### Customer side (`/`, `index.html` + `chat.js`) — two mirrored panes, one conversation
+
+This isn't one chat window with an inline "agent" — it's **two phone
+frames side by side**, styled like two separate WhatsApp installs: the
+customer's phone on the right, that brand's WhatsApp Business inbox on
+the left. Both render the exact same underlying conversation, from
+each side's own point of view — a message the customer sends is
+"mine" (sent, right-aligned) on their own phone and "theirs" (received,
+left-aligned) on the brand's side, and the reverse for the agent's
+reply. This is the literal "you message someone on WhatsApp and they
+receive it on theirs" model, not a single-window simulation of it.
 
 1. **Page load →** `chat.js` calls `GET /api/customers`. This is a
    demo-only stand-in: a real WhatsApp integration never needs a
@@ -40,9 +50,9 @@ authorization, the escalation logic — is real.
 2. **Customer picked →** `POST /api/lookup` with their phone number.
    Returns their name, their brand (`ArcticAir`/`AquaSpin`, derived
    from `product_id`'s prefix — see §4), and every product registered
-   to that number. The chat header repaints itself to that brand's
-   name and initials right here — there is no static "Aftercare
-   Support" header, it's set per customer. (`api_core.lookup()`)
+   to that number. Both panes' headers repaint to that brand right
+   here — there is no static "Aftercare Support" header, it's set per
+   customer. (`api_core.lookup()`)
 3. **First message →** `POST /api/start` with the phone number and the
    free-typed complaint. This is where the real agent logic starts —
    see §3.
@@ -50,8 +60,17 @@ authorization, the escalation logic — is real.
    `conversation_id` from step 3 and the reply text.
 
 Every response has a `status`: `"waiting"` (agent is expecting a
-reply), `"resolved"`, or `"escalated"`. The frontend disables the
-composer for the last two.
+reply), `"resolved"`, or `"escalated"`. The composer (customer pane
+only — the brand pane has no input, it's read-only and says so: "No
+human is typing here, Aftercare's agent is replying automatically") is
+disabled for the last two. On escalation, an "Open dashboard →" button
+appears on the brand pane, linking to that brand's `/dashboard/<slug>`
+— a deliberate, separate click into a separate page, not folded into
+the chat view. Each message is delivered to the sending pane instantly
+and to the receiving pane ~350ms later (`chat.js`'s `deliver()`) — a
+small staged delay that sells "sent, then arrived on the other phone"
+instead of both sides updating in the same tick. A typing indicator
+shows on the customer's pane while the real Ollama call is in flight.
 
 ### Brand staff side (`/dashboard`, `/dashboard/<brand>`)
 
@@ -255,7 +274,12 @@ any of this.
 channel (a styled web chat stands in for it — the copy on the lookup
 screen says this outright), the customer-identity picker, the
 brand-staff login picker. All three exist only because a browser demo
-has no real phone number or real staff account attached to it.
+has no real phone number or real staff account attached to it. The
+two-pane mirrored view (§2) is one browser tab rendering both sides of
+one shared JS conversation log, not two actual devices exchanging
+messages over a network — the visual device is real (a real message,
+mirrored correctly for both perspectives), the "two separate phones"
+framing is a demo device, same honesty rule applied to the layout.
 
 ---
 
