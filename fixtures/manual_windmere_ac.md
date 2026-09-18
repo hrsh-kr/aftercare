@@ -1,4 +1,4 @@
-# Windmere CoolBreeze 1.5T — Split AC
+# Windmere ArcticAir 1.5T — Split AC
 ## User Manual
 
 *Model: AC-CB-15T · 1.5 ton · Split, indoor + outdoor unit*

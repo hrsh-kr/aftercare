@@ -1,6 +1,5 @@
 const lookupScreen = document.getElementById("lookup-screen");
-const phoneInput = document.getElementById("phone-input");
-const lookupBtn = document.getElementById("lookup-btn");
+const customerList = document.getElementById("customer-list");
 const lookupError = document.getElementById("lookup-error");
 const chatBody = document.getElementById("chat-body");
 const messagesEl = document.getElementById("messages");
@@ -11,6 +10,18 @@ const sendBtn = document.getElementById("send-btn");
 let phone = null;
 let conversationId = null;
 let awaitingFirstComplaint = false;
+
+async function loadCustomerPicker() {
+  const res = await fetch("/api/customers");
+  const people = await res.json();
+  customerList.innerHTML = people
+    .map((p) => `<button class="customer-btn" data-phone="${p.phone}">${p.name}</button>`)
+    .join("");
+  customerList.querySelectorAll(".customer-btn").forEach((btn) => {
+    btn.addEventListener("click", () => selectCustomer(btn.dataset.phone));
+  });
+}
+loadCustomerPicker();
 
 function addBubble(text, cls) {
   const el = document.createElement("div");
@@ -25,15 +36,13 @@ function setComposerEnabled(enabled) {
   sendBtn.disabled = !enabled;
 }
 
-lookupBtn.addEventListener("click", async () => {
-  const value = phoneInput.value.trim();
-  if (!value) return;
+async function selectCustomer(selectedPhone) {
   lookupError.hidden = true;
 
   const res = await fetch("/api/lookup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone: value }),
+    body: JSON.stringify({ phone: selectedPhone }),
   });
   const data = await res.json();
 
@@ -43,7 +52,7 @@ lookupBtn.addEventListener("click", async () => {
     return;
   }
 
-  phone = value;
+  phone = selectedPhone;
   lookupScreen.hidden = true;
   messagesEl.hidden = false;
   composer.hidden = false;
@@ -53,11 +62,7 @@ lookupBtn.addEventListener("click", async () => {
   awaitingFirstComplaint = true;
   setComposerEnabled(true);
   messageInput.focus();
-});
-
-phoneInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") lookupBtn.click();
-});
+}
 
 async function sendMessage() {
   const text = messageInput.value.trim();

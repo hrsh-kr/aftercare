@@ -6,11 +6,11 @@
 
 ## 1. Warranty Period, by Product
 
-**Washing machines (FrontClean series):**
+**Washing machines (AquaSpin series):**
 - Motor and drum mechanism: 2 years from date of purchase.
 - All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.
 
-**Split ACs (CoolBreeze series):**
+**Split ACs (ArcticAir series):**
 - Compressor: 5 years from date of purchase.
 - All other parts (indoor/outdoor unit components, remote, filters): 1 year from date of purchase.
 

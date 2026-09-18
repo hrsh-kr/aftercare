@@ -84,28 +84,28 @@ body {
   margin: 0 0 4px;
 }
 
-#phone-input {
+.customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customer-btn {
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  font-size: 15px;
-  outline: none;
-}
-
-#phone-input:focus { border-color: var(--accent); }
-
-#lookup-btn {
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #fff;
+  background: #fff;
   font-size: 15px;
   font-weight: 600;
+  color: var(--text);
   cursor: pointer;
+  text-align: left;
 }
 
-#lookup-btn:hover { opacity: 0.92; }
+.customer-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-bubble);
+}
 
 .lookup-error {
   color: #b91c1c;

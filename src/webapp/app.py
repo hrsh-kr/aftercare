@@ -75,6 +75,19 @@ def dashboard_data():
     )
 
 
+@app.route("/api/customers", methods=["GET"])
+def customers():
+    """For the demo's 'simulate as' picker only. A real WhatsApp
+    integration never needs this -- the incoming message already
+    carries the sender's number, per WhatsApp's own webhook payload.
+    This endpoint exists purely because a browser demo has no real
+    phone attached to it."""
+    seen = {}
+    for r in load_registrations():
+        seen.setdefault(r.customer_phone, r.customer_name)
+    return jsonify([{"phone": phone, "name": name} for phone, name in seen.items()])
+
+
 @app.route("/api/lookup", methods=["POST"])
 def lookup():
     phone = request.json.get("phone", "").strip()
