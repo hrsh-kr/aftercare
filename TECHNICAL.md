@@ -13,7 +13,7 @@ flowchart TD
     R["Brand uploads CSV:\ncustomer + product + purchase"] --> L1["Layer 1: registration + lookup\nby phone number"]
     U["Customer messages:\nfree-form complaint"] --> L1
     L1 --> MW["Layer 2: the support agent"]
-    MAN[("Product manual,\nchunked for retrieval")] --> MW
+    MAN[("Product manual +\nbrand T&Cs, chunked\nfor retrieval")] --> MW
     MW -->|resolved| C1["Customer sees: grounded fix,\ncited to the manual"]
     MW -->|escalate| T["Ticket created:\nproduct, history, issue, what was tried"]
     T --> B1["Brand dashboard:\nticket queue + product feedback"]
@@ -35,8 +35,11 @@ flowchart TD
 **`registrations`** — one row per product a customer owns.
 `registration_id` (key) · `customer_phone` · `customer_name` · `brand_id` · `product_id` · `serial_number` · `purchase_date` · `retailer` · `warranty_end_date` · `warranty_status` (computed: active/expiring/expired)
 
-**`manuals`** — chunked manual content per product, for retrieval.
+**`manuals`** — chunked manual content per product, for troubleshooting questions.
 `product_id` · `chunk_id` · `section_title` · `text`
+
+**`terms`** — chunked terms & conditions per brand, for coverage/warranty questions.
+`brand_id` · `chunk_id` · `section_title` · `text`
 
 **`conversations`** — one row per message exchanged.
 `registration_id` · `turn_number` · `role` (customer/agent) · `message` · `grounded_chunk_id` (if any) · `extracted_fields` (issue type, duration, severity) · `safety_flag` (bool)
@@ -50,7 +53,7 @@ The core loop, specified the same way we specified M.1 last time — because the
 
 1. **Look up the registration** by phone number — product, purchase date, warranty status, prior conversation if any.
 2. **Read the complaint.** Check first, before anything else, for safety-relevant language (sparking, burning smell, exposed wiring, gas, shock) — a keyword/pattern check runs *before* the model touches it, because escalation on safety must never depend on the model choosing to notice.
-3. **If not safety-flagged:** retrieve the most relevant manual chunk for this product given the complaint (embedding or keyword retrieval — see open question below), extract structured fields (issue type, duration, severity), and generate a suggestion — but only if the retrieved chunk actually addresses the issue. If nothing in the manual is clearly relevant, that's the signal to escalate, not a prompt to improvise.
+3. **If not safety-flagged:** decide whether this is a coverage question (retrieve from that brand's terms) or a troubleshooting question (retrieve from that product's manual), then retrieve the most relevant chunk (embedding or keyword retrieval — see open question below), extract structured fields (issue type, duration, severity), and generate a suggestion — but only if the retrieved chunk actually addresses the issue. If nothing in the relevant source is clearly relevant, that's the signal to escalate, not a prompt to improvise.
 4. **Score whether the suggestion is genuinely grounded** in the retrieved text, not just plausible-sounding, before sending it — same "score what was actually said against real evidence" discipline as our claim-matching work before.
 5. **If resolved:** confirm with the customer. **If not, or safety-flagged, or ungrounded:** create a ticket with everything gathered so far.
 
@@ -86,7 +89,7 @@ POST /tickets/{ticket_id}/status
 
 **Fully real:** the registration data (we author it, but it's structured and real once entered), the agent's retrieval-and-grounding logic, the escalation decision, the full conversation log.
 
-**Authored for the demo, not fetched from anywhere:** the product manuals themselves — a small number of real-feeling appliance manuals, written for this build, since there's no public API for appliance manuals the way GitHub gave us commits.
+**Authored for the demo, not fetched from anywhere:** the product manual, the brand's terms & conditions, and the sales records — realistic, not real, written for this one fully-onboarded brand, since there's no public API for any of these the way GitHub gave us commits.
 
 **Simulated, and said so in the video:** the WhatsApp channel itself — a styled web chat UI stands in for it. The logic behind it is real.
 

@@ -4,11 +4,15 @@ One system, three layers, two audiences — same shape that worked for us before
 
 **Track: Build It, competing for Best UI too.** No AWS account needed — everything below runs locally, using AWS's own open-source tooling (Strands Agents SDK + a local model), the same approach as our earlier build.
 
+**Scope assumption: one brand, fully onboarded.** We assume the brand already gave us their product catalog structure, their sales data, and their terms & conditions — the way any real integration would start. We build the complete flow for that one brand, end to end, before considering any other scenario. One feature that runs beats five that almost do.
+
+**Fixtures, not real data.** The product manual, the terms & conditions, and the sales records this build runs on are authored by us — realistic, not real. Same principle as simulating the WhatsApp channel: what's being demonstrated is the logic, not a claim that this is a live brand integration.
+
 ---
 
 ## 1. What this is
 
-Aftercare knows what a customer bought the moment they message about it — no re-explaining, no screenshots of an invoice. When they describe what's wrong, in their own words, it reads that against the *actual manual for that exact product* and attempts a real, grounded fix before ever creating a ticket. If it can't resolve it, or the issue sounds urgent or unsafe, it escalates immediately with everything already gathered.
+Aftercare knows what a customer bought the moment they message about it — no re-explaining, no screenshots of an invoice. When they describe what's wrong, in their own words, it reads that against the *actual manual for that exact product* — and the brand's own terms for coverage questions — and attempts a real, grounded fix before ever creating a ticket. If it can't resolve it, or the issue sounds urgent or unsafe, it escalates immediately with everything already gathered.
 
 ---
 
@@ -48,10 +52,10 @@ Sits between the registration data and both views. This is the flagship — the 
 
 **What it does, in order:**
 1. Reads the customer's free-form complaint — not a menu of canned options, whatever they actually type.
-2. Retrieves the relevant section of *that exact product's* manual — a real RAG pattern: retrieve the grounded passage, add it to context, generate the next step.
-3. Extracts structured fields from the complaint (issue type, how long it's been happening, severity) *and* attempts a first real troubleshooting suggestion grounded in what the manual actually says — not a generic "have you tried turning it off and on."
+2. Decides which source it needs: a coverage/warranty question retrieves from the brand's terms & conditions; a "something's wrong with it" complaint retrieves from that exact product's manual. Same RAG pattern either way: retrieve the grounded passage, add it to context, generate the next step.
+3. Extracts structured fields from the complaint (issue type, how long it's been happening, severity) *and* attempts a first real answer grounded in whichever source actually applies — not a generic "have you tried turning it off and on," and not a guess about what the policy covers.
 4. Checks the suggestion against the safety rule below before ever sending it.
-5. If the manual doesn't clearly cover the described issue, or the first attempt doesn't resolve it, escalates to a structured ticket — product, history, exact issue, what was already tried — instead of guessing further.
+5. If neither source clearly covers what's being asked, or the first attempt doesn't resolve it, escalates to a structured ticket — product, history, exact issue, what was already tried — instead of guessing further.
 
 **AWS:** the local model, orchestrated through Strands, does the reading, retrieval, and generation. DynamoDB-shaped storage holds the full conversation, not just a final ticket.
 

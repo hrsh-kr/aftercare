@@ -24,7 +24,11 @@ You screenshot the invoice. You send it. Fifteen minutes have passed and you hav
 
 This isn't a rare, unlucky interaction. It's the default shape of after-sales support for nearly every appliance, gadget, and physical product sold in India — the customer becomes the one responsible for proving their own history to a company that already has it on file. The support agent on the other end isn't being difficult. They're starting from zero on every single conversation, because nothing connects the person typing to the product they bought.
 
+Go one layer deeper and the real problem isn't the support conversation at all — it's that nobody actually keeps track of what they own. The invoice is a PDF buried three folders deep in an inbox from eighteen months ago. The warranty card, if it still exists, is in a drawer nobody's opened since the day the fan was installed. The serial number is a sticker on the underside of an appliance mounted on a ceiling. Ask most people "when does your AC's warranty end, and where's the proof," and the honest answer is: no idea, and I'd have to go looking. A cloud drive doesn't fix this — it stores the PDF, but it doesn't know it's an invoice, doesn't know what it's proof of, doesn't know when the warranty on it runs out. The burden of organizing, naming, and remembering still sits entirely with the person least equipped to carry it, at the exact moment — something's broken, they're frustrated — when they have the least patience for it.
+
 Multiply this by every appliance in every home, every year something breaks. The brand loses time triaging basic facts instead of solving the actual problem. The customer loses patience before the real conversation even starts. Neither side wanted this — it's just what happens when a sale and a support conversation live in two systems that have never once talked to each other.
+
+A personal vault app could try to fix this by asking the customer to upload and organize everything themselves — but that's the same burden in a nicer folder, and it's exactly why those apps struggle to get anyone to actually keep using them past the first invoice. The record only stays reliable if creating it never depends on the customer remembering to do anything at all.
 
 ## What we're building
 
