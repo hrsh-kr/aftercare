@@ -1,8 +1,0 @@
-{
-  "job_id": "demo-job-1",
-  "candidate_id": "candidate-a",
-  "rank_bucket": "confirmed_good",
-  "interviewer_notes": "Candidate was specific and confident about the edge-case handling, referenced exact thresholds unprompted.",
-  "interview_transcript": "Interviewer: Walk me through the zero-commit case. Candidate: [as above, matches M.1 transcript closely].",
-  "final_reasoning": "Based on the automated report verifying that the project uses Python, requests, and the Strands Agents SDK, and the human interviewer's notes and transcript confirming the candidate's detailed explanation of edge-case handling with specific thresholds, we have decided to hire this candidate. Their technical skills as demonstrated in both sources are robust and demonstrate a deep understanding of their work."
-}

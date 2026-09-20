@@ -1,3 +1,0 @@
-ollama==0.6.2
-requests==2.34.2
-strands-agents==1.56.0
