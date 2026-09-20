@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Aftercare — Live demo</title>
+  <meta name="description" content="Run a real Aftercare conversation: the customer's WhatsApp, the brand's view, and exactly what the agent did at each step.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/landing.css">
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body class="d-body">
+
+  <nav class="l-nav scrolled" id="l-nav" aria-label="Primary">
+    <a class="l-nav-brand" href="/">
+      <span class="l-nav-mark">A</span>
+      <span class="l-nav-wordmark">Aftercare</span>
+    </a>
+    <a class="l-link d-nav-back" href="/">Back to the story</a>
+  </nav>
+
+  <header class="d-hero">
+    <div class="l-hero-glow" aria-hidden="true"></div>
+    <div class="l-wrap">
+      <p class="l-eyebrow"><span class="l-pip"></span>Live demo · real agent, simulated WhatsApp</p>
+      <h1 class="l-h2">Five conversations.<br><span class="l-grad">Five different endings.</span></h1>
+      <p class="l-sub">Pick one. You'll play the customer, and the agent answers for real. Every step it takes is shown beside the chat, along with the moment a person takes over.</p>
+    </div>
+  </header>
+
+  <main class="l-wrap d-main">
+
+    <div class="d-banner" id="d-banner" role="alert" hidden></div>
+
+    <section aria-labelledby="d-pick">
+      <h2 class="d-h3" id="d-pick">1 · Pick a conversation</h2>
+      <div class="d-cards" id="d-cards" role="radiogroup" aria-label="Scenarios"></div>
+    </section>
+
+    <section class="d-stage" id="d-stage" aria-labelledby="d-run" hidden>
+      <div class="d-stage-head">
+        <h2 class="d-h3" id="d-run">2 · Run it</h2>
+        <div class="d-stage-tools">
+          <button class="d-textbtn" id="d-restart" type="button">Restart this conversation</button>
+          <button class="d-textbtn" id="d-reset" type="button">Reset demo data</button>
+        </div>
+      </div>
+
+      <div class="d-grid">
+        <!-- the customer -->
+        <div class="d-col d-col-phone">
+          <p class="d-col-label">The customer · WhatsApp</p>
+          <div class="l-phone-frame d-phone">
+            <div class="l-ph-header">
+              <div class="l-ph-back">‹</div>
+              <div class="l-ph-avatar" id="d-avatar">Aq</div>
+              <div class="l-ph-headtext">
+                <div class="l-ph-name" id="d-brandname">AquaSpin Support</div>
+                <div class="l-ph-sub" id="d-status">online</div>
+              </div>
+            </div>
+            <div class="l-ph-body d-chat" id="d-chat" aria-live="polite"></div>
+            <form class="d-composer" id="d-composer" autocomplete="off">
+              <input id="d-input" type="text" aria-label="Message" placeholder="Message" maxlength="400">
+              <button id="d-send" type="submit" aria-label="Send">➤</button>
+            </form>
+            <p class="d-hint" id="d-hint"></p>
+          </div>
+        </div>
+
+        <!-- the brand -->
+        <div class="d-col d-col-brand">
+          <p class="d-col-label">The brand · what Aftercare did</p>
+          <ol class="d-trace" id="d-trace" aria-live="polite"></ol>
+
+          <div class="d-ticket" id="d-ticket" data-state="empty">
+            <p class="d-ticket-empty">No ticket. Nothing needs a person yet.</p>
+          </div>
+          <a class="l-link d-dash" id="d-dash" href="/dashboard" hidden>Open the brand dashboard</a>
+        </div>
+      </div>
+
+      <div class="d-done" id="d-done" hidden>
+        <p id="d-done-text"></p>
+        <a class="l-pill" href="#d-pick" id="d-next">Try another conversation</a>
+      </div>
+    </section>
+
+    <p class="d-honest">
+      What's real: the agent (Strands + a local model), the manual search, the
+      warranty maths, the escalation rules and the tickets, all running on this
+      machine. What's simulated: WhatsApp itself, and the customer's typing, which you supply.
+      If a run doesn't end the way its card says, earlier runs may count as history. Reset the demo data.
+    </p>
+  </main>
+
+  <script src="/static/demo.js"></script>
+</body>
+</html>
