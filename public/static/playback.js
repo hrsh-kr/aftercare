@@ -29,7 +29,14 @@ function init() {
   select(rec.personas[0].id);
 }
 
-/* ── 1 · the order file ── */
+/* ── 1 · the order file: a live spreadsheet view ── */
+const BRAND_OF = (pid) => (/^WM-/.test(pid) ? "AquaSpin" : /^AC-/.test(pid) ? "ArcticAir" : "");
+function parseCsv(text) {
+  return text.trim().split(/\r?\n/).map((line) => { const out = []; let cur = "", q = false;
+    for (const ch of line) { if (ch === '"') q = !q; else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch; }
+    out.push(cur); return out; });
+}
+let sheetRun = 0;
 function initOrders() {
   const files = [
     { name: "orders_croma_sep2026.csv", about: "A store's export: AquaSpin and ArcticAir mixed, plus rows that need fixing.", data: rec.ingest },
@@ -41,19 +48,45 @@ function initOrders() {
     b.append(el("b", null, f.name), el("span", null, f.about));
     b.addEventListener("click", () => {
       document.querySelectorAll(".sb-sample").forEach((x) => x.classList.toggle("loaded", x === b));
-      showOrders(f.data);
+      showSheet(f);
     });
     box.appendChild(b);
   });
 }
-function showOrders(d) {
+async function showSheet(f) {
+  const my = ++sheetRun; const d = f.data;
+  const rows = parseCsv(rec.samples[f.name]); const head = rows[0], body = rows.slice(1);
+  const bad = new Map(); d.issues.forEach((i) => { const k = i.line - 2; bad.set(k, (bad.get(k) || []).concat(i.problem)); });
   const out = $("pb-result"); out.textContent = "";
-  const p = el("p"); p.append(strong(`${d.rows} rows read.`), ` ${d.accepted} products registered and messaged on WhatsApp, ${d.rejected} rejected.`);
-  out.appendChild(p);
-  const chips = el("div", "sb-chips-brand");
-  d.brands.forEach((b) => chips.appendChild(el("span", null, `${b.brand}: ${b.products} product${b.products === 1 ? "" : "s"}, ${b.customers} customer${b.customers === 1 ? "" : "s"}`)));
-  out.appendChild(chips);
-  if (d.issues.length) { const ul = el("ul"); d.issues.forEach((i) => ul.appendChild(el("li", null, `Line ${i.line}: ${i.problem}`))); out.appendChild(ul); }
+  const bar = el("div", "pb-sheet-bar"); bar.append(strong(f.name), el("span", "sp"));
+  const counts = el("span", null, "Reading…"); bar.appendChild(counts); out.appendChild(bar);
+  const scroll = el("div", "pb-sheet-scroll"); const tbl = el("table", "pb-sheet"); scroll.appendChild(tbl); out.appendChild(scroll);
+  const cols = "ABCDEFGHIJ"; const thead = el("thead"); const hr = el("tr"); hr.appendChild(el("th"));
+  [...head, "Aftercare"].forEach((_, i) => hr.appendChild(el("th", null, cols[i]))); hr.appendChild(el("th", null, cols[head.length + 1]));
+  thead.appendChild(hr); tbl.appendChild(thead);
+  const tb = el("tbody"); const h1 = el("tr", "hd"); h1.appendChild(el("td", "rn", "1"));
+  [...head, "filed under", "check"].forEach((t) => h1.appendChild(el("td", null, t))); tb.appendChild(h1);
+  const trs = body.map((r, i) => { const tr = el("tr"); tr.appendChild(el("td", "rn", String(i + 2)));
+    r.forEach((v, c) => tr.appendChild(el("td", (c === 4 || c === 1 ? "mono" : ""), v)));
+    tr.appendChild(el("td", "brandcell")); tr.appendChild(el("td", "chk")); tb.appendChild(tr); return tr; });
+  tbl.appendChild(tb);
+  let ok = 0, err = 0;
+  for (let i = 0; i < trs.length; i++) {
+    const tr = trs[i]; tr.classList.add("scan"); counts.textContent = `Checking row ${i + 2} of ${trs.length + 1}`;
+    await wait(REDUCED ? 0 : 230); if (my !== sheetRun) return;
+    tr.classList.remove("scan");
+    if (bad.has(i)) { err++; tr.classList.add("bad"); tr.querySelector(".chk").textContent = "✕ " + bad.get(i).join(" · ");
+      // colour the exact offending cell
+      const p = bad.get(i).join(" ").toLowerCase(); const badCol = /product code/.test(p) ? 2 : /date/.test(p) ? 5 : /phone/.test(p) ? 1 : /serial/.test(p) ? 4 : -1;
+      if (badCol >= 0) tr.children[badCol + 1].classList.add("cellbad"); tr.querySelector(".brandcell").textContent = "not filed"; }
+    else { ok++; tr.classList.add("ok"); tr.querySelector(".brandcell").textContent = BRAND_OF(body[i][2]); tr.querySelector(".chk").textContent = "✓ Registered, message sent"; }
+  }
+  counts.textContent = "";
+  counts.append(el("span", "pb-pill g", `${ok} registered`), " ", el("span", "pb-pill " + (err ? "r" : "n"), `${err} rejected`));
+  const foot = el("div", "pb-sheet-foot");
+  foot.textContent = err ? `${d.rows} rows read. Good rows are filed under their brand and each customer gets a WhatsApp message. Bad rows are named, not guessed.`
+                         : `${d.rows} rows read. Every row is filed under its brand and each customer gets a WhatsApp message.`;
+  out.appendChild(foot);
 }
 
 /* ── 2 · customers (stories, not a dropdown) ── */
@@ -149,9 +182,10 @@ async function playCustomer() {
       the real API returned.) ── */
 let msgN = 0, ledgerStarted = false;
 const ledgerItem = (parts, cls, tag) => {
-  const ol = $("pb-trace"); const li = el("li", cls || ""); if (tag) li.appendChild(el("span", "t-tag", tag));
+  const ol = $("pb-trace"); const li = el("li", cls || ""); if (tag) li.appendChild(el("span", "t-tag " + tagClass(tag), tag));
   parts.forEach((p) => li.append(typeof p === "string" ? document.createTextNode(p) : p)); ol.appendChild(li); return li;
 };
+const tagClass = (t) => /^Registry/.test(t) ? "tag-registry" : /OpenSearch/.test(t) ? "tag-os" : /^Strands/.test(t) ? "tag-strands" : /DynamoDB/.test(t) ? "tag-ddb" : /Cedar/.test(t) ? "tag-cedar" : "tag-rule";
 function ledgerReset() {
   const ol = $("pb-trace"); ol.textContent = ""; ledgerStarted = false;
   ol.appendChild(el("li", "d-trace-empty", "Send a message and every step Aftercare takes is added here, in order."));
@@ -270,7 +304,8 @@ function renderStats() {
   if (!d || !d.insights) return;
   const i = d.insights; const total = i.resolved + (i.answered || 0) + i.escalated;
   const k = el("div", "sb-kpis");
-  const kpi = (v, l) => { const x = el("div", "sb-kpi"); x.append(el("b", null, v), el("span", null, l)); return x; };
+  let kn = 0;
+  const kpi = (v, l) => { const x = el("div", "sb-kpi k" + (++kn)); x.append(el("b", null, v), el("span", null, l)); return x; };
   k.append(kpi(total ? Math.round(100 * (i.resolved + (i.answered || 0)) / total) + "%" : "–", "handled with no person"), kpi(String(total), "conversations"),
            kpi(String(i.escalated), "handed to a person"), kpi(String(d.registered_count), "registered products"));
   box.appendChild(k);

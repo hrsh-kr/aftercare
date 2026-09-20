@@ -17,29 +17,29 @@
     <a class="pb-back" href="/">Back to the story</a>
   </nav>
 
-  <header class="pb-hero">
+  <header class="pb-hero pb-band b0">
     <p class="pb-eyebrow"><i></i>Live demo</p>
-    <h1 class="pb-h1">Eight customers.<br><span>One real agent.</span></h1>
+    <h1 class="pb-h1">Eight customers.<br><span class="gt gt-hero">One real agent.</span></h1>
     <p class="pb-sub">Real replies. Recorded from the running tool.</p>
     <p class="pb-stamp">Recorded <b id="pb-when">…</b> · <span id="pb-model">…</span> · Fabricated customers · <a href="#run">Run it yourself</a></p>
   </header>
 
   <!-- 1 · the order file -->
-  <section class="pb-section" id="order" aria-labelledby="h-order">
+  <section class="pb-section pb-band b1" id="order" aria-labelledby="h-order">
     <div class="sb-wrap pb-head">
-      <h2 class="pb-h2" id="h-order">Start with an order file.</h2>
+      <h2 class="pb-h2" id="h-order">Start with an <span class="gt gt-blue">order file.</span></h2>
       <p class="pb-lead">Every row checked. Every customer registered.</p>
     </div>
     <div class="sb-wrap pb-order">
       <div class="pb-samples" id="pb-samples"></div>
-      <div class="sb-result pb-result" id="pb-result" aria-live="polite"><p class="pb-hint">Pick a file. See what Aftercare does with it.</p></div>
+      <div class="pb-sheetwrap" id="pb-result" aria-live="polite"><p class="pb-hint">Pick a file. Watch every row get checked.</p></div>
     </div>
   </section>
 
   <!-- 2 · try a customer -->
-  <section class="pb-section" id="try" aria-labelledby="h-try">
+  <section class="pb-section pb-band b2" id="try" aria-labelledby="h-try">
     <div class="sb-wrap pb-head">
-      <h2 class="pb-h2" id="h-try">Try a customer.</h2>
+      <h2 class="pb-h2" id="h-try">Try a <span class="gt gt-purple">customer.</span></h2>
       <p class="pb-lead">Pick one. Click what they'd say.</p>
     </div>
     <div class="sb-wrap pb-cols">
@@ -95,15 +95,15 @@
   </section>
 
   <!-- the brand's dashboard -->
-  <section class="pb-section pb-dash" aria-labelledby="h-dash">
+  <section class="pb-section pb-band b3 pb-dash" aria-labelledby="h-dash">
     <div class="sb-wrap pb-head">
-      <h2 class="pb-h2" id="h-dash">What the brand sees.</h2>
+      <h2 class="pb-h2" id="h-dash">What the brand <span class="gt gt-orange">sees.</span></h2>
       <p class="pb-lead">Every complaint. Every status. One glance.</p>
     </div>
     <ul class="sb-wrap pb-trio">
-      <li><b>Red, yellow, green.</b> Status in one look.</li>
-      <li><b>The chat behind it.</b> Read it, reply to it.</li>
-      <li><b>AI analytics.</b> Why people need a person.</li>
+      <li class="g-orange"><b>Red, yellow, green.</b><span>Status in one look.</span></li>
+      <li class="g-blue"><b>The chat behind it.</b><span>Read it. Reply to it.</span></li>
+      <li class="g-purple"><b>AI analytics.</b><span>Why people need a person.</span></li>
     </ul>
     <div class="pb-dash-body">
       <iframe class="pb-frame" id="pb-frame" src="/dashboard-snapshot-aquaspin.html" title="Recorded brand dashboard" loading="lazy" scrolling="no"></iframe>
@@ -111,9 +111,9 @@
   </section>
 
   <!-- run it yourself -->
-  <section class="pb-section pb-run" id="run" aria-labelledby="h-run">
+  <section class="pb-section pb-band b4 pb-run" id="run" aria-labelledby="h-run">
     <div class="sb-wrap pb-head">
-      <h2 class="pb-h2" id="h-run">Run it yourself.</h2>
+      <h2 class="pb-h2" id="h-run">Run it <span class="gt gt-cyan">yourself.</span></h2>
       <p class="pb-lead">Type anything. It runs on your machine.</p>
     </div>
     <div class="sb-wrap pb-run-body">
@@ -125,7 +125,7 @@ bash scripts/dev.sh     # then open http://127.0.0.1:3000/sandbox</pre>
     </div>
   </section>
 
-  <p class="sb-honest">Recorded, not generated. Customers, orders and manuals are fabricated. Only WhatsApp's network is simulated.</p>
+  <footer class="pb-band b5 pb-foot"><p class="sb-wrap">Recorded, not generated. Customers, orders and manuals are fabricated. Only WhatsApp's network is simulated.</p></footer>
   <script>
     (function () {
       // size the dashboard frame to its content, so nothing scrolls inside it

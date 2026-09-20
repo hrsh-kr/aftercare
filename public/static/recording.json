@@ -1924,5 +1924,9 @@
     }
    ]
   }
+ },
+ "samples": {
+  "orders_croma_sep2026.csv": "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\nArjun Mehta,+919000000101,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-91011,2026-07-14,Croma (Pune),26499\nKavya Nair,+919000000102,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-91012,2026-01-22,Croma (Kochi),34999\nRohan Desai,+919000000103,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-91013,2025-11-03,Croma (Mumbai),25499\nRohan Desai,+919000000103,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-91014,2026-05-30,Croma (Mumbai),36999\nNeha Kulkarni,+919000000104,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-91015,2025-07-01,Croma (Nagpur),24999\nImran Sheikh,+919000000105,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-91016,2022-08-10,Croma (Hyderabad),31999\nDivya Rao,+919000000106,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-91017,2023-09-05,Croma (Bengaluru),22999\nSanjay Iyer,+919000000107,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-91018,2026-08-29,Croma (Chennai),35499\nMeera Pillai,+919000000108,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-91019,2026-04-18,Croma (Kochi),25999\nKarthik Menon,+919000000109,TV-55-X,Lumo 55in Smart TV,TV-91020,2026-08-01,Croma (Kochi),45999\nAnita Bose,9000000110,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-91021,2026-06-11,Croma (Kolkata),33999\n",
+  "orders_aquaspin_direct.csv": "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\nPooja Shah,+919000000111,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-92001,2026-09-02,AquaSpin Store (Ahmedabad),37999\nVikram Joshi,+919000000112,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-92002,2026-08-20,aquaspin.example (online),26999\nLeena Thomas,+919000000113,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-92003,2026-06-09,aquaspin.example (online),26999\n"
  }
 }

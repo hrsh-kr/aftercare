@@ -135,6 +135,7 @@ def main():
              "Sana Ali,98000,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-80005,12/03/2026,Reliance Digital,35999")
     hdr = {"Content-Type": "text/csv"}
     direct = requests.get(BASE + "/api/sandbox/samples/orders_aquaspin_direct.csv").text
+    rec["samples"] = {n: requests.get(f"{BASE}/api/sandbox/samples/{n}").text for n in ("orders_croma_sep2026.csv", "orders_aquaspin_direct.csv")}
     rec["ingest_direct"] = requests.post(BASE + "/api/ingest", data=direct, headers=hdr).json()
     rec["ingest_check"] = {"clean": requests.post(BASE + "/api/ingest", data=rec["csv"]["clean"], headers=hdr).json(),
                            "messy": requests.post(BASE + "/api/ingest", data=messy, headers=hdr).json()}
