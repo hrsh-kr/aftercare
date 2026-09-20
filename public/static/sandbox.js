@@ -88,7 +88,7 @@ $("sb-reset").addEventListener("click", async () => {
   $("sb-result").textContent = ""; document.querySelectorAll(".sb-sample").forEach((b) => b.classList.remove("loaded"));
   S.loaded = false; S.sent = false; document.querySelectorAll(".sb-sample").forEach((b) => b.classList.add("glow"));
   S.cursor = ""; S.seen = new Set(); S.messages = []; S.ticket = ""; $("sb-thread").textContent = "";
-  $("sb-trace").innerHTML = ""; $("sb-trace").appendChild(el("li", "d-trace-empty", "Send a message and each step Aftercare takes appears here."));
+  S.traceKey = ""; $("sb-trace").innerHTML = ""; $("sb-trace").appendChild(el("li", "d-trace-empty", "Send a message and every step Aftercare takes is added here, in order."));
   await loadCustomers(false); renderInbox([]); loadStats();
 });
 
@@ -142,7 +142,7 @@ function applyLine() {
   const has = !!customer();
   $("sb-input").disabled = !has; document.querySelectorAll(".sb-chip").forEach((c) => (c.disabled = !has));
 }
-function resetThread() { S.cursor = ""; S.seen = new Set(); S.messages = []; $("sb-thread").textContent = ""; poll(); }
+function resetThread() { S.traceKey = ""; $("sb-trace").textContent = ""; $("sb-trace").appendChild(el("li", "d-trace-empty", "Send a message and every step Aftercare takes is added here, in order.")); S.cursor = ""; S.seen = new Set(); S.messages = []; $("sb-thread").textContent = ""; poll(); }
 function renderChips() {
   const box = $("sb-chips"); box.textContent = "";
   (CHIPS[S.brand] || []).forEach(([text, kind]) => {
@@ -197,7 +197,7 @@ async function deliver(message) {
   const { ok, data } = await api("/api/wa/webhook", json(webhookBody(message)));
   clearInterval(fast); S.sending = false; $("sb-input").disabled = false;
   await poll(); renderThread();
-  if (ok) renderTrace(data.replies || []);
+  if (ok) renderTrace(data.replies || [], (message.text && message.text.body) || (message.interactive && message.interactive.button_reply.title) || "");
   loadInbox(); loadStats();
 }
 function send(text) { $("sb-input").value = ""; return deliver({ type: "text", text: { body: text } }); }
@@ -211,10 +211,16 @@ function traceItem(list, parts, cls, tag) {
   parts.forEach((p) => li.append(typeof p === "string" ? document.createTextNode(p) : p));
   list.appendChild(li);
 }
-function renderTrace(replies) {
-  const ol = $("sb-trace"); ol.textContent = "";
-  const c = customer();
-  if (c) traceItem(ol, [strong("Recognised by phone number"), sub(`${c.name} · ${c.products.filter((p) => p.brand === S.brand).length} ${LINES[S.brand].name} product(s) on file`)], "", "Registry");
+/* ONE running ledger per conversation: every message appends to it (and so does a person's reply) until the customer
+   is fixed, a ticket is raised or a human is involved. It starts over only when you switch customer or line. */
+function renderTrace(replies, text) {
+  const ol = $("sb-trace"); const key = S.phone + "|" + S.brand;
+  if (S.traceKey !== key) {
+    ol.textContent = ""; S.traceKey = key; S.traceN = 0;
+    const c = customer();
+    if (c) traceItem(ol, [strong("Recognised by phone number"), sub(`${c.name} · ${c.products.filter((p) => p.brand === S.brand).length} ${LINES[S.brand].name} product(s) on file`)], "", "Registry");
+  }
+  S.traceN++; traceItem(ol, [`Message ${S.traceN} · “${text}”`], "t-msg");
   replies.forEach((m) => {
     const meta = m.meta || {};
     if (m.kind === "buttons") { traceItem(ol, [strong("Owns several products: asked which one"), sub("Buttons sent; the customer's message is kept until they answer")], "", "Rule"); return; }
@@ -237,7 +243,6 @@ function renderTrace(replies) {
       traceItem(ol, [strong(`Handed to a person: ${esc.label}`), sub(`Ticket ${m.meta.ticket_id || ""} created with what was tried. It is in the brand's inbox now`)], esc.code === "safety" ? "t-safety" : "t-handoff", "DynamoDB");
     }
   });
-  if (!ol.children.length) ol.appendChild(el("li", "d-trace-empty", "Nothing to show for that message."));
 }
 
 /* ── 3b · staff: sign-in (real, Cedar-decided), inbox, reply ── */
@@ -297,14 +302,22 @@ $("sb-staff-form").addEventListener("submit", async (e) => {
   const t = $("sb-staff-input").value.trim(); if (!t || !S.ticket) return;
   const { ok, data } = await api(`/api/tickets/${encodeURIComponent(S.ticket)}/reply`, json({ text: t }));
   const msg = $("sb-staff-msg"); msg.className = ok ? "ok" : "no"; msg.textContent = ok ? `Sent. Allowed by ${data.decision.policies.join(", ")}` : data.error;
-  if (ok) { $("sb-staff-input").value = ""; $("sb-staff-input").classList.remove("glow"); refreshTicket(true); poll(); }
+  if (ok) { $("sb-staff-input").value = ""; $("sb-staff-input").classList.remove("glow"); ledgerStaff(`${who()} replied from the inbox`, `“${t}” · Allowed by ${data.decision.policies.join(", ")}`, "t-person"); refreshTicket(true); poll(); }
 });
 document.querySelectorAll(".sb-staff-actions [data-st]").forEach((b) => b.addEventListener("click", async () => {
   if (!S.ticket) return;
   const { ok, data } = await api(`/api/tickets/${encodeURIComponent(S.ticket)}/status`, json({ status: b.dataset.st }));
   const msg = $("sb-staff-msg"); msg.className = ok ? "ok" : "no"; msg.textContent = ok ? `Done. Allowed by ${data.decision.policies.join(", ")}` : data.error;
+  if (ok) ledgerStaff(`${b.textContent}: ${who()}`, `Allowed by ${data.decision.policies.join(", ")}`, "t-ok");
+  else ledgerStaff(`${who()} tried: ${b.textContent}`, data.error || "Refused", "t-safety");
   if (ok) { refreshTicket(); loadInbox(); loadStats(); poll(); }
 }));
+const who = () => (S.role === "manager" ? "Manager" : "Agent");
+function ledgerStaff(title, detail, cls) {
+  if (S.traceKey !== S.phone + "|" + S.brand) return;         // only for the conversation on screen
+  const ol = $("sb-trace"); const li = el("li", cls); li.appendChild(el("span", "t-tag", "Cedar"));
+  li.append(strong(title), sub(detail)); ol.appendChild(li);
+}
 setInterval(() => { if (S.tab === "inbox") loadInbox(); else if (S.tab !== "stats") loadInbox(); }, 2500);
 
 /* ── 3c · analytics (the dashboard's own numbers) ── */

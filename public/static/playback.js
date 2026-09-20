@@ -10,8 +10,8 @@ const strong = (t) => el("strong", null, t);
 const sub = (t) => el("span", "t-sub", t);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const LINES = { aquaspin: { name: "AquaSpin", initials: "Aq", number: "+91 1800 000 0001", bg: "linear-gradient(135deg,#1f7a5c,#30B0C7)" },
-                arcticair: { name: "ArcticAir", initials: "Ar", number: "+91 1800 000 0002", bg: "linear-gradient(135deg,#1a4a8e,#5aa0ff)" } };
+const LINES = { aquaspin: { name: "AquaSpin", initials: "Aq", number: "+91 1800 000 0001", bg: "#2f7d6d" },
+                arcticair: { name: "ArcticAir", initials: "Ar", number: "+91 1800 000 0002", bg: "#3b6fb6" } };
 const TONE = { arjun: "green", kavya: "orange", rohan: "purple", neha: "blue", imran: "teal", divya: "yellow", sanjay: "pink", meera: "indigo" };
 
 let rec, cur = null, idx = 0, busy = false, run = 0, thread = [], tab = "trace", selected = "";
@@ -37,10 +37,10 @@ function initOrders() {
   ];
   const box = $("pb-samples");
   files.forEach((f) => {
-    const b = el("button", "sb-sample glow"); b.type = "button";
+    const b = el("button", "sb-sample"); b.type = "button";
     b.append(el("b", null, f.name), el("span", null, f.about));
     b.addEventListener("click", () => {
-      document.querySelectorAll(".sb-sample").forEach((x) => { x.classList.remove("glow"); x.classList.toggle("loaded", x === b); });
+      document.querySelectorAll(".sb-sample").forEach((x) => x.classList.toggle("loaded", x === b));
       showOrders(f.data);
     });
     box.appendChild(b);
@@ -79,7 +79,7 @@ function select(id) {
   const L = LINES[cur.brand];
   $("pb-avatar").textContent = L.initials; $("pb-avatar").style.background = L.bg;
   $("pb-linename").textContent = `${L.name} Support`; $("pb-linesub").textContent = `Business account · ${L.number}`;
-  $("pb-trace").textContent = ""; $("pb-trace").appendChild(el("li", "d-trace-empty", "Send a message and each step Aftercare takes appears here."));
+  ledgerReset(); msgN = 0;
   $("pb-input").value = "";
   render(); refresh();
   $("pb-staff").hidden = true;
@@ -133,7 +133,7 @@ async function playCustomer() {
   thread.push({ sender: "customer", kind: "text", text: s.text }); render(true);
   await wait(REDUCED ? 0 : 1000); if (my !== run) return;
   for (const m of s.replies) { thread.push(m); render(); await wait(REDUCED ? 0 : 420); if (my !== run) return; }
-  traceFor(s.replies);
+  traceFor(s.replies, s.text);
   s.replies.forEach((m) => {                       // a hand-over creates a ticket that now exists in the brand's inbox
     const meta = m.meta || {};
     if (meta.ticket_id && meta.escalation && !played.has(meta.ticket_id))
@@ -144,11 +144,27 @@ async function playCustomer() {
   if (nxt && nxt.who !== "customer") { const t = ticketOf(cur.id); if (t) { showTab("inbox"); openTicket(t[0]); } }
 }
 
-/* ── what Aftercare did (built only from the fields the real API returned) ── */
-function traceFor(replies) {
-  const ol = $("pb-trace"); ol.textContent = "";
-  const item = (parts, cls, tag) => { const li = el("li", cls || ""); if (tag) li.appendChild(el("span", "t-tag", tag)); parts.forEach((p) => li.append(typeof p === "string" ? document.createTextNode(p) : p)); ol.appendChild(li); };
-  item([strong("Recognised by phone number"), sub(`${cur.name} · registered with ${LINES[cur.brand].name}`)], "", "Registry");
+/* ── what Aftercare did: ONE running ledger for the whole conversation. Each message appends to it, and so does a
+      person's reply, until the customer is fixed, a ticket is raised or a human is involved. (Built only from the fields
+      the real API returned.) ── */
+let msgN = 0, ledgerStarted = false;
+const ledgerItem = (parts, cls, tag) => {
+  const ol = $("pb-trace"); const li = el("li", cls || ""); if (tag) li.appendChild(el("span", "t-tag", tag));
+  parts.forEach((p) => li.append(typeof p === "string" ? document.createTextNode(p) : p)); ol.appendChild(li); return li;
+};
+function ledgerReset() {
+  const ol = $("pb-trace"); ol.textContent = ""; ledgerStarted = false;
+  ol.appendChild(el("li", "d-trace-empty", "Send a message and every step Aftercare takes is added here, in order."));
+}
+function ledgerOpen(text) {
+  const ol = $("pb-trace");
+  const empty = ol.querySelector(".d-trace-empty"); if (empty) empty.remove();
+  if (!ledgerStarted) { ledgerItem([strong("Recognised by phone number"), sub(`${cur.name} · registered with ${LINES[cur.brand].name}`)], "", "Registry"); ledgerStarted = true; }
+  msgN++; ledgerItem([`Message ${msgN} · “${text}”`], "t-msg");
+}
+function traceFor(replies, text) {
+  ledgerOpen(text);
+  const item = ledgerItem;
   replies.forEach((m) => {
     const meta = m.meta || {};
     if (m.kind === "buttons") { item([strong("Owns several products: asked which one"), sub("Buttons sent; the customer's message is kept until they answer")], "", "Rule"); return; }
@@ -168,7 +184,6 @@ function traceFor(replies) {
       item([strong(`Handed to a person: ${esc.label}`), sub(`Ticket ${meta.ticket_id || ""} created with what was tried. It is in the brand's inbox now`)], esc.code === "safety" ? "t-safety" : "t-handoff", "DynamoDB");
     }
   });
-  if (!ol.children.length) ol.appendChild(el("li", "d-trace-empty", "Nothing to show for that message."));
 }
 
 /* ── tabs ── */
@@ -238,10 +253,13 @@ function playStaff() {
     thread.push({ sender: "human", kind: "text", text: s.text, meta: { staff: s.actor.split(" (")[0] } });
     note.className = "pb-note " + (s.result.startsWith("Allowed") ? "ok" : "no"); note.textContent = `${s.actor}. ${s.result}`;
     t.status = t.status === "new" ? "in_progress" : t.status;
+    ledgerItem([strong(`${s.actor.split(" (")[0]} replied from the inbox`), sub(`“${s.text}” · ${s.result}`)], "t-person", "Cedar");
   } else {
     note.className = "pb-note " + (s.ok ? "ok" : "no"); note.textContent = s.ok ? `${s.actor}. Allowed. ${s.result}` : `${s.actor}. Refused. ${s.result}`;
     s.replies.forEach((m) => thread.push(m));
     if (s.ok) t.status = "resolved";
+    ledgerItem([strong(s.ok ? `${s.actor.split(" (")[0]} resolved the ticket` : `${s.actor.split(" (")[0]} tried to resolve the ticket: refused`),
+                sub(s.ok ? `${s.result}. The customer was told` : s.result)], s.ok ? "t-ok" : "t-safety", "Cedar");
   }
   idx++; render(); refresh();
 }

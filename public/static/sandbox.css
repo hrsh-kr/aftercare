@@ -153,3 +153,8 @@
 .sb-staff-reply input.glow{border-radius:999px;}
 .sb-nudge{color:#5aa0ff;}
 .sb-composer input:focus{animation:none;}
+
+/* the running ledger: a divider per message, a person's actions in fuchsia */
+.d-trace li.t-msg{padding:4px 0 10px 0;font-size:12.5px;font-weight:600;color:var(--on-dark);}
+.d-trace li.t-msg::before,.d-trace li.t-msg::after{display:none;}
+.d-trace li.t-person::after{border-color:#e879c1;background:rgba(232,121,193,.35);}
