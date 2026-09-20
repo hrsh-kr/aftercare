@@ -20,6 +20,10 @@ the app will say so instead of pretending (there are no fallbacks).
 Before each take: click **Reset sandbox** (bottom of column 1). It clears chats, tickets, cases and the orders
 you uploaded, and leaves the baseline customers.
 
+## Where to click (the glowing ring)
+
+A pulsing blue ring marks the next thing to do: first the order-file buttons, then the message box and send button, then (after a hand-over) the Inbox tab and the reply box. It switches off once you've done that step. Chips send immediately.
+
 ## The screen
 
 | Column | What it is |
@@ -48,7 +52,7 @@ registration message.
 **Cedar moment (20 s).** In *Inbox*, click **Switch to an agent**, then **Resolve ticket**: refused, naming the
 policy. Switch back to the manager and it works. Then open *Analytics*: handled-without-a-person %, why people
 escalated, which manual sections send them to a person (OpenSearch aggregations). **Open the full dashboard**
-signs you in already.
+signs you in already: a blue header, complaints with a red/yellow/green status, a products table and an AI analytics bar at the bottom. Click a row to read the chat and reply; click the dots to change status.
 
 ## Say your own words
 

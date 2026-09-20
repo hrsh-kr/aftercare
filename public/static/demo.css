@@ -104,3 +104,9 @@
 
 .d-trace .t-tag{display:inline-block;margin:0 8px 0 0;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.09);color:var(--on-dark-2);font-size:11.5px;font-weight:600;vertical-align:1px;}
 .d-up{color:#34C759;}.d-down{color:#ff9f0a;}
+
+/* "this is where you type / press": a soft pulsing ring while the composer is live (keyframes from landing.css) */
+.d-composer input:not(:disabled){animation:glow-ring 2s ease-in-out infinite;}
+.d-composer button:not(:disabled){animation:glow-ring 2s ease-in-out infinite;}
+.d-composer input:focus{animation:none;}
+@media(prefers-reduced-motion:reduce){.d-composer input:not(:disabled),.d-composer button:not(:disabled){animation:none;outline:2px solid #0a7cff;}}

@@ -286,3 +286,6 @@ tickStory();
     set("storage", c.dynamodb.ok, c.dynamodb.ok ? `● live · DynamoDB Local · table ${c.dynamodb.table}` : "○ DynamoDB unreachable");
   } catch (_) { chips.forEach((c) => { c.textContent = "○ status unavailable"; c.classList.add("down"); }); }
 })();
+
+/* the pulse says "start here"; once they have clicked anything in the checker it has done its job */
+document.querySelectorAll(".l-check-btn").forEach((b) => b.addEventListener("click", () => document.querySelectorAll(".l-check-btn.glow").forEach((g) => g.classList.remove("glow"))));

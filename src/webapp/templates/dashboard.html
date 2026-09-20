@@ -4,97 +4,72 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ brand_display }} — Aftercare Dashboard</title>
-  <meta name="description" content="{{ brand_display }} support dashboard: registered products, open tickets, warranty status, and recurring issue insights — powered by Aftercare.">
+  <meta name="description" content="{{ brand_display }} support dashboard: complaints and their status, registered products, and analytics, powered by Aftercare.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/dashboard.css">
 </head>
-<body class="dashboard-body">
+<body class="db">
+<div class="db-wrap">
 
-  <a href="/" class="back-link">← Aftercare</a>
-
-  <div class="dash">
-    <header class="dash-header">
-      <div class="brand-dot">{{ brand_display[:2] }}</div>
-      <div class="dash-header-text">
-        <div class="brand-name dash-title">{{ brand_display }} — Support Dashboard</div>
-        <div class="brand-sub" id="session-line">Checking authorization…</div>
+  <header class="db-head">
+    <div class="db-brand">
+      <span class="db-mark">{{ brand_display[:2] }}</span>
+      <div>
+        <h1>{{ brand_display }} support</h1>
+        <p id="session-line">Checking sign-in…</p>
       </div>
-      <a class="switch-brand-link" href="/dashboard">Switch account</a>
-      {% for slug, name in others %}<a class="switch-brand-link try-other" href="/dashboard/{{ slug }}" title="You should be refused. Cedar will say which rule refused you.">Try {{ name }}'s dashboard</a>{% endfor %}
-    </header>
-
-    <div id="denied-panel" class="denied-panel" hidden>
-      <div class="denied-icon">🔒</div>
-      <div class="denied-title">Access denied</div>
-      <p class="denied-copy" id="denied-copy"></p>
-      <a class="switch-brand-link" href="/dashboard">Sign in as a different account</a>
     </div>
+    <nav class="db-nav" aria-label="Dashboard links">
+      <a href="/sandbox">Sandbox</a>
+      <a href="/dashboard">Switch account</a>
+      {% for slug, name in others %}<a href="/dashboard/{{ slug }}" title="You should be refused. Cedar will say which rule refused you.">Try {{ name }}</a>{% endfor %}
+    </nav>
+  </header>
 
-    <div id="dash-content" hidden>
-
-      <!-- ── 1. KPI stat cards ── -->
-      <section class="stat-row" id="stat-row"></section>
-
-      <!-- ── 2. Analytics row (complaint breakdown + warranty ring) ── -->
-      <div class="analytics-row">
-
-        <section class="dash-section analytics-card">
-          <h2>Complaint breakdown
-            <span class="section-hint">Categorised from ticket summaries</span>
-          </h2>
-          <div id="complaint-breakdown" class="breakdown-list"></div>
-        </section>
-
-        <section class="dash-section analytics-card analytics-card--narrow">
-          <h2>Warranty coverage</h2>
-          <div id="warranty-ring"></div>
-        </section>
-
-      </div>
-
-      <!-- ── 3. Product health table ── -->
-      <section class="dash-section">
-        <h2>Product health
-          <span class="section-hint">Registered units vs. escalated tickets</span>
-        </h2>
-        <div id="product-health"></div>
-      </section>
-
-      <!-- ── 3b. Insights (OpenSearch aggregations) ── -->
-      <section class="dash-section">
-        <h2>Why customers reach a person
-          <span class="section-hint" id="insights-engine"></span>
-        </h2>
-        <div id="insights" class="insights"></div>
-      </section>
-
-      <!-- ── 4. Escalated tickets (conversation thread style) ── -->
-      <section class="dash-section">
-        <h2>Escalated tickets
-          <span class="section-hint">Every turn the agent took before creating the ticket</span>
-        </h2>
-        <div id="ticket-list" class="ticket-list"></div>
-      </section>
-
-      <!-- ── 5. Registered products + QR codes ── -->
-      <section class="dash-section">
-        <h2>Registered products
-          <span class="section-hint">QR codes go on warranty cards at point of sale</span>
-        </h2>
-        <div id="registration-list" class="registration-list"></div>
-      </section>
-
-    </div><!-- /#dash-content -->
+  <div id="denied-panel" class="db-card db-denied" hidden>
+    <h2>Access denied</h2>
+    <p id="denied-copy"></p>
+    <a class="db-btn" href="/dashboard">Sign in as a different account</a>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
-          integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <main id="dash-content" hidden>
+    <section class="db-kpis" id="stat-row" aria-label="Summary"></section>
 
-  <script>window.__BRAND__ = {{ brand | tojson }};</script>
-  <script src="/static/dashboard.js"></script>
+    <section class="db-card" aria-labelledby="h-complaints">
+      <div class="db-card-head">
+        <h2 id="h-complaints">Complaints</h2>
+        <div class="db-filter" id="db-filter" role="tablist" aria-label="Filter by status">
+          <button class="on" data-f="all" role="tab">All</button>
+          <button data-f="open" role="tab"><i class="d red"></i>Open</button>
+          <button data-f="progress" role="tab"><i class="d yellow"></i>In progress</button>
+          <button data-f="done" role="tab"><i class="d green"></i>Resolved</button>
+        </div>
+      </div>
+      <p class="db-hint">Only people who reached a person are listed. The three dots are the status: red is waiting, yellow is being handled, green is resolved. Click a dot to change it (managers only). Open a row to read the chat and reply.</p>
+      <div id="ticket-list" class="db-list"></div>
+    </section>
+
+    <section class="db-card" aria-labelledby="h-products">
+      <div class="db-card-head"><h2 id="h-products">Registered products</h2><span class="db-muted" id="db-prod-count"></span></div>
+      <div class="db-table-wrap"><table class="db-table" id="db-products"></table></div>
+    </section>
+  </main>
+
+</div>
+
+<!-- the AI analytics bar: always at the bottom -->
+<footer class="db-ai" id="db-ai" hidden>
+  <div class="db-ai-panel" id="db-ai-panel" hidden></div>
+  <div class="db-ai-bar">
+    <span class="db-ai-tag">AI analytics</span>
+    <p id="db-ai-text">Reading your conversations…</p>
+    <button type="button" id="db-ai-toggle" aria-expanded="false">Details</button>
+  </div>
+</footer>
+
+<script>window.__BRAND__ = {{ brand | tojson }};</script>
+<script src="/static/dashboard.js"></script>
 </body>
 </html>

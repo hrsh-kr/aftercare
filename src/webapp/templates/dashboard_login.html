@@ -101,6 +101,10 @@
     .dl-go { width: 100%; margin-top: 16px; padding: 13px; border: 0; border-radius: 980px; cursor: pointer; font: inherit; font-size: 16px;
       font-weight: 600; color: #fff; background: linear-gradient(135deg,#5E5CE6,#0a7cff); }
     .dl-go:disabled { opacity: .5; }
+    @keyframes dl-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(10,124,255,.55), 0 0 12px rgba(10,124,255,.25); } 50% { box-shadow: 0 0 0 6px rgba(10,124,255,0), 0 0 22px rgba(10,124,255,.5); } }
+    .dl-pass { animation: dl-glow 2s ease-in-out infinite; }
+    .dl-pass:focus { animation: none; outline: 2px solid #0a7cff; }
+    @media (prefers-reduced-motion: reduce) { .dl-pass { animation: none; outline: 2px solid #0a7cff; } }
 
     /* Footer */
     .dl-footer {

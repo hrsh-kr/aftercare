@@ -33,7 +33,7 @@ const strong = (t) => el("strong", null, t);
 const sub = (t) => el("span", "t-sub", t);
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const S = { customers: [], phone: "", brand: "aquaspin", cursor: "", seen: new Set(), messages: [], sending: false,
+const S = { loaded: false, sent: false, customers: [], phone: "", brand: "aquaspin", cursor: "", seen: new Set(), messages: [], sending: false,
             role: "manager", signedAs: "", tab: "trace", ticket: "", threadCursor: 0 };
 
 /* ── API ── */
@@ -63,6 +63,7 @@ async function loadSamples() {
       const csv = await (await fetch(`/api/sandbox/samples/${encodeURIComponent(s.name)}`)).text();
       await ingest(csv, b);
     });
+    b.classList.add("glow");
     box.appendChild(b);
   });
 }
@@ -72,6 +73,7 @@ async function ingest(csv, btn) {
   out.textContent = "";
   if (!ok) { out.append(strong("Can't read this file. "), document.createTextNode(data.error || "Unknown error")); return; }
   if (btn) btn.classList.add("loaded");
+  S.loaded = true; document.querySelectorAll(".sb-sample").forEach((b) => b.classList.remove("glow")); hintComposer();
   const p = el("p"); p.append(strong(`${data.rows} rows read.`), ` ${data.registered} customers' products registered and messaged on WhatsApp, ${data.rejected} rejected.`);
   out.appendChild(p);
   const chips = el("div", "sb-chips-brand");
@@ -84,10 +86,19 @@ $("sb-file").addEventListener("change", (e) => { const f = e.target.files[0]; if
 $("sb-reset").addEventListener("click", async () => {
   await api("/api/sandbox/reset", { method: "POST" });
   $("sb-result").textContent = ""; document.querySelectorAll(".sb-sample").forEach((b) => b.classList.remove("loaded"));
+  S.loaded = false; S.sent = false; document.querySelectorAll(".sb-sample").forEach((b) => b.classList.add("glow"));
   S.cursor = ""; S.seen = new Set(); S.messages = []; S.ticket = ""; $("sb-thread").textContent = "";
   $("sb-trace").innerHTML = ""; $("sb-trace").appendChild(el("li", "d-trace-empty", "Send a message and each step Aftercare takes appears here."));
   await loadCustomers(false); renderInbox([]); loadStats();
 });
+
+/* the pulse marks the next thing to do: pick an order file, then say something, then (when a chat is handed over) reply */
+function hintComposer() {
+  const on = S.loaded && !S.sent && !!S.phone;
+  $("sb-input").classList.toggle("glow", on);
+  document.querySelector("#sb-composer button").classList.toggle("glow", on);
+  document.querySelector(".sb-chip-title").classList.toggle("sb-nudge", on);
+}
 
 /* ── 2 · the phone ── */
 async function loadCustomers(keepSelection) {
@@ -101,6 +112,7 @@ async function loadCustomers(keepSelection) {
   });
   if (prev && S.customers.some((c) => c.phone === prev)) sel.value = prev;
   selectCustomer(sel.value || (S.customers[0] && S.customers[0].phone) || "");
+  hintComposer();
 }
 function customer() { return S.customers.find((c) => c.phone === S.phone); }
 function selectCustomer(phone) {
@@ -180,7 +192,7 @@ function webhookBody(message) {
 }
 async function deliver(message) {
   if (S.sending || !S.phone) return;
-  S.sending = true; $("sb-input").disabled = true; renderThread();
+  S.sending = true; S.sent = true; hintComposer(); $("sb-input").disabled = true; renderThread();
   const fast = setInterval(poll, 350);                       // the customer's own message shows up straight away
   const { ok, data } = await api("/api/wa/webhook", json(webhookBody(message)));
   clearInterval(fast); S.sending = false; $("sb-input").disabled = false;
@@ -247,6 +259,7 @@ function renderInbox(chats) {
   const box = $("sb-inbox"); box.textContent = "";
   const open = chats.filter((c) => c.mode === "human" && c.ticket_status !== "resolved");
   const badge = $("sb-inbox-count"); badge.hidden = !open.length; badge.textContent = open.length;
+  document.querySelector('[data-tab="inbox"]').classList.toggle("glow", open.length > 0 && S.tab !== "inbox");
   if (!chats.length) { box.appendChild(el("p", "sb-empty", "No chats yet.")); return; }
   chats.forEach((c) => {
     const b = el("button", "sb-chat" + (c.ticket_id && c.ticket_id === S.ticket ? " sel" : "")); b.type = "button";
@@ -264,7 +277,7 @@ async function loadInbox() {
   if (ok) renderInbox(data.chats);
   if (S.ticket) refreshTicket();
 }
-async function openTicket(id) { S.ticket = id; $("sb-staff").hidden = false; $("sb-staff-msg").textContent = ""; await refreshTicket(true); loadInbox(); }
+async function openTicket(id) { S.ticket = id; $("sb-staff").hidden = false; $("sb-staff-input").classList.add("glow"); $("sb-staff-msg").textContent = ""; await refreshTicket(true); loadInbox(); }
 async function refreshTicket(scroll) {
   const { ok, data } = await api(`/api/tickets/${encodeURIComponent(S.ticket)}/thread`);
   if (!ok) { $("sb-staff-msg").className = "no"; $("sb-staff-msg").textContent = data.error || ""; return; }
@@ -281,7 +294,7 @@ $("sb-staff-form").addEventListener("submit", async (e) => {
   const t = $("sb-staff-input").value.trim(); if (!t || !S.ticket) return;
   const { ok, data } = await api(`/api/tickets/${encodeURIComponent(S.ticket)}/reply`, json({ text: t }));
   const msg = $("sb-staff-msg"); msg.className = ok ? "ok" : "no"; msg.textContent = ok ? `Sent. Allowed by ${data.decision.policies.join(", ")}` : data.error;
-  if (ok) { $("sb-staff-input").value = ""; refreshTicket(true); poll(); }
+  if (ok) { $("sb-staff-input").value = ""; $("sb-staff-input").classList.remove("glow"); refreshTicket(true); poll(); }
 });
 document.querySelectorAll(".sb-staff-actions [data-st]").forEach((b) => b.addEventListener("click", async () => {
   if (!S.ticket) return;
@@ -313,14 +326,14 @@ async function loadStats() {
     return d;
   };
   box.appendChild(bars("Why they reached a person", i.by_reason.map((r) => [r.label, r.count])));
-  box.appendChild(bars("Manual sections that send people to a person", i.top_sections.map((s) => [s.heading, s.escalated, `${s.escalated} of ${s.count}`]), "warn"));
+  box.appendChild(bars("Manual sections that send people to a person", i.top_sections.filter((s) => s.escalated).sort((a, b) => b.escalated - a.escalated).map((s) => [s.heading, s.escalated, `${s.escalated} of ${s.count}`]), "warn"));
   box.appendChild(el("p", "sb-empty", i.engine === "opensearch" ? "Computed by OpenSearch aggregations." : ""));
 }
 setInterval(() => { if (S.tab === "stats") loadStats(); }, 5000);
 
 /* tabs */
 document.querySelectorAll(".sb-tab").forEach((t) => t.addEventListener("click", () => {
-  S.tab = t.dataset.tab;
+  S.tab = t.dataset.tab; t.classList.remove("glow");
   document.querySelectorAll(".sb-tab").forEach((x) => x.classList.toggle("on", x === t));
   ["trace", "inbox", "stats"].forEach((n) => ($("pane-" + n).hidden = n !== S.tab));
   if (S.tab === "inbox") loadInbox(); if (S.tab === "stats") loadStats();

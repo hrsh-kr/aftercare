@@ -144,3 +144,12 @@
 
 .sb-hero .l-sub{font-size:clamp(15px,1.4vw,18px);max-width:820px;margin-top:12px;}
 .sb-hero .l-eyebrow{margin-bottom:10px;}
+
+/* "start here" cues (the pulsing ring itself is .glow in landing.css) */
+.sb-sample.glow{border-radius:20px;}
+.sb-composer button.glow{border-radius:50%;}
+.sb-composer input.glow{border-radius:999px;}
+.sb-tab.glow{border-radius:10px;}
+.sb-staff-reply input.glow{border-radius:999px;}
+.sb-nudge{color:#5aa0ff;}
+.sb-composer input:focus{animation:none;}

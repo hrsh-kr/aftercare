@@ -389,6 +389,7 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
                 "serial_number": r.serial_number,
                 "purchase_date": r.purchase_date,
                 "retailer": r.retailer,
+                "warranty_component": r.warranty_component,
                 "warranty_component_status": r.warranty_component_status,
                 "warranty_parts_status": r.warranty_parts_status,
                 # QR encodes a WhatsApp deep link so the customer can scan
