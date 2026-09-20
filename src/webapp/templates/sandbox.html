@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Aftercare — Sandbox</title>
+  <meta name="description" content="Run the whole Aftercare flow for real on fabricated orders: order file, WhatsApp, the agent, a person taking over, and the brand's analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/landing.css">
+  <link rel="stylesheet" href="/static/sandbox.css">
+</head>
+<body class="sb-body">
+
+  <nav class="l-nav scrolled" aria-label="Primary">
+    <a class="l-nav-brand" href="/"><span class="l-nav-mark">A</span><span class="l-nav-wordmark">Aftercare</span></a>
+    <a class="l-link sb-nav-back" href="/">Back to the story</a>
+  </nav>
+
+  <header class="sb-hero">
+    <div class="l-hero-glow" aria-hidden="true"></div>
+    <div class="sb-wrap">
+      <p class="l-eyebrow"><span class="l-pip"></span>Sandbox · everything real except WhatsApp itself</p>
+      <h1 class="sb-h1">Fabricated orders.<br><span class="l-grad">A real agent.</span></h1>
+      <p class="l-sub">Load an order file, message as one of its customers, and watch a real conversation run: warranty checks, support from the manual, a ticket, a person taking over from the brand's inbox, and the analytics updating.</p>
+      <p class="sb-runtime" id="sb-runtime" hidden></p>
+    </div>
+  </header>
+
+  <div class="sb-banner" id="sb-banner" role="alert" hidden></div>
+
+  <main class="sb-wrap sb-grid">
+
+    <!-- 1 · the order file -->
+    <section class="sb-col" aria-labelledby="h-orders">
+      <p class="sb-step">1</p>
+      <h2 class="sb-h2" id="h-orders">The order file</h2>
+      <p class="sb-p">A store or brand exports its sales. Aftercare checks every row, files each product under its brand, registers the customers, and messages each one on WhatsApp.</p>
+      <div class="sb-samples" id="sb-samples"></div>
+      <label class="sb-upload">Or upload a CSV<input type="file" id="sb-file" accept=".csv,text/csv"></label>
+      <div class="sb-result" id="sb-result" aria-live="polite"></div>
+      <div class="sb-tools"><button class="sb-textbtn" id="sb-reset" type="button">Reset sandbox</button></div>
+    </section>
+
+    <!-- 2 · the customer's phone -->
+    <section class="sb-col sb-col-phone" aria-labelledby="h-phone">
+      <p class="sb-step">2</p>
+      <h2 class="sb-h2" id="h-phone">The customer's WhatsApp</h2>
+      <div class="sb-pick">
+        <label>Message as <select id="sb-customer" aria-label="Customer"></select></label>
+        <div class="sb-lines" id="sb-lines" role="tablist" aria-label="Which brand's line"></div>
+      </div>
+      <div class="l-phone-frame sb-phone">
+        <div class="l-ph-header">
+          <div class="l-ph-back">‹</div>
+          <div class="l-ph-avatar" id="sb-avatar">Aq</div>
+          <div class="l-ph-headtext"><div class="l-ph-name" id="sb-linename">AquaSpin Support</div><div class="l-ph-sub" id="sb-linesub">Business account</div></div>
+        </div>
+        <div class="sb-thread" id="sb-thread" aria-live="polite"></div>
+        <form class="sb-composer" id="sb-composer" autocomplete="off">
+          <input id="sb-input" type="text" placeholder="Message" aria-label="Message" maxlength="400">
+          <button type="submit" aria-label="Send">➤</button>
+        </form>
+      </div>
+      <p class="sb-chip-title">Try saying <span>(click to send)</span></p>
+      <div class="sb-chips" id="sb-chips"></div>
+    </section>
+
+    <!-- 3 · the brand -->
+    <section class="sb-col" aria-labelledby="h-brand">
+      <p class="sb-step">3</p>
+      <h2 class="sb-h2" id="h-brand">The brand</h2>
+      <div class="sb-tabs" role="tablist">
+        <button class="sb-tab on" data-tab="trace" role="tab">What Aftercare did</button>
+        <button class="sb-tab" data-tab="inbox" role="tab">Inbox <i id="sb-inbox-count" hidden></i></button>
+        <button class="sb-tab" data-tab="stats" role="tab">Analytics</button>
+      </div>
+      <div class="sb-pane" id="pane-trace"><ol class="d-trace" id="sb-trace"><li class="d-trace-empty">Send a message and each step Aftercare takes appears here.</li></ol></div>
+      <div class="sb-pane" id="pane-inbox" hidden>
+        <p class="sb-who" id="sb-who"></p>
+        <div class="sb-inbox" id="sb-inbox"><p class="sb-empty">No chats yet.</p></div>
+        <div class="sb-thread-wrap" id="sb-staff" hidden>
+          <div class="sb-staff-head"><b id="sb-staff-title"></b><span id="sb-staff-badge"></span></div>
+          <div class="sb-staff-thread" id="sb-staff-thread"></div>
+          <form class="sb-staff-reply" id="sb-staff-form" autocomplete="off">
+            <input id="sb-staff-input" type="text" placeholder="Reply to the customer on WhatsApp" aria-label="Reply">
+            <button type="submit">Send</button>
+          </form>
+          <div class="sb-staff-actions"><button type="button" data-st="in_progress">Mark in progress</button><button type="button" data-st="resolved">Resolve ticket</button><span id="sb-staff-msg" role="status"></span></div>
+        </div>
+      </div>
+      <div class="sb-pane" id="pane-stats" hidden><div id="sb-stats"><p class="sb-empty">Loading…</p></div>
+        <a class="l-link" id="sb-dash" href="/dashboard">Open the full dashboard</a></div>
+    </section>
+  </main>
+
+  <p class="sb-honest">Real: the registry (DynamoDB), the order check, the agent (Strands + a local model), manual search (OpenSearch), tickets, Cedar authorization, and the inbox. Simulated: WhatsApp's network. The customer's phone talks to a Meta-shaped webhook on this server, and every message lands in the same log the brand's inbox reads. All customers and orders here are fabricated.</p>
+
+  <script src="/static/sandbox.js"></script>
+</body>
+</html>

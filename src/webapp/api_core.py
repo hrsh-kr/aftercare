@@ -622,7 +622,7 @@ def inbox(brand: str, token: str | None) -> tuple[dict, int]:
     for c in get_store().chat_index(brand):
         t = get_store().get_ticket(c["ticket_id"]) if c.get("ticket_id") else None
         rows.append({"customer_name": c["customer_name"], "phone": mask_phone(c["phone"]), "last_text": c["last_text"], "mode": c["mode"],
-                     "ticket_id": c.get("ticket_id", ""), "reason": c.get("reason", ""), "unread": c.get("unread", 0),
+                     "ticket_id": c.get("ticket_id", ""), "reason": agent_mod.ESCALATION_LABELS.get(c.get("reason", ""), c.get("reason", "")), "unread": c.get("unread", 0),
                      "updated_at": c["updated_at"], "ticket_status": (t or {}).get("status", ""), "safety": bool((t or {}).get("safety_flag"))})
     rows.sort(key=lambda r: (r["mode"] != "human" or r["ticket_status"] == "resolved", r["updated_at"]), reverse=False)
     handed = sorted([r for r in rows if r["mode"] == "human" and r["ticket_status"] != "resolved"], key=lambda r: r["updated_at"], reverse=True)

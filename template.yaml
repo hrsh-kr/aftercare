@@ -16,6 +16,7 @@ Globals:
         # Lambda's "localhost" is the container itself, not the host
         # machine running Ollama -- see agent.py's OLLAMA_HOST.
         OLLAMA_HOST: http://host.docker.internal:11434
+        AFTERCARE_MODEL: gemma2:9b
         # The bundled linux/aarch64 Cedar CLI, not the host's macOS one
         # -- see cedar_authz.py's CEDAR_BIN.
         CEDAR_BIN: /var/task/tools/cedar/cedar

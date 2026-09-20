@@ -103,7 +103,7 @@ def _ask_product(brand: str, phone: str, name: str, regs: list[Registration], pe
 def _deliver(brand: str, phone: str, name: str, data: dict, conv_id: str | None) -> list[dict]:
     """Turn an agent result into WhatsApp messages and update the chat state."""
     st = get_store()
-    meta = {**(data.get("meta") or {}), "status": data["status"]}
+    meta = {**(data.get("meta") or {}), "status": data["status"], "ticket_id": data.get("ticket_id", "")}
     out = []
     status = data["status"]
     if status == "waiting":
