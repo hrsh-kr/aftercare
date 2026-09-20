@@ -22,7 +22,7 @@ The form asks the video to cover: *about the project, tech stack and architectur
 
 ## Part 1: The idea (0:00 – 0:55) · ~135 words
 
-**SHOW** Landing page, hero, then scroll the problem line and the six-step phone story. Don't stop; the phone animation carries you.
+**SHOW** Landing page hero (headline and tagline), then scroll the problem line and the six-step phone story. Don't stop; the phone animation in the story carries you.
 
 **SAY**
 
@@ -101,7 +101,7 @@ The form asks the video to cover: *about the project, tech stack and architectur
 
 ## Common failure points
 
-- The phone animation on the landing page can look empty for a second on first paint. Scroll slowly.
+- The phone animation in the six-step story can look empty for a second on first paint. Scroll slowly.
 - The architecture status chips say "recorded" on the deployed site. That's correct and honest; don't call them live.
 - If a chip doesn't seem to work in the live demo, it's already been played for that customer. Use **Restart this customer**.
 - Running the real thing locally instead? Click-by-click steps for eight customers are in [`SANDBOX_RUNBOOK.md`](SANDBOX_RUNBOOK.md).

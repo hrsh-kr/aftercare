@@ -93,19 +93,6 @@ function playMessages(container, msgs, timers, stepMs) {
   });
 }
 
-/* ── Hero phone: one exchange, taken from the real AquaSpin manual (§4.1) ── */
-(function () {
-  const box = document.getElementById("hero-messages");
-  if (!box) return;
-  playMessages(box, [
-    { type: "cust",   text: "My washing machine bangs on every spin" },
-    { type: "agent",  text: "Rock it gently from each corner. If it moves, turn the feet until all four sit flat — then run it again." },
-    { type: "source", text: "📄 AquaSpin manual · 4.1 Drum wobbling or banging noise" },
-    { type: "cust",   text: "That fixed it — thank you!" },
-    { type: "ok",     text: "✓ Resolved · no ticket" },
-  ], [], 900);
-})();
-
 /* ══════════════════════════════════════════════════════════════
    CUSTOMER STORY
    Bubbles use the fixtures' own people, products and manual sections
