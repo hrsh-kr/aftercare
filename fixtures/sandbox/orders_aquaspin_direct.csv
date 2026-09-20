@@ -1,0 +1,4 @@
+customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price
+Pooja Shah,+919000000111,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-92001,2026-09-02,AquaSpin Store (Ahmedabad),37999
+Vikram Joshi,+919000000112,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-92002,2026-08-20,aquaspin.example (online),26999
+Leena Thomas,+919000000113,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-92003,2026-06-09,aquaspin.example (online),26999

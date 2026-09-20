@@ -55,30 +55,23 @@ def compute_warranty_status(purchase_date: str, product_id: str) -> tuple[str, i
     return component, years, component_status, parts_status
 
 
+def registration_from_row(row: dict) -> Registration:
+    """A stored or CSV row -> Registration. Warranty status is computed here, at read time, from the
+    purchase date and today's date, so it is never stale and never stored."""
+    component, years, component_status, parts_status = compute_warranty_status(row["purchase_date"], row["product_id"])
+    return Registration(
+        customer_name=row["customer_name"], customer_phone=row["customer_phone"], product_id=row["product_id"],
+        product_name=row["product_name"], serial_number=row["serial_number"], purchase_date=row["purchase_date"],
+        retailer=row["retailer"], purchase_price=int(row["purchase_price"]), warranty_component=component,
+        warranty_component_years=years, warranty_component_status=component_status, warranty_parts_status=parts_status,
+    )
+
+
 def load_registrations(path: Path = SALES_DATA) -> list[Registration]:
-    registrations = []
+    """Read a sales CSV from disk. Used by bootstrap (to load the baseline registry into DynamoDB) and by
+    the landing page's Step 0 table. The running app reads registrations from the registry, not from here."""
     with open(path) as f:
-        for row in csv.DictReader(f):
-            component, years, component_status, parts_status = compute_warranty_status(
-                row["purchase_date"], row["product_id"]
-            )
-            registrations.append(
-                Registration(
-                    customer_name=row["customer_name"],
-                    customer_phone=row["customer_phone"],
-                    product_id=row["product_id"],
-                    product_name=row["product_name"],
-                    serial_number=row["serial_number"],
-                    purchase_date=row["purchase_date"],
-                    retailer=row["retailer"],
-                    purchase_price=int(row["purchase_price"]),
-                    warranty_component=component,
-                    warranty_component_years=years,
-                    warranty_component_status=component_status,
-                    warranty_parts_status=parts_status,
-                )
-            )
-    return registrations
+        return [registration_from_row(row) for row in csv.DictReader(f)]
 
 
 def lookup_by_phone(phone: str, registrations: list[Registration] | None = None) -> list[Registration]:

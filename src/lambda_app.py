@@ -69,6 +69,11 @@ def dashboard(brand: str):
     return _html(pages.dashboard(brand))
 
 
+@app.get("/sandbox")
+def sandbox():
+    return _html(pages.sandbox())
+
+
 # ── API ──────────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health():
@@ -162,6 +167,77 @@ def demo_reset():
     if os.environ.get("AFTERCARE_DEMO") != "1":
         return _json({"error": "Not found."}, 404)
     return _json(core.reset_demo_data())
+
+
+# ── WhatsApp channel + sandbox ────────────────────────────────────────────────
+@app.post("/api/wa/webhook")
+def wa_webhook():
+    """Meta's WhatsApp Cloud API webhook shape: the door a real WhatsApp Business number would use."""
+    data, status = core.wa_webhook(_body())
+    return _json(data, status)
+
+
+@app.get("/api/wa/messages")
+def wa_messages():
+    ev = app.current_event
+    return _json(core.wa_messages(ev.get_query_string_value("brand", "") or "", ev.get_query_string_value("phone", "") or "",
+                                  ev.get_query_string_value("after", "") or ""))
+
+
+@app.get("/api/inbox/<brand>")
+def inbox(brand: str):
+    data, status = core.inbox(brand, _token())
+    return _json(data, status)
+
+
+@app.get("/api/tickets/<ticket_id>/thread")
+def ticket_thread(ticket_id: str):
+    data, status = core.ticket_thread(ticket_id, _token())
+    return _json(data, status)
+
+
+@app.post("/api/tickets/<ticket_id>/reply")
+def ticket_reply(ticket_id: str):
+    data, status = core.ticket_reply(ticket_id, _body().get("text", ""), _token())
+    return _json(data, status)
+
+
+@app.get("/api/sandbox/customers")
+def sandbox_customers():
+    return _json(core.sandbox_customers())
+
+
+_SAMPLES = {
+    "orders_croma_sep2026.csv": "A multi-brand store's export (Croma): AquaSpin and ArcticAir sales mixed together, plus two rows that need fixing.",
+    "orders_aquaspin_direct.csv": "A brand's own export (AquaSpin direct sales): clean, one brand.",
+}
+
+
+@app.get("/api/sandbox/samples")
+def sandbox_samples():
+    return _json([{"name": n, "about": a} for n, a in _SAMPLES.items()])
+
+
+@app.get("/api/sandbox/samples/<name>")
+def sandbox_sample(name: str):
+    from src.layer1.registration import FIXTURES
+    if name not in _SAMPLES:
+        return _json({"error": "Unknown sample."}, 404)
+    return Response(status_code=200, content_type="text/csv", body=(FIXTURES / "sandbox" / name).read_text())
+
+
+@app.post("/api/sandbox/ingest")
+def sandbox_ingest():
+    data, status = core.ingest_commit(app.current_event.body or "", source="sandbox")
+    return _json(data, status)
+
+
+@app.post("/api/sandbox/reset")
+def sandbox_reset():
+    import os
+    if os.environ.get("AFTERCARE_DEMO") != "1":
+        return _json({"error": "Not found."}, 404)
+    return _json(core.sandbox_reset())
 
 
 @logger.inject_lambda_context(correlation_id_path="requestContext.requestId")

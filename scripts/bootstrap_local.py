@@ -54,6 +54,22 @@ def dynamodb() -> None:
                 pass  # already enabled
 
 
+def registry() -> None:
+    """Load the baseline customer registry (fixtures/sales_data.csv) into DynamoDB. The sandbox demo
+    later adds its own order files through POST /api/ingest."""
+    os.environ["DYNAMODB_ENDPOINT"] = ENDPOINT
+    from src.layer1.catalog import brand_for
+    from src.layer1.registration import load_registrations
+    from src.storage import get_store
+    store = get_store()
+    n = 0
+    for r in load_registrations():
+        store.put_registration({k: getattr(r, k) for k in ("customer_name", "customer_phone", "product_id", "product_name",
+                                                         "serial_number", "purchase_date", "retailer", "purchase_price")} | {"source": "baseline"})
+        n += 1
+    print(f"DynamoDB Local: {n} baseline registrations loaded")
+
+
 def opensearch() -> None:
     from src.layer1 import opensearch_retrieval as osr
     from src.layer3b import case_index
@@ -64,4 +80,5 @@ def opensearch() -> None:
 
 if __name__ == "__main__":
     dynamodb()
+    registry()
     opensearch()

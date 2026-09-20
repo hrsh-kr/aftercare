@@ -50,7 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from src.authz import cedar_authz, session
 from src.authz.cedar_authz import CedarUnavailable
 from src.layer1.catalog import BRAND_SLUGS, brand_for
-from src.layer1.registration import Registration, load_registrations, lookup_by_phone
+from src.layer1.registration import Registration, registration_from_row
 from src.layer2 import agent as agent_mod
 from src.layer3b import case_index
 from src.storage import get_store
@@ -132,6 +132,15 @@ def _record(conv_id: str, conv: agent_mod.Conversation) -> None:
     case_index.record(conv_id, conv)
 
 
+def regs_for_phone(phone: str) -> list[Registration]:
+    """Everything this phone number has bought, from the registry (DynamoDB, GSI on the phone)."""
+    return [registration_from_row(r) for r in get_store().registrations_for_phone(phone)]
+
+
+def regs_for_brand(brand: str) -> list[Registration]:
+    return [registration_from_row(r) for r in get_store().registrations(brand)]
+
+
 def list_customers(brand: str = "") -> list[dict]:
     """For the demo's 'simulate as' picker only. A real WhatsApp
     integration never needs this -- the incoming message already
@@ -143,7 +152,7 @@ def list_customers(brand: str = "") -> list[dict]:
     Mixing them in one picker was a design flaw: the two brands are
     independent, each with their own WhatsApp Business number."""
     seen: dict[str, str] = {}
-    for r in load_registrations():
+    for r in [x for b in ((brand,) if brand else BRAND_SLUGS) for x in regs_for_brand(b.lower())]:
         # Filter to brand if requested -- brand is the slug (lowercase)
         if brand and brand_for(r.product_id).lower() != brand.lower():
             continue
@@ -162,7 +171,7 @@ def lookup(phone: str, brand: str = "") -> dict:
     In a real deployment, brand comes from which number the message
     arrived on -- it's never user-supplied or guessed. In the demo,
     it comes from the brand the user picked at the entry screen."""
-    all_regs = lookup_by_phone(phone, load_registrations())
+    all_regs = regs_for_phone(phone)
     if not all_regs:
         return {"found": False}
 
@@ -196,7 +205,7 @@ def lookup(phone: str, brand: str = "") -> dict:
     }
 
 
-def start_conversation(phone: str, complaint: str, product_id: str, idempotency_key: str | None = None) -> tuple[dict, int]:
+def start_conversation(phone: str, complaint: str, product_id: str, idempotency_key: str | None = None, serial: str | None = None) -> tuple[dict, int]:
     """Idempotent when the caller supplies a key (Idempotency-Key header) and the DynamoDB
     store is active: a retried request returns the same conversation instead of creating a
     second conversation and a second ticket."""
@@ -204,10 +213,10 @@ def start_conversation(phone: str, complaint: str, product_id: str, idempotency_
         from src.webapp.idempotency import once
         out = once(payload={"key": idempotency_key, "phone": phone, "complaint": complaint, "product_id": product_id})
         return out["data"], out["status"]
-    return _start_conversation(phone, complaint, product_id)
+    return _start_conversation(phone, complaint, product_id, serial)
 
 
-def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dict, int]:
+def _start_conversation(phone: str, complaint: str, product_id: str, serial: str | None = None) -> tuple[dict, int]:
     """Start a support conversation for a specific product.
 
     product_id is required -- the customer has already selected which
@@ -215,9 +224,9 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
     via a QR deep-link encoding the serial). Using regs[0] was wrong:
     a customer with two products would always get support for the first
     registered one, regardless of which machine they asked about."""
-    all_regs = lookup_by_phone(phone, load_registrations())
-    # Find the exact registration the customer selected
-    matching = [r for r in all_regs if r.product_id == product_id]
+    all_regs = regs_for_phone(phone)
+    # Find the exact registration the customer selected (by serial when we have it, else by product id)
+    matching = [r for r in all_regs if (r.serial_number == serial if serial else r.product_id == product_id)]
     if not matching:
         return {"error": f"No registration found for product {product_id} on this number."}, 404
 
@@ -313,7 +322,7 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
         obs.metric("AuthzDenied", Action="viewDashboard")
         return {"error": _deny_message(principal, f"view {brand}'s dashboard", decision), "decision": {"allowed": False, "policies": decision.policies}}, 403
 
-    registrations = [r for r in load_registrations() if brand_for(r.product_id).lower() == brand]
+    registrations = regs_for_brand(brand)
     tickets = [Ticket(**d) for d in get_store().tickets(brand)]
 
     if q.strip():
@@ -438,11 +447,9 @@ REQUIRED_COLUMNS = ("customer_name", "customer_phone", "product_id", "product_na
 MAX_CSV_BYTES = 200_000
 
 
-def ingest_preview(csv_text: str) -> tuple[dict, int]:
-    """Read a sales file the way onboarding would: check every row, file each product under the
-    brand that owns its product code, and report what is wrong instead of guessing. A preview:
-    the demo's registry is still fixtures/sales_data.csv. In production the upload lands in S3,
-    an event triggers this same function, and accepted rows are written to the registry."""
+def _parse_orders(csv_text: str) -> tuple[list[dict], list[dict], int] | tuple[dict, int]:
+    """Read an order file row by row. Returns (accepted rows, issues, total rows), or an (error, status)
+    pair if the file itself is unusable. Each accepted row is filed under the brand that owns its product code."""
     import csv
     import io
     import re
@@ -456,71 +463,206 @@ def ingest_preview(csv_text: str) -> tuple[dict, int]:
 
     issues: list[dict] = []
     seen: dict[str, int] = {}
-    by_brand: dict[str, dict] = {}
+    accepted: list[dict] = []
     total = 0
     for line, row in enumerate(reader, start=2):
         total += 1
         if total > 2000:
             issues.append({"line": line, "problem": "Stopped at 2,000 rows (demo limit)."})
             break
+        row = {k: (v or "").strip() for k, v in row.items() if k in REQUIRED_COLUMNS}
         problems = []
         try:
-            brand = brand_for(row["product_id"].strip())
+            brand_for(row["product_id"])
         except ValueError:
-            brand = None
-            problems.append(f"Unknown product code \"{row['product_id'].strip()}\": no brand owns it")
+            problems.append(f"Unknown product code \"{row['product_id']}\": no brand owns it")
         try:
-            datetime.strptime(row["purchase_date"].strip(), "%Y-%m-%d")
+            datetime.strptime(row["purchase_date"], "%Y-%m-%d")
         except ValueError:
-            problems.append(f"Purchase date \"{row['purchase_date'].strip()}\" is not YYYY-MM-DD")
-        if not re.fullmatch(r"\+\d{10,15}", row["customer_phone"].strip()):
+            problems.append(f"Purchase date \"{row['purchase_date']}\" is not YYYY-MM-DD")
+        if not re.fullmatch(r"\+\d{10,15}", row["customer_phone"]):
             problems.append("Phone is not in +<country code><number> form")
-        serial = row["serial_number"].strip()
-        if not serial:
+        if not row["serial_number"]:
             problems.append("Serial number is empty")
-        elif serial in seen:
-            problems.append(f"Serial {serial} already appears on line {seen[serial]}")
+        elif row["serial_number"] in seen:
+            problems.append(f"Serial {row['serial_number']} already appears on line {seen[row['serial_number']]}")
         else:
-            seen[serial] = line
+            seen[row["serial_number"]] = line
+        if not row["purchase_price"].isdigit():
+            problems.append("Purchase price is not a whole number")
         if problems:
             issues.extend({"line": line, "problem": p} for p in problems)
-            continue
-        entry = by_brand.setdefault(brand, {"brand": brand, "slug": brand.lower(), "products": 0, "phones": set()})
-        entry["products"] += 1
-        entry["phones"].add(row["customer_phone"].strip())
+        else:
+            accepted.append(row)
+    return accepted, issues, total
 
-    accepted = sum(e["products"] for e in by_brand.values())
+
+def _orders_summary(accepted: list[dict], issues: list[dict], total: int) -> dict:
+    by_brand: dict[str, dict] = {}
+    for row in accepted:
+        brand = brand_for(row["product_id"])
+        e = by_brand.setdefault(brand, {"brand": brand, "slug": brand.lower(), "products": 0, "phones": set()})
+        e["products"] += 1
+        e["phones"].add(row["customer_phone"])
     return {
-        "rows": total, "accepted": accepted, "rejected": total - accepted,
+        "rows": total, "accepted": len(accepted), "rejected": total - len(accepted),
         "brands": [{"brand": e["brand"], "slug": e["slug"], "products": e["products"], "customers": len(e["phones"])}
                    for e in sorted(by_brand.values(), key=lambda e: e["brand"])],
         "issues": issues[:25],
-    }, 200
+    }
+
+
+def ingest_preview(csv_text: str) -> tuple[dict, int]:
+    """Check an order file without saving it: files each product under its brand and reports what it
+    can't place (unknown codes, bad dates, malformed phones, duplicate serials) instead of guessing."""
+    parsed = _parse_orders(csv_text)
+    if len(parsed) == 2:
+        return parsed
+    return _orders_summary(*parsed), 200
+
+
+def ingest_commit(csv_text: str, source: str = "upload") -> tuple[dict, int]:
+    """Check the file, then register every accepted row (DynamoDB registry, keyed by brand and phone)
+    and send each customer their registration message on that brand's WhatsApp line. Rejected rows are
+    reported, not saved. In production the upload lands in S3 and an event triggers this."""
+    parsed = _parse_orders(csv_text)
+    if len(parsed) == 2:
+        return parsed
+    accepted, issues, total = parsed
+    from src.channel import bot
+    for row in accepted:
+        get_store().put_registration({**row, "purchase_price": int(row["purchase_price"]), "source": source})
+        bot.announce_registration(registration_from_row(row))
+    out = _orders_summary(accepted, issues, total)
+    out["registered"] = len(accepted)
+    out["messages_sent"] = len(accepted)
+    return out, 200
 
 
 TICKET_STATUSES = ("new", "in_progress", "resolved")
 
 
+def _ticket_access(token: str | None, ticket_id: str, action: str, what: str):
+    """Common gate for anything a staff member does to one ticket: signed in? ticket exists? Cedar says yes?
+    Returns (principal, ticket dict, decision, None) or (None, None, None, (error body, status))."""
+    principal = session.verify(token)
+    if principal is None:
+        return None, None, None, ({"error": "Not signed in."}, 401)
+    row = get_store().get_ticket(ticket_id)
+    if row is None:
+        return None, None, None, ({"error": "Unknown ticket."}, 404)
+    try:
+        d = cedar_authz.authorize(_cedar_principal(principal), action, "Ticket", ticket_id,
+                                  {"brand": brand_for(row["product_id"]).lower(), "safety": bool(row.get("safety_flag"))})
+    except CedarUnavailable as exc:
+        return None, None, None, ({"error": f"Authorization check unavailable: {exc}"}, 503)
+    if not d.allowed:
+        obs.logger.warning("authz_denied", action=action, principal_brand=principal.brand, role=principal.role, policies=d.policies)
+        return None, None, None, ({"error": _deny_message(principal, f"{what} {ticket_id}", d), "decision": {"allowed": False, "policies": d.policies}}, 403)
+    return principal, row, d, None
+
+
 def update_ticket_status(ticket_id: str, status: str, token: str | None) -> tuple[dict, int]:
+    if status not in TICKET_STATUSES:
+        return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
+    principal, row, d, err = _ticket_access(token, ticket_id, "updateTicketStatus", "change ticket")
+    if err:
+        return err
+    ticket = Ticket(**row)
+    ticket.status = status
+    ticket.save()
+    if status == "resolved":
+        from src.channel import bot
+        bot.ticket_resolved(row, principal.name)
+    return {"ticket_id": ticket_id, "status": status, "decision": {"allowed": True, "policies": d.policies}}, 200
+
+
+def ticket_reply(ticket_id: str, text: str, token: str | None) -> tuple[dict, int]:
+    """A person answers the customer, on WhatsApp, from the brand's inbox."""
+    text = (text or "").strip()
+    if not text:
+        return {"error": "Write a message first."}, 400
+    principal, row, d, err = _ticket_access(token, ticket_id, "replyToCustomer", "reply on ticket")
+    if err:
+        return err
+    from src.channel import bot
+    msg = bot.staff_reply(row, text[:1000], principal.name)
+    if row.get("status") == "new":
+        t = Ticket(**row)
+        t.status = "in_progress"
+        t.save()
+    return {"sent": msg, "decision": {"allowed": True, "policies": d.policies}}, 200
+
+
+def ticket_thread(ticket_id: str, token: str | None) -> tuple[dict, int]:
+    """The whole WhatsApp conversation behind a ticket (never exposes the phone number)."""
+    principal, row, d, err = _ticket_access(token, ticket_id, "viewTicket", "view ticket")
+    if err:
+        return err
+    brand = brand_for(row["product_id"]).lower()
+    return {"ticket": {"ticket_id": ticket_id, "status": row.get("status"), "customer_name": row["customer_name"],
+                       "product_name": row["product_name"], "reason_label": agent_mod.ESCALATION_LABELS.get(row.get("reason_code", ""), ""),
+                       "safety_flag": bool(row.get("safety_flag"))},
+            "messages": get_store().chat_messages(brand, row["customer_phone"])}, 200
+
+
+def inbox(brand: str, token: str | None) -> tuple[dict, int]:
+    """The brand's WhatsApp inbox: every chat on its line, handed-over ones first."""
+    brand = brand.strip().lower()
     principal = session.verify(token)
     if principal is None:
         return {"error": "Not signed in."}, 401
-    if status not in TICKET_STATUSES:
-        return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
-    row = get_store().get_ticket(ticket_id)
-    if row is None:
-        return {"error": "Unknown ticket."}, 404
-    ticket = Ticket(**row)
     try:
-        d = cedar_authz.authorize(_cedar_principal(principal), "updateTicketStatus", "Ticket", ticket_id,
-                                  {"brand": brand_for(ticket.product_id).lower(), "safety": bool(ticket.safety_flag)})
+        decision = cedar_authz.can_view_dashboard(_cedar_principal(principal), brand)
     except CedarUnavailable as exc:
         return {"error": f"Authorization check unavailable: {exc}"}, 503
-    if not d.allowed:
-        return {"error": _deny_message(principal, f"change ticket {ticket_id}", d), "decision": {"allowed": False, "policies": d.policies}}, 403
-    ticket.status = status
-    ticket.save()
-    return {"ticket_id": ticket_id, "status": status, "decision": {"allowed": True, "policies": d.policies}}, 200
+    if not decision.allowed:
+        return {"error": _deny_message(principal, f"view {brand}'s inbox", decision), "decision": {"allowed": False, "policies": decision.policies}}, 403
+    rows = []
+    for c in get_store().chat_index(brand):
+        t = get_store().get_ticket(c["ticket_id"]) if c.get("ticket_id") else None
+        rows.append({"customer_name": c["customer_name"], "phone": mask_phone(c["phone"]), "last_text": c["last_text"], "mode": c["mode"],
+                     "ticket_id": c.get("ticket_id", ""), "reason": c.get("reason", ""), "unread": c.get("unread", 0),
+                     "updated_at": c["updated_at"], "ticket_status": (t or {}).get("status", ""), "safety": bool((t or {}).get("safety_flag"))})
+    rows.sort(key=lambda r: (r["mode"] != "human" or r["ticket_status"] == "resolved", r["updated_at"]), reverse=False)
+    handed = sorted([r for r in rows if r["mode"] == "human" and r["ticket_status"] != "resolved"], key=lambda r: r["updated_at"], reverse=True)
+    rest = sorted([r for r in rows if r not in handed], key=lambda r: r["updated_at"], reverse=True)
+    return {"principal": asdict(principal), "chats": handed + rest}, 200
+
+
+def wa_messages(brand: str, phone: str, after: str = "") -> dict:
+    """What the customer's phone shows. No login: it stands in for the customer's own device."""
+    phone = phone.strip()
+    if phone and not phone.startswith("+"):
+        phone = "+" + phone
+    return {"messages": get_store().chat_messages(brand.strip().lower(), phone, after)}
+
+
+def wa_webhook(payload: dict) -> tuple[dict, int]:
+    from src.channel import bot
+    replies = []
+    for brand, phone, inbound in bot.parse_webhook(payload):
+        replies.extend(bot.handle_inbound(brand, phone, inbound))
+    return {"status": "ok", "replies": replies}, 200
+
+
+def sandbox_customers() -> list[dict]:
+    """Everyone in the registry, grouped by phone: what the sandbox's 'send as' picker offers."""
+    seen: dict[str, dict] = {}
+    for b in BRAND_SLUGS:
+        for r in regs_for_brand(b.lower()):
+            c = seen.setdefault(r.customer_phone, {"phone": r.customer_phone, "name": r.customer_name, "products": []})
+            c["products"].append({"brand": brand_for(r.product_id).lower(), "product_name": r.product_name, "serial": r.serial_number,
+                                  "purchase_date": r.purchase_date, "warranty_component_status": r.warranty_component_status})
+    return sorted(seen.values(), key=lambda c: c["name"])
+
+
+def sandbox_reset() -> dict:
+    """Wipe everything a demo run produced (conversations, tickets, chats, cases) and the orders the
+    sandbox uploaded. The baseline registry stays."""
+    n = get_store().clear() + get_store().delete_registrations("sandbox")
+    case_index.reset()
+    return {"cleared": n}
 
 
 def _clean(message: str) -> str:

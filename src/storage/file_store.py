@@ -5,6 +5,8 @@ conversation files, so the file backend has no second copy to drift."""
 import json
 import os
 import shutil
+import uuid
+from datetime import datetime
 from pathlib import Path
 
 from src.layer1.catalog import brand_for
@@ -75,8 +77,82 @@ class FileStore:
     def cases_for_brand(self, brand: str) -> list[dict]:
         return [c for c in self._cases() if c["brand"] == brand]
 
+    # registry (a single json file)
+    @property
+    def _reg_file(self) -> Path:
+        return self.conv_dir.parent / "registry.json"
+
+    def _regs(self) -> dict:
+        return json.loads(self._reg_file.read_text()) if self._reg_file.exists() else {}
+
+    def put_registration(self, row: dict) -> None:
+        regs = self._regs()
+        regs[row["serial_number"]] = row
+        self._reg_file.parent.mkdir(parents=True, exist_ok=True)
+        self._reg_file.write_text(json.dumps(regs))
+
+    def registrations_for_phone(self, phone: str) -> list[dict]:
+        return sorted((r for r in self._regs().values() if r["customer_phone"] == phone), key=lambda r: r["serial_number"])
+
+    def registrations(self, brand: str) -> list[dict]:
+        return sorted((r for r in self._regs().values() if brand_for(r["product_id"]).lower() == brand), key=lambda r: r["serial_number"])
+
+    def delete_registrations(self, source: str) -> int:
+        regs = self._regs()
+        keep = {k: v for k, v in regs.items() if v.get("source") != source}
+        self._reg_file.write_text(json.dumps(keep))
+        return len(regs) - len(keep)
+
+    # chat channel
+    def _chat_file(self, brand: str, phone: str) -> Path:
+        return self.conv_dir.parent / "chats" / f"{brand}_{phone.lstrip('+')}.json"
+
+    def _chat(self, brand: str, phone: str) -> dict:
+        f = self._chat_file(brand, phone)
+        return json.loads(f.read_text()) if f.exists() else {"messages": [], "state": {}}
+
+    def _save_chat(self, brand: str, phone: str, chat: dict) -> None:
+        f = self._chat_file(brand, phone)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(chat))
+
+    def put_chat_message(self, brand: str, phone: str, msg: dict) -> str:
+        chat = self._chat(brand, phone)
+        sk = f"MSG#{datetime.now().isoformat()}#{uuid.uuid4().hex[:6]}"
+        chat["messages"].append({**msg, "cursor": sk})
+        self._save_chat(brand, phone, chat)
+        return sk
+
+    def chat_messages(self, brand: str, phone: str, after: str = "") -> list[dict]:
+        return [m for m in self._chat(brand, phone)["messages"] if m["cursor"] > after]
+
+    def get_chat_state(self, brand: str, phone: str) -> dict:
+        return self._chat(brand, phone)["state"]
+
+    def put_chat_state(self, brand: str, phone: str, state: dict) -> None:
+        chat = self._chat(brand, phone)
+        chat["state"] = state
+        self._save_chat(brand, phone, chat)
+
+    def put_chat_index(self, brand: str, phone: str, summary: dict) -> None:
+        f = self.conv_dir.parent / "chat_index.json"
+        idx = json.loads(f.read_text()) if f.exists() else {}
+        idx[f"{brand}|{phone}"] = {**summary, "brand": brand}
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(idx))
+
+    def chat_index(self, brand: str) -> list[dict]:
+        f = self.conv_dir.parent / "chat_index.json"
+        idx = json.loads(f.read_text()) if f.exists() else {}
+        return sorted((v for v in idx.values() if v["brand"] == brand), key=lambda x: x.get("updated_at", ""), reverse=True)
+
     def clear(self) -> int:
         n = 0
+        for extra in (self.conv_dir.parent / "chats", self.conv_dir.parent / "chat_index.json"):
+            if extra.is_dir():
+                shutil.rmtree(extra)
+            elif extra.exists():
+                extra.unlink()
         for d in (self.conv_dir, self.ticket_dir):
             if d.exists():
                 n += len(list(d.glob("*.json")))

@@ -20,6 +20,12 @@ when { principal.brand == resource.brand };
 permit (principal, action == Action::"updateTicketStatus", resource is Ticket)
 when { principal.brand == resource.brand && principal.role == "manager" };
 
+// Answering a customer who has been handed to a person: any staff member of the brand may reply
+// (agents do the talking; managers additionally change ticket status).
+@id("same-brand-staff-reply")
+permit (principal, action == Action::"replyToCustomer", resource is Ticket)
+when { principal.brand == resource.brand };
+
 // Customer phone numbers are masked by default. A safety ticket may need a same-day
 // call to the customer, so for those (and only those) the number is shown in full.
 @id("safety-tickets-show-phone")

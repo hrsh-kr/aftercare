@@ -53,3 +53,7 @@ def dashboard(brand: str) -> str | None:
         return None
     others = [(k, v) for k, v in BRAND_SLUGS.items() if k != brand]
     return _env.get_template("dashboard.html").render(brand=brand, brand_display=BRAND_SLUGS[brand], others=others)
+
+
+def sandbox() -> str:
+    return _env.get_template("sandbox.html").render()

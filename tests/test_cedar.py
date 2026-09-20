@@ -32,6 +32,8 @@ def test_matrix():
         (AGENT, "updateTicketStatus", "Ticket", "aquaspin", False, False, None),   # agents may not
         (MANAGER, "updateTicketStatus", "Ticket", "aquaspin", False, True, "managers-update-ticket-status"),
         (MANAGER, "updateTicketStatus", "Ticket", "arcticair", False, False, "no-cross-brand"),
+        (AGENT, "replyToCustomer", "Ticket", "aquaspin", False, True, "same-brand-staff-reply"),
+        (MANAGER, "replyToCustomer", "Ticket", "arcticair", False, False, "no-cross-brand"),
         (AGENT, "viewPhoneUnmasked", "Ticket", "aquaspin", False, False, None),    # masked unless safety
         (AGENT, "viewPhoneUnmasked", "Ticket", "aquaspin", True, True, "safety-tickets-show-phone"),
         (AGENT, "viewPhoneUnmasked", "Ticket", "arcticair", True, False, "no-cross-brand"),

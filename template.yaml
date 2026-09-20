@@ -125,6 +125,39 @@ Resources:
         PostApiDemoReset:
           Type: Api
           Properties: {Path: "/api/demo/reset", Method: post}
+        GetSandbox:
+          Type: Api
+          Properties: {Path: "/sandbox", Method: get}
+        PostApiWaWebhook:
+          Type: Api
+          Properties: {Path: "/api/wa/webhook", Method: post}
+        GetApiWaMessages:
+          Type: Api
+          Properties: {Path: "/api/wa/messages", Method: get}
+        GetApiInboxBrand:
+          Type: Api
+          Properties: {Path: "/api/inbox/{brand}", Method: get}
+        GetApiTicketsTicketIdThread:
+          Type: Api
+          Properties: {Path: "/api/tickets/{ticket_id}/thread", Method: get}
+        PostApiTicketsTicketIdReply:
+          Type: Api
+          Properties: {Path: "/api/tickets/{ticket_id}/reply", Method: post}
+        GetApiSandboxCustomers:
+          Type: Api
+          Properties: {Path: "/api/sandbox/customers", Method: get}
+        GetApiSandboxSamples:
+          Type: Api
+          Properties: {Path: "/api/sandbox/samples", Method: get}
+        GetApiSandboxSamplesName:
+          Type: Api
+          Properties: {Path: "/api/sandbox/samples/{name}", Method: get}
+        PostApiSandboxIngest:
+          Type: Api
+          Properties: {Path: "/api/sandbox/ingest", Method: post}
+        PostApiSandboxReset:
+          Type: Api
+          Properties: {Path: "/api/sandbox/reset", Method: post}
 
 Outputs:
   ApiUrl:

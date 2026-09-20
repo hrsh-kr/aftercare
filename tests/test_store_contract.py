@@ -53,11 +53,39 @@ def cases_contract(store, label):
     assert store.cases_for_brand("arcticair") == [], label
 
 
+def registry_and_chat_contract(store, label):
+    row = lambda serial, phone, pid, src: {"customer_name": "X", "customer_phone": phone, "product_id": pid, "product_name": "P",
+                                          "serial_number": serial, "purchase_date": "2026-01-01", "retailer": "R", "purchase_price": 100, "source": src}
+    store.put_registration(row("WM-FC-1", "+911", "WM-FC-700", "sandbox"))
+    store.put_registration(row("WM-FL-2", "+911", "WM-FL-900", "baseline"))
+    store.put_registration(row("AC-CB-3", "+912", "AC-CB-15T", "sandbox"))
+    assert [r["serial_number"] for r in store.registrations_for_phone("+911")] == ["WM-FC-1", "WM-FL-2"], label
+    assert [r["serial_number"] for r in store.registrations("aquaspin")] == ["WM-FC-1", "WM-FL-2"], label
+    assert store.registrations_for_phone("+911")[0]["purchase_price"] == 100 and isinstance(store.registrations_for_phone("+911")[0]["purchase_price"], int), label
+    assert store.delete_registrations("sandbox") == 2 and [r["serial_number"] for r in store.registrations("aquaspin")] == ["WM-FL-2"], label
+    # chat log: ordered, resumable from a cursor, isolated per brand line + phone
+    c1 = store.put_chat_message("aquaspin", "+911", {"sender": "customer", "kind": "text", "text": "hi", "meta": {"ms": 5}})
+    store.put_chat_message("aquaspin", "+911", {"sender": "aftercare", "kind": "text", "text": "hello"})
+    store.put_chat_message("arcticair", "+911", {"sender": "customer", "kind": "text", "text": "other line"})
+    msgs = store.chat_messages("aquaspin", "+911")
+    assert [m["text"] for m in msgs] == ["hi", "hello"] and msgs[0]["meta"]["ms"] == 5, label
+    assert [m["text"] for m in store.chat_messages("aquaspin", "+911", after=msgs[0]["cursor"])] == ["hello"], label
+    assert store.get_chat_state("aquaspin", "+911") in ({}, None), label
+    store.put_chat_state("aquaspin", "+911", {"mode": "bot", "conversation_id": "c9"})
+    assert store.get_chat_state("aquaspin", "+911")["conversation_id"] == "c9", label
+    store.put_chat_index("aquaspin", "+911", {"phone": "+911", "customer_name": "X", "mode": "human", "updated_at": "2026-01-02"})
+    store.put_chat_index("aquaspin", "+912", {"phone": "+912", "customer_name": "Y", "mode": "idle", "updated_at": "2026-01-03"})
+    assert [c["phone"] for c in store.chat_index("aquaspin")] == ["+912", "+911"], label
+    store.clear()
+    assert store.chat_messages("aquaspin", "+911") == [] and store.chat_index("aquaspin") == [], f"{label}: clear() removes runtime data"
+    assert [r["serial_number"] for r in store.registrations("aquaspin")] == ["WM-FL-2"], f"{label}: ...but keeps the registry"
+
+
 def main() -> int:
     fs = FileStore()
     tmp = Path(tempfile.mkdtemp())
     fs.conv_dir, fs.ticket_dir = tmp / "c", tmp / "t"
-    contract(fs, "file"); cases_contract(fs, "file")
+    contract(fs, "file"); cases_contract(fs, "file"); registry_and_chat_contract(fs, "file")
     print("PASS  file store contract")
     os.environ["DYNAMODB_ENDPOINT"] = "http://localhost:8000"
     try:
@@ -74,8 +102,8 @@ def main() -> int:
     except Exception as exc:
         print(f"SKIP  dynamodb store (DynamoDB Local not reachable: {str(exc)[:60]})")
         return 0
-    contract(ds, "dynamodb"); cases_contract(ds, "dynamodb")
-    ds.clear()
+    contract(ds, "dynamodb"); cases_contract(ds, "dynamodb"); registry_and_chat_contract(ds, "dynamodb")
+    ds.clear(); ds.delete_registrations("baseline")
     print("PASS  dynamodb store contract (same assertions, atomic ids)")
     return 0
 

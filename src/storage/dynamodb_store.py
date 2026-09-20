@@ -15,6 +15,8 @@ Unset it and boto3 talks to real DynamoDB with normal credentials -- nothing els
 import json
 import os
 import time
+import uuid
+from decimal import Decimal
 
 import functools
 
@@ -111,10 +113,99 @@ class DynamoStore:
         r = self._table.query(KeyConditionExpression=Key("PK").eq(f"BRAND#{brand}") & Key("SK").begins_with("CASE#"))
         return [self._strip(i) for i in r["Items"]]
 
+    # registry: PK BRAND#<brand>, SK REG#<serial>; GSI1 PHONE#<phone> finds a customer's products
+    @staticmethod
+    def _plain(item: dict) -> dict:
+        out = {}
+        for k, v in DynamoStore._strip(item).items():
+            out[k] = int(v) if isinstance(v, Decimal) else v
+        return out
+
+    @_guard
+    def put_registration(self, row: dict) -> None:
+        from src.layer1.catalog import brand_for
+        brand = brand_for(row["product_id"]).lower()
+        self._table.put_item(Item={**row, "PK": f"BRAND#{brand}", "SK": f"REG#{row['serial_number']}",
+                                   "GSI1PK": f"PHONE#{row['customer_phone']}", "GSI1SK": f"REG#{row['serial_number']}"})
+
+    @_guard
+    def registrations_for_phone(self, phone: str) -> list[dict]:
+        r = self._table.query(IndexName="GSI1", KeyConditionExpression=Key("GSI1PK").eq(f"PHONE#{phone}") & Key("GSI1SK").begins_with("REG#"))
+        return sorted((self._plain(i) for i in r["Items"]), key=lambda x: x["serial_number"])
+
+    @_guard
+    def registrations(self, brand: str) -> list[dict]:
+        r = self._table.query(KeyConditionExpression=Key("PK").eq(f"BRAND#{brand}") & Key("SK").begins_with("REG#"))
+        return sorted((self._plain(i) for i in r["Items"]), key=lambda x: x["serial_number"])
+
+    @_guard
+    def delete_registrations(self, source: str) -> int:
+        n = 0
+        for b in ("aquaspin", "arcticair"):
+            for item in self.registrations(b):
+                if item.get("source") == source:
+                    self._table.delete_item(Key={"PK": f"BRAND#{b}", "SK": f"REG#{item['serial_number']}"})
+                    n += 1
+        return n
+
+    # WhatsApp channel. Messages: PK CHAT#<brand>#<phone>, SK MSG#<iso>#<id> (time-ordered, so "after"
+    # is a plain range condition). State: same PK, SK STATE. Inbox: PK BRAND#<brand>, SK CHATIDX#<phone>.
+    @_guard
+    def put_chat_message(self, brand: str, phone: str, msg: dict) -> str:
+        from datetime import datetime
+        sk = f"MSG#{datetime.now().isoformat()}#{uuid.uuid4().hex[:6]}"
+        self._table.put_item(Item={**msg, "PK": f"CHAT#{brand}#{phone}", "SK": sk, "ttl": int(time.time()) + CONV_TTL_SECONDS})
+        return sk
+
+    @_guard
+    def chat_messages(self, brand: str, phone: str, after: str = "") -> list[dict]:
+        cond = Key("PK").eq(f"CHAT#{brand}#{phone}")
+        cond = cond & (Key("SK").gt(after) if after else Key("SK").begins_with("MSG#"))
+        items = self._table.query(KeyConditionExpression=cond)["Items"]
+        return [{**self._strip_msg(i), "cursor": i["SK"]} for i in items if i["SK"].startswith("MSG#")]
+
+    @staticmethod
+    def _native(v):
+        """boto3 returns numbers as Decimal; the API speaks JSON."""
+        if isinstance(v, Decimal):
+            return int(v) if v == v.to_integral_value() else float(v)
+        if isinstance(v, dict):
+            return {k: DynamoStore._native(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [DynamoStore._native(x) for x in v]
+        return v
+
+    @staticmethod
+    def _strip_msg(item: dict) -> dict:
+        return DynamoStore._native({k: v for k, v in item.items() if k not in ("PK", "SK", "ttl")})
+
+    @_guard
+    def get_chat_state(self, brand: str, phone: str) -> dict:
+        item = self._table.get_item(Key={"PK": f"CHAT#{brand}#{phone}", "SK": "STATE"}, ConsistentRead=True).get("Item")
+        return json.loads(item["data"]) if item else {}
+
+    @_guard
+    def put_chat_state(self, brand: str, phone: str, state: dict) -> None:
+        self._table.put_item(Item={"PK": f"CHAT#{brand}#{phone}", "SK": "STATE", "data": json.dumps(state), "ttl": int(time.time()) + CONV_TTL_SECONDS})
+
+    @_guard
+    def put_chat_index(self, brand: str, phone: str, summary: dict) -> None:
+        self._table.put_item(Item={**summary, "PK": f"BRAND#{brand}", "SK": f"CHATIDX#{phone}"})
+
+    @_guard
+    def chat_index(self, brand: str) -> list[dict]:
+        r = self._table.query(KeyConditionExpression=Key("PK").eq(f"BRAND#{brand}") & Key("SK").begins_with("CHATIDX#"))
+        return sorted((self._plain(i) for i in r["Items"]), key=lambda x: x.get("updated_at", ""), reverse=True)
+
     @_guard
     def clear(self) -> int:
+        """Runtime data (conversations, tickets, cases, chats, counters). The registry is kept: it is
+        loaded data, not something a demo run produced. delete_registrations() clears sandbox uploads."""
         n = 0
-        for item in self._table.scan(ProjectionExpression="PK, SK")["Items"]:
+        scan = self._table.scan(ProjectionExpression="PK, SK")
+        for item in scan["Items"]:
+            if item["SK"].startswith("REG#"):
+                continue
             self._table.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
             n += 1
         return n
