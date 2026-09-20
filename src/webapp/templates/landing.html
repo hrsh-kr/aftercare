@@ -340,45 +340,48 @@
     </div>
   </section>
 
-  <!-- ═════════ 4b · UNDER THE HOOD (black) ═════════ -->
-  <section class="l-band l-band-black l-uh" id="under-the-hood">
-    <div class="l-wrap">
-      <div class="l-head l-reveal">
-        <p class="l-kicker">Under the hood</p>
-        <h2 class="l-h2">The model words it.<br><span class="l-grad">Code decides the rest.</span></h2>
-        <p class="l-sub">A small model words a step. Code decides the rest. Each card below is checked live.</p>
+  <!-- ═════════ 4b · ARCHITECTURE (blueprint, one screen) ═════════ -->
+  <section class="l-ar" id="architecture" aria-labelledby="l-ar-h">
+    <div class="l-ar-wrap">
+      <header class="l-ar-head l-reveal">
+        <p class="l-ar-tag">Architecture</p>
+        <h2 id="l-ar-h">Five AWS tools. One job each.</h2>
+        <p class="l-ar-sub">The model only words a step. Code decides the rest.</p>
+      </header>
+
+      <ol class="l-ar-flow l-reveal" aria-label="A message's path">
+        <li><b>Customer</b><span>WhatsApp · simulated</span></li>
+        <li><b>API Gateway</b><span>one front door</span></li>
+        <li class="hot"><b>Lambda</b><span>one function, 26 routes</span></li>
+        <li><b>Four services</b><span>each does one thing</span></li>
+      </ol>
+
+      <div class="l-ar-grid l-reveal">
+        <article class="l-ar-card" data-c="lambda"><span class="l-ar-n">01</span>
+          <h3>API Gateway + Lambda</h3><p class="l-ar-does">Serves every page and API route.</p>
+          <dl><dt>Why</dt><dd>Stateless: a chat survives any restart.</dd><dt>Trade-off</dt><dd>Cold starts. A code change needs a rebuild.</dd></dl>
+          <span class="l-uh-chip" data-chip="runtime">checking…</span></article>
+        <article class="l-ar-card" data-c="strands"><span class="l-ar-n">02</span>
+          <h3>Strands Agents</h3><p class="l-ar-does">Words one manual step. Reads a vague reply.</p>
+          <dl><dt>Why</dt><dd>A small model on narrow jobs, timed by hooks.</dd><dt>Trade-off</dt><dd>Local model is slower, so rules do the rest.</dd></dl>
+          <span class="l-uh-chip" data-chip="ollama">checking…</span></article>
+        <article class="l-ar-card" data-c="os"><span class="l-ar-n">03</span>
+          <h3>OpenSearch</h3><p class="l-ar-does">Finds the manual section. Spots repeat faults.</p>
+          <dl><dt>Why</dt><dd>Ranked search and time-window queries in one engine.</dd><dt>Trade-off</dt><dd>Heavier than a database. Keywords, not meaning.</dd></dl>
+          <span class="l-uh-chip" data-chip="opensearch">checking…</span></article>
+        <article class="l-ar-card" data-c="cedar"><span class="l-ar-n">04</span>
+          <h3>Cedar</h3><p class="l-ar-does">Decides who may view, reply, resolve.</p>
+          <dl><dt>Why</dt><dd>Rules as policy files. Each answer names its policy.</dd><dt>Trade-off</dt><dd>One more language to learn.</dd></dl>
+          <span class="l-uh-chip" data-chip="cedar">checking…</span></article>
+        <article class="l-ar-card" data-c="ddb"><span class="l-ar-n">05</span>
+          <h3>DynamoDB</h3><p class="l-ar-does">One table: customers, chats, tickets, cases.</p>
+          <dl><dt>Why</dt><dd>Known access patterns. Fast, and an atomic ticket counter.</dd><dt>Trade-off</dt><dd>Queries are designed up front. Ad-hoc ones go to OpenSearch.</dd></dl>
+          <span class="l-uh-chip" data-chip="storage">checking…</span></article>
       </div>
 
-      <div class="l-uh-grid l-reveal">
-        <article class="l-uh-card" data-c="lambda"><span class="l-uh-n">1</span><h3>API Gateway + Lambda</h3>
-          <p>This whole site, the pages and every API route, is one Lambda behind API Gateway in SAM Local. Logs and CloudWatch metrics via Lambda Powertools.</p><span class="l-uh-chip" data-chip="runtime">checking…</span></article>
-        <article class="l-uh-card" data-c="strands"><span class="l-uh-n">2</span><h3>Strands Agents</h3>
-          <p>Phrases one manual step and reads the customer's reply, on a local Ollama model. A fresh agent per call, timed by hooks.</p><span class="l-uh-chip" data-chip="ollama">checking…</span></article>
-        <article class="l-uh-card" data-c="os"><span class="l-uh-n">3</span><h3>OpenSearch</h3>
-          <p>Finds the right manual section (BM25), spots a recurring problem with a time-window query, and counts why customers escalate.</p><span class="l-uh-chip" data-chip="opensearch">checking…</span></article>
-        <article class="l-uh-card" data-c="cedar"><span class="l-uh-n">4</span><h3>Cedar</h3>
-          <p>Decides what each signed-in person may see and change. Every answer names the policy that decided it.</p><span class="l-uh-chip" data-chip="cedar">checking…</span></article>
-        <article class="l-uh-card" data-c="ddb"><span class="l-uh-n">5</span><h3>DynamoDB</h3>
-          <p>One table holds the customer registry, conversations, tickets, the WhatsApp message log and cases, with an atomic ticket counter. Here it is DynamoDB Local.</p><span class="l-uh-chip" data-chip="storage">checking…</span></article>
-      </div>
-
-      <div class="l-uh-rules l-reveal">
-        <p class="l-tools-title">Never left to the model</p>
-        <ul>
-          <li><b>Safety</b> is a keyword rule, or the manual's own safety section, that skips troubleshooting.</li>
-          <li><b>Which step comes next</b> is read from the manual's numbered list.</li>
-          <li><b>Two tries, then a person</b> is a counter.</li>
-          <li><b>Not in the manual</b> is a word-overlap test.</li>
-          <li><b>Seen it before</b> is an OpenSearch query.</li>
-          <li><b>Warranty dates</b> are arithmetic.</li>
-          <li><b>Who sees what</b> is a Cedar policy.</li>
-        </ul>
-      </div>
-
-      <div class="l-uh-honest l-reveal">
-        <div><h4>Real</h4><p>The order-file check and customer registry, the agent, manual search, escalation rules, tickets, the chat log and inbox where a person replies, Cedar policies, DynamoDB and the Lambda, all running on this machine.</p></div>
-        <div><h4>Simulated</h4><p>WhatsApp's network (the phone talks to a Meta-shaped webhook on this server), the QR sticker, and the customers, orders and manuals, which are all fabricated.</p></div>
-        <div><h4>Not used</h4><p>An AWS account. Nothing here is deployed. Bedrock, Verified Permissions and OpenSearch Serverless are where each piece would go.</p></div>
+      <div class="l-ar-foot l-reveal">
+        <p><b>Never left to the model:</b> safety, next step, two tries then a person, warranty dates, who sees what.</p>
+        <p><b>Runs locally, no account.</b> Deploy path: Bedrock · OpenSearch Service · Verified Permissions · DynamoDB.</p>
       </div>
     </div>
   </section>
