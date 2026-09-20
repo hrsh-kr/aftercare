@@ -9,6 +9,7 @@ fix the manual doesn't support, escalate rather than keep guessing.
 import os
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 
 from strands import Agent
 from strands.models.ollama import OllamaModel
@@ -16,6 +17,7 @@ from strands.models.ollama import OllamaModel
 from src.layer1 import opensearch_retrieval
 from src.layer1.catalog import BRAND_SLUGS, brand_for, manual_for, terms_for
 from src.layer1.registration import Registration
+from src.layer1.retrieval import content_words, load_sections
 from src.layer3b.tickets import Ticket, next_ticket_id
 
 # Overridable so a Lambda running inside SAM Local's Docker container can
@@ -27,6 +29,24 @@ OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
 COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
 MAX_ATTEMPTS = 2
+RECURRENCE_DAYS = 90
+
+# Why a conversation went to a person. Every escalation carries exactly one of
+# these codes (Ticket.reason_code) so the brand sees *why*, not just *that*.
+ESCALATION_LABELS = {
+    "safety": "Safety",
+    "attempts_exhausted": "Two steps tried",
+    "no_more_steps": "Manual has nothing more to try",
+    "no_steps": "Needs a person",
+    "unmatched": "Not in the manual",
+    "recurring": "Recurring issue",
+}
+
+def diagnostic_overlap(complaint: str, heading: str, body: str) -> int:
+    """How many meaningful words the complaint shares with the section the
+    search returned. 0 means the manual doesn't address this -- and the
+    honesty rule (DESIGN.md section 7) says escalate rather than guess."""
+    return len(content_words(complaint) & content_words(f"{heading} {body}"))
 
 
 @dataclass
@@ -50,6 +70,19 @@ class Conversation:
     resolved: bool = False
     ticket: Ticket | None = None
     retrieval_method: str = ""  # "opensearch" or "keyword_fallback" -- see opensearch_retrieval.retrieve()
+    escalation_code: str = ""   # one of ESCALATION_LABELS, set when a ticket is created
+    escalation_detail: str = ""  # e.g. for "recurring": which earlier case matched
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+
+
+@dataclass
+class PriorCase:
+    """An earlier conversation about this exact product -- what the agent
+    checks to recognise a recurring problem."""
+    serial_number: str
+    section_heading: str
+    when: datetime
+    outcome: str  # "resolved" | "escalated"
 
 
 def _parse_numbered_steps(body: str, limit: int = MAX_ATTEMPTS) -> list[str]:
@@ -90,12 +123,37 @@ They replied: "{reply}"
 Did this resolve their issue? Answer with only one word: RESOLVED or STILL_BROKEN."""
 
 
-def start(registration: Registration, complaint: str, agent: Agent | None = None) -> Conversation:
+def _safety_instruction(product_id: str) -> tuple[str, str]:
+    """The manual's own stop-use instruction (its burning/smoke section), shown
+    to the customer verbatim -- deterministic, no model, no retrieval."""
+    for heading, body in load_sections(manual_for(product_id)):
+        if any(k in heading.lower() for k in ("burning", "smoke", "spark")):
+            m = re.search(r"\*\*(.+?)\*\*", body, flags=re.DOTALL)
+            return heading, (m.group(1) if m else body.splitlines()[0]).strip()
+    return "", ""
+
+
+def _find_recurrence(history: list[PriorCase] | None, registration: Registration, heading: str) -> PriorCase | None:
+    """Same product, same manual section, already handled within the window."""
+    cutoff = datetime.now() - timedelta(days=RECURRENCE_DAYS)
+    matches = [
+        c for c in (history or [])
+        if c.serial_number == registration.serial_number and c.section_heading == heading and c.when >= cutoff
+    ]
+    return max(matches, key=lambda c: c.when) if matches else None
+
+
+def start(registration: Registration, complaint: str, agent: Agent | None = None, history: list[PriorCase] | None = None) -> Conversation:
     agent = agent or _build_agent()
 
     if _check_safety(complaint):
-        conv = Conversation(registration=registration, complaint=complaint, source="manual", section_heading="", section_body="", safety_flag=True)
-        conv.ticket = _escalate(conv, reason="Safety-flagged complaint -- no troubleshooting attempted.")
+        heading, instruction = _safety_instruction(registration.product_id)
+        conv = Conversation(
+            registration=registration, complaint=complaint, source="manual",
+            section_heading=heading, section_body=instruction, safety_flag=True,
+            retrieval_method="safety_rule",
+        )
+        conv.ticket = _escalate(conv, "safety", "Safety-flagged complaint -- no troubleshooting attempted.")
         return conv
 
     if _is_coverage_question(complaint):
@@ -113,11 +171,31 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         retrieval_method=retrieval_method,
     )
 
+    # Gate 1 -- can we diagnose it at all? A complaint sharing no meaningful
+    # word with the best section the search found is not in the manual.
+    if diagnostic_overlap(complaint, heading, body) == 0:
+        conv.escalation_detail = f"Closest section, \"{heading}\", shares no meaningful word with the complaint"
+        conv.section_heading, conv.section_body, conv.available_steps = "", "", []
+        conv.ticket = _escalate(conv, "unmatched", "Nothing in the product manual matches this complaint -- not guessing.")
+        return conv
+
+    # Gate 2 -- have we been here before? Same product, same manual section,
+    # already handled recently: repeating the same step is not the answer.
+    if source == "manual":
+        prior = _find_recurrence(history, registration, heading)
+        if prior:
+            conv.escalation_detail = f"{heading} -- handled {prior.when:%d %b %Y} ({prior.outcome})"
+            conv.ticket = _escalate(
+                conv, "recurring",
+                f"Recurring issue: '{heading}' was already handled on {prior.when:%d %b %Y} ({prior.outcome}).",
+            )
+            return conv
+
     if not available_steps:
         # Nothing in this section is a self-service step (e.g. it's a
         # pure "this needs a technician" section) -- escalate directly
         # rather than inventing a step that isn't there.
-        conv.ticket = _escalate(conv, reason="No self-service step found in the relevant section.")
+        conv.ticket = _escalate(conv, "no_steps", "No self-service step found in the relevant section.")
         return conv
 
     phrased = str(agent(PHRASE_STEP_PROMPT.format(complaint=complaint, raw_step=available_steps[0]))).strip()
@@ -147,12 +225,11 @@ def respond(conv: Conversation, customer_reply: str, agent: Agent | None = None)
 
     next_index = current.attempt_number  # 0-indexed available_steps, 1-indexed attempt_number
     if current.attempt_number >= MAX_ATTEMPTS or next_index >= len(conv.available_steps):
-        reason = (
-            f"{MAX_ATTEMPTS} self-service attempts tried, issue persists."
-            if current.attempt_number >= MAX_ATTEMPTS
-            else "No further self-service step in the manual; needs a technician."
-        )
-        conv.ticket = _escalate(conv, reason=reason)
+        if current.attempt_number >= MAX_ATTEMPTS:
+            code, reason = "attempts_exhausted", f"{MAX_ATTEMPTS} self-service attempts tried, issue persists."
+        else:
+            code, reason = "no_more_steps", "No further self-service step in the manual; needs a technician."
+        conv.ticket = _escalate(conv, code, reason)
         return conv
 
     raw_step = conv.available_steps[next_index]
@@ -161,7 +238,7 @@ def respond(conv: Conversation, customer_reply: str, agent: Agent | None = None)
     return conv
 
 
-def _escalate(conv: Conversation, reason: str) -> Ticket:
+def _escalate(conv: Conversation, code: str, reason: str) -> Ticket:
     attempts = [t.step for t in conv.turns]
     ticket = Ticket(
         ticket_id=next_ticket_id(),
@@ -173,6 +250,8 @@ def _escalate(conv: Conversation, reason: str) -> Ticket:
         issue_summary=f"{conv.complaint} -- {reason}",
         attempts_tried=attempts,
         safety_flag=conv.safety_flag,
+        reason_code=code,
     )
     ticket.save()
+    conv.escalation_code = code
     return ticket

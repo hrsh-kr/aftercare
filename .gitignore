@@ -8,3 +8,6 @@ tools/cedar-lambda/cedar
 .aws-sam/
 data/tickets/
 data/conversations/
+data/_backup_*/
+framework.txt
+data/

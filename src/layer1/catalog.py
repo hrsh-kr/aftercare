@@ -16,22 +16,27 @@ from pathlib import Path
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
 
 MANUAL_BY_PREFIX = {
-    "WM-": FIXTURES / "manual_aquaspin.md",
+    "WM-FC-": FIXTURES / "manual_aquaspin.md",   # AquaSpin front-control washing machines
+    "WM-FL-": FIXTURES / "manual_aquaspin.md",   # AquaSpin front-loader line -- same manual, same brand
     "AC-": FIXTURES / "manual_arcticair.md",
 }
 TERMS_BY_PREFIX = {
-    "WM-": FIXTURES / "terms_aquaspin.md",
+    "WM-FC-": FIXTURES / "terms_aquaspin.md",
+    "WM-FL-": FIXTURES / "terms_aquaspin.md",
     "AC-": FIXTURES / "terms_arcticair.md",
 }
 BRAND_BY_PREFIX = {
-    "WM-": "AquaSpin",
+    "WM-FC-": "AquaSpin",
+    "WM-FL-": "AquaSpin",
     "AC-": "ArcticAir",
 }
 BRAND_SLUGS = {name.lower(): name for name in BRAND_BY_PREFIX.values()}  # "arcticair" -> "ArcticAir"
 WARRANTY_BY_PREFIX = {
-    "WM-": {"component": "motor", "years": 2},
+    "WM-FC-": {"component": "motor", "years": 2},
+    "WM-FL-": {"component": "motor", "years": 2},
     "AC-": {"component": "compressor", "years": 5},
 }
+
 
 
 def _by_prefix(product_id: str, mapping: dict, label: str):

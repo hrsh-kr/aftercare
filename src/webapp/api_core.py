@@ -14,6 +14,26 @@ with its own memory, so an in-memory dict never actually shared state
 between them -- not a cold-start edge case, every single call. Flask
 gets the same fix for free, and gains "survives a dev-server restart"
 as a side effect.
+
+--- Audit fixes applied here (see IMPLEMENTATION.md Phase audit pass) ---
+
+1. list_customers() now accepts brand filter -- the demo is brand-scoped,
+   so the picker must show only that brand's customers, not everyone.
+
+2. lookup() now accepts brand -- scopes returned products to that brand
+   only. In a real deployment, the brand is known from which WhatsApp
+   Business number the message arrived on; in the demo, it's the brand
+   the user chose at entry. This removes the regs[0].brand guessing.
+
+3. start_conversation() now requires product_id -- the customer picks
+   which product they want support for (or the QR deep-link encodes it).
+   Using regs[0] was always wrong: if a customer has two products and
+   asks about the second one, it would service the first. Silent and
+   wrong.
+
+4. dashboard_data() now includes the full registrations list -- needed
+   for the QR code section (each product gets a QR linking back to the
+   WhatsApp support line with the serial pre-filled).
 """
 
 import json
@@ -21,11 +41,13 @@ import os
 import sys
 import uuid
 from dataclasses import asdict
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.authz.cedar_authz import CedarUnavailable, can_view_dashboard
+from src.layer1.catalog import BRAND_SLUGS, brand_for
 from src.layer1.registration import Registration, load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
 from src.layer3b.tickets import Ticket
@@ -65,40 +87,141 @@ def _load_conversation(conv_id: str) -> agent_mod.Conversation | None:
         resolved=data["resolved"],
         ticket=Ticket(**data["ticket"]) if data["ticket"] else None,
         retrieval_method=data.get("retrieval_method", ""),
+        escalation_code=data.get("escalation_code", ""),
+        escalation_detail=data.get("escalation_detail", ""),
+        created_at=data.get("created_at", ""),
     )
 
 
-def list_customers() -> list[dict]:
+HISTORY_SEED = Path(__file__).resolve().parent.parent.parent / "fixtures" / "history_seed.json"
+
+
+def _history() -> list[agent_mod.PriorCase]:
+    """Earlier cases the agent can recognise a recurring problem from: every
+    saved conversation, plus the seeded history (what a brand's ticketing
+    system would already hold on day one). Seed ages are relative, so the
+    demo scenario doesn't drift out of the recurrence window."""
+    cases: list[agent_mod.PriorCase] = []
+    if HISTORY_SEED.exists():
+        for e in json.loads(HISTORY_SEED.read_text()):
+            cases.append(agent_mod.PriorCase(
+                serial_number=e["serial_number"], section_heading=e["section_heading"],
+                when=datetime.now() - timedelta(days=e["days_ago"]), outcome=e["outcome"],
+            ))
+    if CONV_DIR.exists():
+        for path in CONV_DIR.glob("*.json"):
+            try:
+                c = json.loads(path.read_text())
+            except ValueError:
+                continue
+            if not (c.get("resolved") or c.get("ticket")) or c.get("safety_flag") or not c.get("section_heading"):
+                continue
+            if c.get("source") != "manual" or not c.get("created_at"):
+                continue
+            cases.append(agent_mod.PriorCase(
+                serial_number=c["registration"]["serial_number"], section_heading=c["section_heading"],
+                when=datetime.fromisoformat(c["created_at"]),
+                outcome="resolved" if c.get("resolved") else "escalated",
+            ))
+    return cases
+
+
+def reset_demo_data() -> dict:
+    """Clear conversations and tickets so a demo run starts clean (otherwise
+    the first run makes the second look like a recurring issue)."""
+    import shutil
+    from src.layer3b import tickets as tickets_mod
+    n = 0
+    for d in (CONV_DIR, tickets_mod.DATA_DIR):
+        if d.exists():
+            n += len(list(d.glob("*.json")))
+            shutil.rmtree(d)
+    return {"cleared": n}
+
+
+def list_customers(brand: str = "") -> list[dict]:
     """For the demo's 'simulate as' picker only. A real WhatsApp
     integration never needs this -- the incoming message already
-    carries the sender's number, per WhatsApp's own webhook payload."""
-    seen = {}
+    carries the sender's number, per WhatsApp's own webhook payload.
+
+    brand: if provided (e.g. 'arcticair'), return only customers who
+    have at least one product from that brand. The demo is brand-scoped --
+    ArcticAir's support line sees ArcticAir customers, not AquaSpin's.
+    Mixing them in one picker was a design flaw: the two brands are
+    independent, each with their own WhatsApp Business number."""
+    seen: dict[str, str] = {}
     for r in load_registrations():
+        # Filter to brand if requested -- brand is the slug (lowercase)
+        if brand and brand_for(r.product_id).lower() != brand.lower():
+            continue
         seen.setdefault(r.customer_phone, r.customer_name)
     return [{"phone": phone, "name": name} for phone, name in seen.items()]
 
 
-def lookup(phone: str) -> dict:
-    regs = lookup_by_phone(phone, load_registrations())
+def lookup(phone: str, brand: str = "") -> dict:
+    """Look up a customer by phone, scoped to a brand.
+
+    brand: the brand whose WhatsApp line the customer is messaging on.
+    A customer with both an AquaSpin and ArcticAir product messaging
+    AquaSpin's number should only see their AquaSpin products here --
+    the other brand is irrelevant to this conversation.
+
+    In a real deployment, brand comes from which number the message
+    arrived on -- it's never user-supplied or guessed. In the demo,
+    it comes from the brand the user picked at the entry screen."""
+    all_regs = lookup_by_phone(phone, load_registrations())
+    if not all_regs:
+        return {"found": False}
+
+    # Scope to this brand's products only
+    if brand:
+        regs = [r for r in all_regs if brand_for(r.product_id).lower() == brand.lower()]
+    else:
+        regs = all_regs
+
     if not regs:
         return {"found": False}
+
+    # brand is the same for all filtered registrations -- safe to read from the first
+    derived_brand = brand_for(regs[0].product_id)
     return {
         "found": True,
         "customer_name": regs[0].customer_name,
-        "brand": agent_mod.brand_for(regs[0].product_id),
+        "brand": derived_brand,
+        "brand_slug": derived_brand.lower(),
         "products": [
-            {"product_id": r.product_id, "product_name": r.product_name, "serial_number": r.serial_number}
+            {
+                "product_id": r.product_id,
+                "product_name": r.product_name,
+                "serial_number": r.serial_number,
+                "purchase_date": r.purchase_date,
+                "warranty_component_status": r.warranty_component_status,
+                "warranty_parts_status": r.warranty_parts_status,
+            }
             for r in regs
         ],
     }
 
 
-def start_conversation(phone: str, complaint: str) -> tuple[dict, int]:
-    regs = lookup_by_phone(phone, load_registrations())
-    if not regs:
-        return {"error": "No registration found for this number."}, 404
+def start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dict, int]:
+    """Start a support conversation for a specific product.
 
-    conv = agent_mod.start(regs[0], complaint, agent=get_agent())
+    product_id is required -- the customer has already selected which
+    product they need help with (either via the product picker UI or
+    via a QR deep-link encoding the serial). Using regs[0] was wrong:
+    a customer with two products would always get support for the first
+    registered one, regardless of which machine they asked about."""
+    all_regs = lookup_by_phone(phone, load_registrations())
+    # Find the exact registration the customer selected
+    matching = [r for r in all_regs if r.product_id == product_id]
+    if not matching:
+        return {"error": f"No registration found for product {product_id} on this number."}, 404
+
+    reg = matching[0]  # product_id is a precise match -- all registrations for the same
+                       # product_id on this phone are the same product type; take first.
+                       # A real system would match on serial_number too for absolute precision.
+
+    conv = agent_mod.start(reg, complaint, agent=get_agent(), history=_history())
     conv_id = str(uuid.uuid4())
     _save_conversation(conv_id, conv)
     return {"conversation_id": conv_id, **_conversation_state(conv)}, 200
@@ -131,9 +254,9 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
     if not allowed:
         return {"error": f"Not authorized to view {brand}'s dashboard as '{staff_brand or 'nobody'}'."}, 403
 
-    registrations = [r for r in load_registrations() if agent_mod.brand_for(r.product_id).lower() == brand]
+    registrations = [r for r in load_registrations() if brand_for(r.product_id).lower() == brand]
     tickets = sorted(
-        [t for t in Ticket.load_all() if t.product_id and agent_mod.brand_for(t.product_id).lower() == brand],
+        [t for t in Ticket.load_all() if t.product_id and brand_for(t.product_id).lower() == brand],
         key=lambda t: t.ticket_id,
     )
 
@@ -146,6 +269,13 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
     for t in tickets:
         product_feedback[t.product_name] = product_feedback.get(t.product_name, 0) + 1
 
+    # QR whatsapp deep-link: in production this would be the brand's real
+    # WhatsApp Business number. For the demo, we use a placeholder that
+    # encodes the intent: customer scans, WhatsApp opens pre-addressed
+    # to that brand's support line with the serial pre-filled.
+    brand_display = BRAND_SLUGS.get(brand, brand)
+    whatsapp_demo_base = f"https://wa.me/message/{brand}"  # placeholder -- real number goes here
+
     return {
         "brand": brand,
         "tickets": [
@@ -156,6 +286,8 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
                 "issue_summary": t.issue_summary,
                 "attempts_tried": t.attempts_tried,
                 "safety_flag": t.safety_flag,
+                "reason_code": t.reason_code,
+                "reason_label": agent_mod.ESCALATION_LABELS.get(t.reason_code, ""),
                 "status": t.status,
                 "created_at": t.created_at,
             }
@@ -164,6 +296,24 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
         "warranty_counts": warranty_counts,
         "product_feedback": [{"product_name": k, "count": v} for k, v in sorted(product_feedback.items(), key=lambda kv: -kv[1])],
         "registered_count": len(registrations),
+        # Full registration list for the QR code section -- brand staff
+        # can see each registered product and its QR code link.
+        "registrations": [
+            {
+                "customer_name": r.customer_name,
+                "product_id": r.product_id,
+                "product_name": r.product_name,
+                "serial_number": r.serial_number,
+                "purchase_date": r.purchase_date,
+                "retailer": r.retailer,
+                "warranty_component_status": r.warranty_component_status,
+                "warranty_parts_status": r.warranty_parts_status,
+                # QR encodes a WhatsApp deep link so the customer can scan
+                # and start a support conversation with context pre-loaded.
+                "qr_content": f"https://wa.me/message/{brand}?serial={r.serial_number}",
+            }
+            for r in registrations
+        ],
     }, 200
 
 
@@ -174,17 +324,76 @@ def _clean(message: str) -> str:
     return message.strip().strip('"').strip()
 
 
+def _escalation_message(conv: agent_mod.Conversation) -> str:
+    """What the customer is told, by *why* a person is stepping in."""
+    tid = conv.ticket.ticket_id
+    code = conv.escalation_code
+    if code == "safety":
+        stop = conv.section_body or "Please stop using the product."
+        return (
+            f"{stop}\n\nThis is a safety issue, so I won't try to troubleshoot it over chat. "
+            f"I've raised ticket {tid} for an emergency technician visit -- free of charge whatever your warranty status."
+        )
+    if code == "recurring":
+        when = conv.escalation_detail.split(" -- handled ", 1)[-1].split(" (")[0]
+        return (
+            f"This looks like the same problem we handled on {when}. "
+            f"Repeating the same fix won't help, so I've passed it to our service team as ticket {tid}, "
+            f"with the earlier case attached. You won't have to explain it again."
+        )
+    if code == "unmatched":
+        return (
+            f"I couldn't find this in your product manual, and I won't guess at it. "
+            f"I've handed it to our service team as ticket {tid} with your description as written."
+        )
+    if code == "attempts_exhausted":
+        return (
+            f"Sorry those two steps didn't fix it. I've handed this to our service team as ticket {tid}, "
+            f"including what we already tried, so you won't be asked to repeat it."
+        )
+    if code == "no_more_steps":
+        return (
+            f"That was the last self-service step in the manual. I've handed this to our service team "
+            f"as ticket {tid}, including what we tried."
+        )
+    return f"This one needs a person. I've raised ticket {tid} for our service team, who'll follow up within 5 business days."
+
+
 def _conversation_state(conv: agent_mod.Conversation) -> dict:
-    """What the frontend needs to render the next thing to show."""
+    """What the frontend needs to render the next thing to show. `meta` is
+    the 'what Aftercare did' trace the demo displays -- all of it read from
+    the conversation, none of it invented for display."""
+    reg = conv.registration
+    meta = {
+        "source": conv.source,
+        "section_heading": conv.section_heading,
+        "retrieval_method": conv.retrieval_method,
+        "attempt": len(conv.turns),
+        "max_attempts": agent_mod.MAX_ATTEMPTS,
+        "escalation": None,
+        "warranty": {"component": reg.warranty_component, "component_status": reg.warranty_component_status,
+                     "parts_status": reg.warranty_parts_status},
+    }
     if conv.resolved:
-        return {"status": "resolved", "message": "Glad that fixed it! Let us know if anything else comes up."}
+        return {"status": "resolved", "message": "Glad that fixed it! Let us know if anything else comes up.", "meta": meta}
     if conv.ticket is not None:
+        meta["escalation"] = {
+            "code": conv.escalation_code,
+            "label": agent_mod.ESCALATION_LABELS.get(conv.escalation_code, ""),
+            "detail": conv.escalation_detail,
+        }
         return {
             "status": "escalated",
-            "message": (
-                f"I've created ticket {conv.ticket.ticket_id} for you and looped in our service team. "
-                f"They'll follow up within 5 business days."
-            ),
+            "message": _escalation_message(conv),
             "ticket_id": conv.ticket.ticket_id,
+            "ticket": {
+                "customer_name": conv.ticket.customer_name,
+                "product_name": conv.ticket.product_name,
+                "serial_number": conv.ticket.serial_number,
+                "issue_summary": conv.ticket.issue_summary,
+                "attempts_tried": [_clean(a) for a in conv.ticket.attempts_tried],
+                "safety_flag": conv.ticket.safety_flag,
+            },
+            "meta": meta,
         }
-    return {"status": "waiting", "message": _clean(conv.turns[-1].step)}
+    return {"status": "waiting", "message": _clean(conv.turns[-1].step), "meta": meta}

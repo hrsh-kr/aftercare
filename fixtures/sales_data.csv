@@ -1,5 +1,6 @@
 customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price
-Priya Sharma,+919876543210,WM-FC-700,AquaSpin 700 Washing Machine,WM-FC-78234,2025-06-05,Amazon.in,24999
+Priya Sharma,+919876543210,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-78234,2025-06-05,Amazon.in,24999
+Priya Sharma,+919876543210,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-90012,2026-01-18,Croma (Bengaluru),34999
 Ravi Kumar,+919812345678,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-78901,2024-11-12,Flipkart,32999
-Ananya Iyer,+919845098450,WM-FC-700,AquaSpin 700 Washing Machine,WM-FC-79345,2025-08-20,Croma (Chennai),25999
+Ananya Iyer,+919845098450,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-79345,2025-08-20,Croma (Chennai),25999
 Sameer Khan,+919900112233,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-77102,2023-03-15,Amazon.in,31499

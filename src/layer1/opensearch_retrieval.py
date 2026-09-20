@@ -19,7 +19,7 @@ from src.layer1.catalog import MANUAL_BY_PREFIX, TERMS_BY_PREFIX
 from src.layer1.retrieval import keyword_retrieve, load_sections
 
 OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST", "http://localhost:9200")
-INDEX_NAME = "aftercare-sections"
+INDEX_NAME = "aftercare-sections-v2"  # v2: english analyzer (stems "bangs"/"banging", drops filler)
 
 # Every document that might ever be retrieved from -- indexed once,
 # up front, rather than lazily per-brand, so a fresh index always has
@@ -59,7 +59,7 @@ def ensure_indexed(force: bool = False) -> None:
 
     client.indices.create(
         index=INDEX_NAME,
-        body={"mappings": {"properties": {"path": {"type": "keyword"}, "heading": {"type": "text"}, "body": {"type": "text"}}}},
+        body={"mappings": {"properties": {"path": {"type": "keyword"}, "heading": {"type": "text", "analyzer": "english"}, "body": {"type": "text", "analyzer": "english"}}}},
     )
     for doc_path in ALL_DOCS:
         for heading, body in load_sections(doc_path):

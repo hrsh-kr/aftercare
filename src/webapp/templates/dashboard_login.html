@@ -3,40 +3,141 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aftercare — Brand Login</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/dashboard.css">
-</head>
-<body class="dashboard-body login-body">
-  <div class="login-card">
-    <div class="login-mark">A</div>
-    <h1 class="login-title">Aftercare for Brands</h1>
-    <p class="login-copy">
-      Aftercare is one backend, but every brand's dashboard is its own —
-      ArcticAir never sees AquaSpin's tickets, and the other way around.
-      A real deployment would authenticate each brand's staff account;
-      this demo simulates that with a picker, then a real Cedar policy
-      decides what each session is allowed to see.
-    </p>
-    <div id="brand-list" class="login-brand-list"></div>
-  </div>
+  <title>Aftercare — Dashboard</title>
+  <meta name="description" content="Sign in to your brand's Aftercare analytics dashboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #06040e;
+      color: #f5f5f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .dl-wrap {
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+    }
+    /* Logo / wordmark */
+    .dl-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      margin-bottom: 40px;
+    }
+    .dl-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #5E5CE6, #007AFF);
+      color: #fff; font-size: 16px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dl-wordmark { font-size: 20px; font-weight: 800; letter-spacing: -.03em; color: #f5f5f7; }
 
-  <script>
-    const brands = {{ brands | tojson }};
-    const list = document.getElementById("brand-list");
-    list.innerHTML = Object.entries(brands)
-      .map(([slug, name]) => `
-        <button class="login-brand-btn" data-slug="${slug}">
-          <span class="login-brand-dot">${name.slice(0, 2)}</span>
-          <span class="login-brand-name">${name} staff</span>
-        </button>`)
-      .join("");
-    list.querySelectorAll(".login-brand-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        sessionStorage.setItem("staffBrand", btn.dataset.slug);
-        window.location.href = `/dashboard/${btn.dataset.slug}`;
-      });
-    });
-  </script>
+    /* Card */
+    .dl-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 20px;
+      padding: 36px;
+    }
+    .dl-title {
+      font-size: 24px; font-weight: 900; letter-spacing: -.03em;
+      color: #f5f5f7; margin-bottom: 6px;
+    }
+    .dl-sub {
+      font-size: 14px; color: rgba(245,245,247,.4);
+      margin-bottom: 28px; line-height: 1.6;
+    }
+
+    /* Brand buttons */
+    .dl-brands { display: flex; flex-direction: column; gap: 8px; }
+    .dl-brand-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.08);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .2s ease;
+    }
+    .dl-brand-btn:hover {
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.18);
+      transform: translateX(3px);
+    }
+    .dl-brand-dot {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+    }
+    .dl-brand-text { text-align: left; }
+    .dl-brand-name { font-size: 15px; font-weight: 700; color: #f5f5f7; }
+    .dl-brand-hint { font-size: 12px; color: rgba(245,245,247,.35); }
+    .dl-brand-arrow { margin-left: auto; color: rgba(245,245,247,.25); font-size: 18px; }
+
+    /* Footer */
+    .dl-footer {
+      margin-top: 28px;
+      font-size: 12.5px;
+      color: rgba(245,245,247,.22);
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .dl-footer a { color: inherit; text-decoration: none; }
+    .dl-footer a:hover { color: rgba(245,245,247,.5); }
+  </style>
+</head>
+<body>
+  <div class="dl-wrap">
+    <a class="dl-logo" href="/">
+      <div class="dl-mark">A</div>
+      <span class="dl-wordmark">Aftercare</span>
+    </a>
+
+    <div class="dl-card">
+      <div class="dl-title">Brand dashboard</div>
+      <div class="dl-sub">Select your brand to view your support analytics, registered products, and escalated tickets.</div>
+
+      <div class="dl-brands">
+        {% for slug, name in brands.items() %}
+        <a class="dl-brand-btn" href="/dashboard/{{ slug }}">
+          <div class="dl-brand-dot" style="background: linear-gradient(135deg,
+            hsl({{ loop.index * 67 % 360 }},55%,28%),
+            hsl({{ (loop.index * 67 + 40) % 360 }},65%,45%));">
+            {{ name[:2] }}
+          </div>
+          <div class="dl-brand-text">
+            <div class="dl-brand-name">{{ name }}</div>
+            <div class="dl-brand-hint">Support dashboard</div>
+          </div>
+          <div class="dl-brand-arrow">›</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="dl-footer">
+      <a href="/">← Back to Aftercare</a>
+      <span>·</span>
+      <a href="/demo">Live demo</a>
+    </div>
+  </div>
 </body>
 </html>

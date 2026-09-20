@@ -4,44 +4,88 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ brand_display }} — Aftercare Dashboard</title>
+  <meta name="description" content="{{ brand_display }} support dashboard: registered products, open tickets, warranty status, and recurring issue insights — powered by Aftercare.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 <body class="dashboard-body">
+
+  <a href="/" class="back-link">← Aftercare</a>
+
   <div class="dash">
     <header class="dash-header">
       <div class="brand-dot">{{ brand_display[:2] }}</div>
       <div class="dash-header-text">
         <div class="brand-name dash-title">{{ brand_display }} — Support Dashboard</div>
-        <div class="brand-sub" id="session-line">Checking authorization&hellip;</div>
+        <div class="brand-sub" id="session-line">Checking authorization…</div>
       </div>
       <a class="switch-brand-link" href="/dashboard">Switch brand</a>
     </header>
 
     <div id="denied-panel" class="denied-panel" hidden>
+      <div class="denied-icon">🔒</div>
       <div class="denied-title">Access denied</div>
       <p class="denied-copy" id="denied-copy"></p>
-      <a class="switch-brand-link" href="/dashboard">Log in as the right brand</a>
+      <a class="switch-brand-link" href="/dashboard">Log in as the correct brand</a>
     </div>
 
     <div id="dash-content" hidden>
+
+      <!-- ── 1. KPI stat cards ── -->
       <section class="stat-row" id="stat-row"></section>
 
+      <!-- ── 2. Analytics row (complaint breakdown + warranty ring) ── -->
+      <div class="analytics-row">
+
+        <section class="dash-section analytics-card">
+          <h2>Complaint breakdown
+            <span class="section-hint">Categorised from ticket summaries</span>
+          </h2>
+          <div id="complaint-breakdown" class="breakdown-list"></div>
+        </section>
+
+        <section class="dash-section analytics-card analytics-card--narrow">
+          <h2>Warranty coverage</h2>
+          <div id="warranty-ring"></div>
+        </section>
+
+      </div>
+
+      <!-- ── 3. Product health table ── -->
       <section class="dash-section">
-        <h2>Open tickets</h2>
+        <h2>Product health
+          <span class="section-hint">Registered units vs. escalated tickets</span>
+        </h2>
+        <div id="product-health"></div>
+      </section>
+
+      <!-- ── 4. Escalated tickets (conversation thread style) ── -->
+      <section class="dash-section">
+        <h2>Escalated tickets
+          <span class="section-hint">Every turn the agent took before creating the ticket</span>
+        </h2>
         <div id="ticket-list" class="ticket-list"></div>
       </section>
 
+      <!-- ── 5. Registered products + QR codes ── -->
       <section class="dash-section">
-        <h2>Product feedback</h2>
-        <div id="feedback-list" class="feedback-list"></div>
+        <h2>Registered products
+          <span class="section-hint">QR codes go on warranty cards at point of sale</span>
+        </h2>
+        <div id="registration-list" class="registration-list"></div>
       </section>
-    </div>
+
+    </div><!-- /#dash-content -->
   </div>
 
-  <script>
-    window.__BRAND__ = {{ brand | tojson }};
-  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+          integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>window.__BRAND__ = {{ brand | tojson }};</script>
   <script src="/static/dashboard.js"></script>
 </body>
 </html>

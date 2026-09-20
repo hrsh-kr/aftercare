@@ -94,6 +94,7 @@ After each build milestone in `DESIGN.md`'s build order, check: does `README.md`
 - **`DESIGN.md`** — what we're building, layer by layer, and what we're deliberately not.
 - **`TECHNICAL.md`** — how, concretely: the pipeline, the data, what's real versus mocked.
 - **`FLOW.md`** — how it actually works, as built: request-by-request, file-by-file. Written from a full audit of the real code, not the plan — where `TECHNICAL.md` drifts from reality, `FLOW.md` is the one to trust.
+- **`USER_GUIDE.md`** — install it, run it, click through it. For a person using the demo, not a person reading the code.
 - **`README.md`** — the front door.
 - **`SKILL.md`** — this file.
 - **`IMPLEMENTATION.md`** — the live task checklist. Update it immediately after finishing each task, not in a batch — this is the file that lets a different session or model pick up cold.

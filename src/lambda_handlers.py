@@ -39,12 +39,17 @@ def _header(event: dict, name: str) -> str:
 
 
 def customers(event, context):
-    return _response(core.list_customers())
+    # ?brand= query param scopes the list to that brand's customers only
+    qs = event.get("queryStringParameters") or {}
+    brand = qs.get("brand", "").strip().lower()
+    return _response(core.list_customers(brand=brand))
 
 
 def lookup(event, context):
-    phone = _body(event).get("phone", "").strip()
-    return _response(core.lookup(phone))
+    body = _body(event)
+    phone = body.get("phone", "").strip()
+    brand = body.get("brand", "").strip().lower()
+    return _response(core.lookup(phone, brand=brand))
 
 
 def conversation(event, context):
@@ -66,7 +71,13 @@ def conversation(event, context):
     if path.endswith("/respond"):
         data, status = core.respond_conversation(body.get("conversation_id"), body.get("reply", "").strip())
     else:
-        data, status = core.start_conversation(body.get("phone", "").strip(), body.get("complaint", "").strip())
+        # product_id is now required -- the customer selected which product they
+        # need help with before reaching this call. regs[0] is gone.
+        data, status = core.start_conversation(
+            body.get("phone", "").strip(),
+            body.get("complaint", "").strip(),
+            body.get("product_id", "").strip(),
+        )
     return _response(data, status)
 
 

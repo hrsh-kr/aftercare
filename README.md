@@ -18,6 +18,7 @@ Built and running locally — chat UI, brand dashboards, the full agent loop, an
 | [`DESIGN.md`](DESIGN.md) | What we're building, and what we're not |
 | [`TECHNICAL.md`](TECHNICAL.md) | How it's built, in AWS terms |
 | [`FLOW.md`](FLOW.md) | How it actually works, as built — request-by-request, file-by-file |
+| [`USER_GUIDE.md`](USER_GUIDE.md) | How to install, run, and click through the demo yourself |
 | [`SKILL.md`](SKILL.md) | How we design, write, and code |
 | [`IMPLEMENTATION.md`](IMPLEMENTATION.md) | Live task checklist — what's done, what's next |
 | `source/aftercare/` | The original product spec this build is based on — reference only |
