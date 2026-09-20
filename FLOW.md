@@ -6,12 +6,14 @@ are the plan and the pitch context; this is what's actually running.
 Written during a full audit pass — see `IMPLEMENTATION.md`'s Phase 7.9
 entry for what that audit found and fixed.
 
-> **Status (2026-09-20, after the AWS-depth pass).** Current routes and API:
+> **Status (2026-09-20, after the all-Lambda pass): the app runs only as a Lambda behind API Gateway (SAM Local), `src/lambda_app.py`; Flask and all fallbacks are gone (see IMPLEMENTATION.md 7.17). Anything below that mentions Flask, `app.py`, port 5001 or a fallback is historical.**
+>
+> Earlier status (AWS-depth pass): Current routes and API:
 >
 > | Route | What it is |
 > |---|---|
 > | `/` | one-page story: hero -> problem -> **Step 0** (real CSV check via `POST /api/ingest`) -> customer story (pinned phone left, six step cards right; step 5 is the non-safety human handoff) -> **Under the hood** (live component status from `/api/health`) -> "Now see it run" |
-> | `/demo` | **real client of `/api/*`**: five fixture-tied scenarios, a trace of what Aftercare did (tagged by component), the ticket the brand receives. `?api=http://127.0.0.1:3000` runs the same page against SAM Local Lambdas |
+> | `/demo` | **real client of `/api/*`**: five fixture-tied scenarios, a trace of what Aftercare did (tagged by component), the ticket the brand receives. served by the Lambda itself (there is no other server) |
 > | `/dashboard`, `/dashboard/<brand>` | staff sign-in (server-side signed cookie), Cedar-gated, insights from OpenSearch aggregations, ticket status controls |
 >
 > API: `POST /api/lookup|start|respond` (start takes an optional `Idempotency-Key`); `POST /api/login|logout`, `GET /api/me`; `GET /api/dashboard/<brand>?q=` (cookie auth); `POST /api/tickets/<id>/status` (managers only, Cedar); `POST /api/ingest`; `GET /api/health`; `POST /api/demo/reset`. Responses carry a `meta` block (source, section, retrieval method, attempt, escalation code/label/detail, model timings, storage). Six escalation reason codes: safety, attempts_exhausted, no_more_steps, no_steps, unmatched, recurring. Storage is behind `src/storage` (file or DynamoDB single table). See `IMPLEMENTATION.md` Phases 7.15-7.16, `PLAN.md`, `docs/DYNAMODB_DESIGN.md`. **The customer-side walkthrough below still describes the retired two-pane page.**

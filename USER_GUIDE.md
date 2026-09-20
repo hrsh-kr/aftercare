@@ -4,7 +4,7 @@ How to install it, run it, and click through it. For how it works inside, see
 `FLOW.md`; for where the project stands and what's next, see `CONTEXT.md` and
 `TARGET.md`.
 
-> **What is real (2026-09-20).** The agent, manual search (OpenSearch), Cedar, tickets, storage and dashboards are real, and **`/demo` runs the real agent** (Ollama must be running). WhatsApp itself is simulated. Dashboard sign-ins: `meera.nair` / `aqua-manager`, `dev.patel` / `aqua-agent` (AquaSpin); `sara.thomas` / `arctic-manager`, `ben.dsouza` / `arctic-agent` (ArcticAir). Managers can change ticket status; agents are refused by Cedar. To run the same page on Lambda: `bash scripts/start_dynamodb.sh`, `sam build --use-container && sam local start-api --warm-containers LAZY`, then open `/demo?api=http://127.0.0.1:3000`.
+> **What is real (2026-09-20).** The agent, manual search (OpenSearch), Cedar, tickets, storage and dashboards are real, and **`/demo` runs the real agent** (Ollama must be running). WhatsApp itself is simulated. Dashboard sign-ins: `meera.nair` / `aqua-manager`, `dev.patel` / `aqua-agent` (AquaSpin); `sara.thomas` / `arctic-manager`, `ben.dsouza` / `arctic-agent` (ArcticAir). Managers can change ticket status; agents are refused by Cedar. **Run it with `bash scripts/dev.sh`, then open http://127.0.0.1:3000** (everything is Lambda under SAM Local; needs Docker and Ollama). Ports and commands below that mention Flask or 5001 are historical.
 
 ---
 

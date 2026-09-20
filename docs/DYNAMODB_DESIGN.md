@@ -30,4 +30,4 @@ Access patterns first, keys second. These are the only questions the application
 - **Idempotency table** is separate because Lambda Powertools owns its schema (`id` hash key); it stores each `Idempotency-Key`'s result for 60 s so a retried `POST /api/start` returns the same conversation instead of opening a second one and a second ticket.
 
 ## Local vs cloud
-`DYNAMODB_ENDPOINT` points boto3 at DynamoDB Local; unset it and the same code talks to DynamoDB. `template.yaml` declares both tables, so `sam deploy` would create them; locally `DynamoStore` creates them in DynamoDB Local on first use.
+`DYNAMODB_ENDPOINT` points boto3 at DynamoDB Local; unset it and the same code talks to DynamoDB. `template.yaml` declares both tables, so `sam deploy` would create them; locally `scripts/bootstrap_local.py` creates them in DynamoDB Local, reading the definitions from `template.yaml` so the two cannot drift. The application never creates a table.

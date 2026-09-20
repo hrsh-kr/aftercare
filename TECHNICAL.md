@@ -105,7 +105,7 @@ Also: `POST /api/login|logout`, `GET /api/me`, `POST /api/tickets/{id}/status` (
 
 ## 8. Demo script
 
-> *Note:* `/demo` now runs the real agent, so this script can be recorded as written. The tighter 3-minute shot list is `docs/VIDEO_SCRIPT.md`.
+> *Note (all-Lambda pass): the app runs only as one Lambda behind API Gateway on SAM Local; no Flask, no fallbacks; 503 naming the service when one is down.* `/demo` now runs the real agent, so this script can be recorded as written. The tighter 3-minute shot list is `docs/VIDEO_SCRIPT.md`.
 
 1. Open on the real, felt moment: re-explaining your product to support from scratch, every single time.
 2. **The before:** a real screenshot of a well-known appliance brand's actual support page — logo blacked out, since we're not naming them — showing the genuine broken or maze-like experience (a form that doesn't submit, a phone tree that goes nowhere). This is the contrast the whole pitch rests on, so it comes first, not last.

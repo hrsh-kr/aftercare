@@ -72,5 +72,6 @@ Must (A, B, C, D, G, H). Then F visuals items 1–3. E only as structured output
 Docker instability (SAM and OpenSearch), qwen tool-calling, DynamoDB Local + SAM networking (`host.docker.internal`), time. Each has a fallback in its phase.
 
 ## 9. Status log (updated as work lands)
+- 2026-09-20 (later): all-Lambda pass done: Flask removed, single Lambda + API Gateway on SAM Local, no fallbacks, Corretto DynamoDB Local, bootstrap script, `scripts/dev.sh`. See IMPLEMENTATION 7.17.
 - 2026-09-20: phases A-F done and committed; G (tests + README + docs sweep) done; H drafted (`docs/VIDEO_SCRIPT.md`, `SUBMISSION_ANSWERS.md`). Story-layout regression fixed.
 - Open: video recording, user's details on the form, revoke the leaked GitHub token, make repo public, decide on tracked `archive/groundtruth/`.

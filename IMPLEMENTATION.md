@@ -353,3 +353,17 @@ Plan and cut lines: `PLAN.md`. Access patterns: `docs/DYNAMODB_DESIGN.md`. Frict
 - **Regression (mine):** the cleanup that removed Step 0's old "What runs behind it" block used a lazy regex that also deleted the customer-story section header and the pinned phone column, so the landing showed only cards (the phone animation had vanished). Caught by the user, restored, and the story is now "Steps 1-6". Lesson: after any structural edit, check the rendered page (element counts, geometry) rather than trusting the diff; template edits by regex need a balance check.
 - **Layout:** phone on the left, cards on the right; two-column down to 700px; below that the phone is pinned compactly at the top and the cards scroll beneath it (phone and cards share one grid cell so `position: sticky` can travel the whole story; a sticky grid item is confined to its own grid area).
 - **Docs sweep:** FLOW, USER_GUIDE, TECHNICAL, DESIGN, README brought in line (real `/demo`, cookie sessions, `aftercare.cedar`, storage interface, six escalation codes).
+
+## Phase 7.17 — All AWS, no Flask, no fallbacks (done, 2026-09-20)
+
+**Why:** the app ran on Flask with Lambda as a side proof, and degraded silently to a keyword scorer or files when a service was down. Neither is "using AWS for real".
+
+- **One Lambda serves everything.** `src/lambda_app.py` (Lambda Powertools API Gateway resolver) serves the pages (`src/pages.py`, Jinja) and all API routes; `template.yaml` has 17 explicit API Gateway routes (a catch-all proxy is shadowed by sam local's static route). Static files are `public/static/`, served by `sam local start-api --static-dir` (absolute path required). Flask, `app.py` and the per-route handlers are deleted.
+- **Packaging:** `scripts/stage_lambda.sh` stages `lambda_pkg/` (src, fixtures, policies, requirements, arm64 Cedar) as `CodeUri`, because `sam build` copies the CodeUri folder wholesale (it choked on `.venv`).
+- **No fallbacks.** `opensearch_retrieval.retrieve` has no keyword scorer; recurrence, insights, ticket search and case recording require OpenSearch; storage is DynamoDB only. A missing or unreachable service raises `DependencyUnavailable`, which the resolver turns into `503 {"error", "service"}`. The file store and keyword scorer remain only as unit-test doubles (`AFTERCARE_STORE=file`).
+- **No infrastructure created at request time.** `scripts/bootstrap_local.py` creates the DynamoDB tables (read from `template.yaml`, so they cannot drift) and the OpenSearch indices + seed history. In an account CloudFormation creates the tables.
+- **Corretto:** DynamoDB Local now runs from `docker/dynamodb-local/Dockerfile` (`amazoncorretto:21`).
+- **One command:** `scripts/dev.sh` (containers -> bootstrap -> stage -> `sam build --use-container` -> `sam local start-api`). All five scenarios verified through it; stopping OpenSearch or DynamoDB gives a 503 naming it.
+- **Tests:** call the handler with API Gateway proxy events (`tests/lambda_client.py`); no web framework anywhere.
+- **Mistake caught by the tests:** a slice edit while removing fallbacks silently deleted `ingest_preview` and `update_ticket_status` from `api_core.py`; the Lambda route tests failed on the missing attribute and the functions were restored. Lesson: after bulk edits, import-check and run the suite before moving on.
+- **Not used (and why):** LocalStack (needs an auth token; verified it exits with code 55 without one), PartyRock (personal Amazon sign-in), Finch/EKS-D/EKS-A/Firecracker (no natural role; Docker runs the containers).
