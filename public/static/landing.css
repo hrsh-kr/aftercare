@@ -430,7 +430,7 @@ body{
 .l-ar-card dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#5aa0ff;margin-top:6px;}
 .l-ar-card dt:first-child{margin-top:0;}
 .l-ar-card dd{color:#b9cff2;}
-.l-ar .l-uh-chip{background:rgba(120,170,255,.12);color:#8fb2e6;border-radius:4px;font-family:inherit;}
+.l-ar .l-uh-chip{font-size:11px;font-weight:500;background:rgba(120,170,255,.12);color:#8fb2e6;border-radius:4px;font-family:inherit;}
 .l-ar .l-uh-chip.up{background:rgba(52,199,89,.18);color:#6fe08c;}
 .l-ar .l-uh-chip.down{background:rgba(255,159,10,.18);color:#ffc36b;}
 .l-ar-foot{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;margin-top:18px;padding-top:14px;border-top:1px dashed rgba(120,170,255,.4);font-size:13px;line-height:1.5;color:#8fb2e6;}
