@@ -317,6 +317,48 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
     }, 200
 
 
+def health() -> dict:
+    """Live probes, no cached answers: each component reports what it actually
+    did just now. The landing page's "under the hood" chips and the demo's
+    runtime pill read this, so a stopped container shows up as stopped."""
+    import hashlib
+    import time
+    import urllib.request
+
+    from src.authz import cedar_authz
+    from src.layer1 import opensearch_retrieval as osr
+
+    def probe(fn):
+        t0 = time.perf_counter()
+        try:
+            detail = fn()
+            return {"ok": True, "ms": round((time.perf_counter() - t0) * 1000), **detail}
+        except Exception as exc:  # any failure is the answer here
+            return {"ok": False, "ms": round((time.perf_counter() - t0) * 1000), "error": str(exc)[:120]}
+
+    def ollama():
+        with urllib.request.urlopen(f"{agent_mod.OLLAMA_HOST}/api/tags", timeout=2) as r:
+            models = [m["name"] for m in json.loads(r.read()).get("models", [])]
+        return {"models": models}
+
+    def opensearch():
+        c = osr._get_client()
+        info = c.info()
+        docs = c.count(index=osr.INDEX_NAME)["count"] if c.indices.exists(index=osr.INDEX_NAME) else 0
+        return {"version": info["version"]["number"], "index": osr.INDEX_NAME, "documents": docs}
+
+    def cedar():
+        if not cedar_authz.CEDAR_BIN.exists():
+            raise RuntimeError("Cedar CLI missing")
+        return {"policy_sha": hashlib.sha256(cedar_authz.POLICY_PATH.read_bytes()).hexdigest()[:8]}
+
+    return {
+        "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "flask",
+        "storage": "file",
+        "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar)},
+    }
+
+
 def _clean(message: str) -> str:
     """The model occasionally wraps its answer in quote marks despite
     being asked not to add anything extra -- strip them rather than

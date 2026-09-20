@@ -70,6 +70,18 @@ Resources:
             Path: /api/respond
             Method: post
 
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.health
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/health
+            Method: get
+
   DashboardFunction:
     Type: AWS::Serverless::Function
     Properties:

@@ -133,6 +133,11 @@ def respond():
     return jsonify(data), status
 
 
+@app.route("/api/health", methods=["GET"])
+def health():
+    return jsonify(core.health())
+
+
 @app.route("/api/demo/reset", methods=["POST"])
 def demo_reset():
     """Flask-only (not a Lambda route): wipe demo conversations and tickets so

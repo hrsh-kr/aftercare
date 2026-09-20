@@ -86,3 +86,7 @@ def dashboard(event, context):
     staff_brand = _header(event, "X-Staff-Brand")
     data, status = core.dashboard_data(brand, staff_brand)
     return _response(data, status)
+
+
+def health(event, context):
+    return _response(core.health())
