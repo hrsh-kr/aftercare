@@ -65,6 +65,12 @@ def get_agent():
     return _agent
 
 
+def _drain_model_ms() -> list[int]:
+    """Milliseconds of each model call made for this request (Strands hooks); [] for test doubles."""
+    drain = getattr(get_agent(), "drain_model_ms", None)
+    return drain() if drain else []
+
+
 def _save_conversation(conv_id: str, conv: agent_mod.Conversation) -> None:
     get_store().put_conversation(conv_id, asdict(conv))
 
@@ -260,6 +266,7 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
     _record(conv_id, conv)
     state = _conversation_state(conv)
     obs.conversation_outcome(state, brand_for(reg.product_id).lower(), agent_ms)
+    state["meta"]["model_ms"] = _drain_model_ms()
     return {"conversation_id": conv_id, **state}, 200
 
 
@@ -275,6 +282,7 @@ def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
     _record(conversation_id, conv)
     state = _conversation_state(conv)
     obs.conversation_outcome(state, brand_for(conv.registration.product_id).lower(), agent_ms)
+    state["meta"]["model_ms"] = _drain_model_ms()
     return state, 200
 
 

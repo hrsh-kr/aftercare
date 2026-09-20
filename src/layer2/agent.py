@@ -11,7 +11,10 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+import time
+
 from strands import Agent
+from strands.hooks import AfterModelCallEvent, BeforeModelCallEvent, HookProvider, HookRegistry
 from strands.models.ollama import OllamaModel
 
 from src.layer1 import opensearch_retrieval
@@ -94,8 +97,49 @@ def _parse_numbered_steps(body: str, limit: int = MAX_ATTEMPTS) -> list[str]:
     return [m.strip() for m in matches[:limit]]
 
 
-def _build_agent(model_id: str = "qwen2.5-coder:7b") -> Agent:
-    return Agent(model=OllamaModel(host=OLLAMA_HOST, model_id=model_id), callback_handler=None)
+class _LatencyHook(HookProvider):
+    """Strands hooks: time every model call. Read back into the response `meta` so the demo's
+    trace can show what the model did and how long it took -- measured, not estimated."""
+
+    def __init__(self, sink: list) -> None:
+        self._sink = sink
+        self._t0 = 0.0
+
+    def register_hooks(self, registry: HookRegistry, **kwargs) -> None:
+        registry.add_callback(BeforeModelCallEvent, self._before)
+        registry.add_callback(AfterModelCallEvent, self._after)
+
+    def _before(self, event: BeforeModelCallEvent) -> None:
+        self._t0 = time.perf_counter()
+
+    def _after(self, event: AfterModelCallEvent) -> None:
+        self._sink.append(round((time.perf_counter() - self._t0) * 1000))
+
+
+class StatelessAgent:
+    """One fresh Strands Agent per call, sharing a single model client.
+
+    Why not one long-lived Agent: a Strands Agent keeps every message it has seen and replays
+    them as context. Shared across requests, that meant customer B's prompt was answered with
+    customer A's complaint in its context (found by inspecting `agent.messages`: 4 messages
+    after 2 calls), and the context grew without bound. Every prompt here is self-contained,
+    so no call needs another's history."""
+
+    def __init__(self, model_id: str = "qwen2.5-coder:7b") -> None:
+        self._model = OllamaModel(host=OLLAMA_HOST, model_id=model_id)
+        self.model_ms: list[int] = []
+
+    def __call__(self, prompt: str):
+        agent = Agent(model=self._model, callback_handler=None, hooks=[_LatencyHook(self.model_ms)])
+        return agent(prompt)
+
+    def drain_model_ms(self) -> list[int]:
+        out, self.model_ms = self.model_ms, []
+        return out
+
+
+def _build_agent(model_id: str = "qwen2.5-coder:7b") -> StatelessAgent:
+    return StatelessAgent(model_id)
 
 
 def _check_safety(complaint: str) -> bool:

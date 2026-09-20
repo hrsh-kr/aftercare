@@ -115,6 +115,26 @@ def test_every_code_has_a_label():
         assert code in A.ESCALATION_LABELS
 
 
+def test_each_model_call_gets_a_fresh_agent():
+    """A shared Strands Agent replays every earlier prompt as context (cross-customer bleed)."""
+    made = []
+
+    class Spy:
+        def __init__(self, **kw): made.append(self); self.kw = kw
+        def __call__(self, prompt): return "ok"
+
+    real = agent_mod.Agent
+    agent_mod.Agent = Spy
+    try:
+        sa = agent_mod.StatelessAgent.__new__(agent_mod.StatelessAgent)
+        sa._model, sa.model_ms = object(), []
+        sa("one"); sa("two")
+    finally:
+        agent_mod.Agent = real
+    assert len(made) == 2 and made[0] is not made[1]
+    assert made[0].kw["hooks"], "latency hook is attached"
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     failed = 0
