@@ -90,6 +90,18 @@
     .dl-brand-hint { font-size: 12px; color: rgba(245,245,247,.35); }
     .dl-brand-arrow { margin-left: auto; color: rgba(245,245,247,.25); font-size: 18px; }
 
+    .dl-staff input { position: absolute; opacity: 0; pointer-events: none; }
+    .dl-staff:has(input:checked) { border-color: #5aa0ff; background: rgba(90,160,255,.1); }
+    .dl-staff:has(input:focus-visible) { outline: 2px solid #5aa0ff; outline-offset: 2px; }
+    .dl-pass { width: 100%; margin-top: 18px; padding: 13px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05); color: #f5f5f7; font: inherit; font-size: 15px; }
+    .dl-demo { margin-top: 10px; font-size: 12px; color: rgba(245,245,247,.4); text-align: left; }
+    .dl-demo code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 6px; }
+    .dl-err { margin-top: 10px; font-size: 13px; color: #ff8fa5; text-align: left; }
+    .dl-go { width: 100%; margin-top: 16px; padding: 13px; border: 0; border-radius: 980px; cursor: pointer; font: inherit; font-size: 16px;
+      font-weight: 600; color: #fff; background: linear-gradient(135deg,#5E5CE6,#0a7cff); }
+    .dl-go:disabled { opacity: .5; }
+
     /* Footer */
     .dl-footer {
       margin-top: 28px;
@@ -112,25 +124,29 @@
     </a>
 
     <div class="dl-card">
-      <div class="dl-title">Brand dashboard</div>
-      <div class="dl-sub">Select your brand to view your support analytics, registered products, and escalated tickets.</div>
+      <div class="dl-title">Staff sign-in</div>
+      <div class="dl-sub">Choose an account and enter its passcode. The server signs you in; Cedar then decides what you may see and change.</div>
 
-      <div class="dl-brands">
-        {% for slug, name in brands.items() %}
-        <a class="dl-brand-btn" href="/dashboard/{{ slug }}">
-          <div class="dl-brand-dot" style="background: linear-gradient(135deg,
-            hsl({{ loop.index * 67 % 360 }},55%,28%),
-            hsl({{ (loop.index * 67 + 40) % 360 }},65%,45%));">
-            {{ name[:2] }}
-          </div>
-          <div class="dl-brand-text">
-            <div class="dl-brand-name">{{ name }}</div>
-            <div class="dl-brand-hint">Support dashboard</div>
-          </div>
-          <div class="dl-brand-arrow">›</div>
-        </a>
-        {% endfor %}
-      </div>
+      <form id="dl-form" autocomplete="off">
+        <div class="dl-brands" role="radiogroup" aria-label="Staff account">
+          {% for u in staff %}
+          <label class="dl-brand-btn dl-staff">
+            <input type="radio" name="username" value="{{ u.username }}" data-brand="{{ u.brand }}" data-code="{{ u.brand[:4] == 'aqua' and 'aqua' or 'arctic' }}-{{ u.role }}" {% if loop.first %}checked{% endif %}>
+            <div class="dl-brand-dot" style="background: linear-gradient(135deg,
+              hsl({{ (brands.keys()|list).index(u.brand) * 67 + 67 }},55%,28%),
+              hsl({{ (brands.keys()|list).index(u.brand) * 67 + 107 }},65%,45%));">{{ brands[u.brand][:2] }}</div>
+            <div class="dl-brand-text">
+              <div class="dl-brand-name">{{ u.name }}</div>
+              <div class="dl-brand-hint">{{ brands[u.brand] }} · {{ u.role }}</div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+        <input class="dl-pass" id="dl-pass" type="password" placeholder="Passcode" aria-label="Passcode" required>
+        <p class="dl-demo" id="dl-demo"></p>
+        <p class="dl-err" id="dl-err" role="alert" hidden></p>
+        <button class="dl-go" type="submit">Sign in</button>
+      </form>
     </div>
 
     <div class="dl-footer">
@@ -139,5 +155,27 @@
       <a href="/demo">Live demo</a>
     </div>
   </div>
+  <script>
+    const form = document.getElementById("dl-form"), pass = document.getElementById("dl-pass"),
+          err = document.getElementById("dl-err"), demo = document.getElementById("dl-demo");
+    const nextBrand = new URLSearchParams(location.search).get("brand");
+    function hint() {
+      const r = form.querySelector("input[name=username]:checked");
+      demo.textContent = "";
+      demo.append("Demo passcode: ");
+      const c = document.createElement("code"); c.textContent = r.dataset.code; demo.append(c);
+    }
+    form.addEventListener("change", hint); hint();
+    if (nextBrand) { const r = form.querySelector(`input[data-brand="${CSS.escape(nextBrand)}"]`); if (r) { r.checked = true; hint(); } }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault(); err.hidden = true;
+      const r = form.querySelector("input[name=username]:checked");
+      const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: r.value, passcode: pass.value }) });
+      const data = await res.json();
+      if (!res.ok) { err.textContent = data.error || "Sign-in failed."; err.hidden = false; return; }
+      location.href = "/dashboard/" + data.principal.brand;
+    });
+  </script>
 </body>
 </html>

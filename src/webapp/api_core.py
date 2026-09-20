@@ -46,7 +46,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from src.authz.cedar_authz import CedarUnavailable, can_view_dashboard
+from src.authz import cedar_authz, session
+from src.authz.cedar_authz import CedarUnavailable
 from src.layer1.catalog import BRAND_SLUGS, brand_for
 from src.layer1.registration import Registration, load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
@@ -304,22 +305,51 @@ def _insights_from_files(brand: str) -> dict:
     }
 
 
-def dashboard_data(brand: str, staff_brand: str, q: str = "") -> tuple[dict, int]:
-    """Brand-scoped, Cedar-authorized. staff_brand is who the request
-    claims to be logged in as; brand is whose data is being asked for.
-    These can disagree -- e.g. an ArcticAir staff session asking for
-    aquaspin's dashboard -- and Cedar is what actually decides, not an
-    if-statement guessing at the same logic."""
+def mask_phone(phone: str) -> str:
+    """+919876543210 -> '+91 98765 \u00b7\u00b7\u00b7\u00b7\u00b7'"""
+    digits = phone.lstrip("+")
+    if len(digits) == 12 and digits.startswith("91"):
+        return f"+91 {digits[2:7]} \u00b7\u00b7\u00b7\u00b7\u00b7"
+    return phone[:4] + " \u00b7\u00b7\u00b7\u00b7\u00b7"
+
+
+def _cedar_principal(p: session.Principal) -> dict:
+    return {"id": p.username, "brand": p.brand, "role": p.role}
+
+
+def login(username: str, passcode: str) -> tuple[dict, int]:
+    p = session.authenticate(username.strip(), passcode)
+    if p is None:
+        return {"error": "Wrong username or passcode."}, 401
+    return {"token": session.issue(p), "principal": asdict(p)}, 200
+
+
+def me(token: str | None) -> tuple[dict, int]:
+    p = session.verify(token)
+    return ({"principal": asdict(p)}, 200) if p else ({"error": "Not signed in."}, 401)
+
+
+def _deny_message(p: session.Principal, what: str, d: cedar_authz.Decision) -> str:
+    rule = ", ".join(d.policies) or "no policy permits it"
+    return f"{p.name} ({p.brand} {p.role}) may not {what}. Cedar decided by: {rule}."
+
+
+def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, int]:
+    """Brand-scoped, Cedar-authorized. The principal comes from the signed session
+    cookie (server-side), the resource from the URL; Cedar -- not an if-statement --
+    decides whether they match, and says which policy decided."""
     brand = brand.strip().lower()
-    staff_brand = staff_brand.strip().lower()
+    principal = session.verify(token)
+    if principal is None:
+        return {"error": "Not signed in."}, 401
 
     try:
-        allowed = can_view_dashboard(staff_brand, brand)
+        decision = cedar_authz.can_view_dashboard(_cedar_principal(principal), brand)
     except CedarUnavailable as exc:
         return {"error": f"Authorization check unavailable: {exc}"}, 503
 
-    if not allowed:
-        return {"error": f"Not authorized to view {brand}'s dashboard as '{staff_brand or 'nobody'}'."}, 403
+    if not decision.allowed:
+        return {"error": _deny_message(principal, f"view {brand}'s dashboard", decision), "decision": {"allowed": False, "policies": decision.policies}}, 403
 
     registrations = [r for r in load_registrations() if brand_for(r.product_id).lower() == brand]
     tickets = sorted(
@@ -334,6 +364,16 @@ def dashboard_data(brand: str, staff_brand: str, q: str = "") -> tuple[dict, int
         except Exception:
             ql = q.strip().lower()
             tickets = [t for t in tickets if ql in f"{t.customer_name} {t.product_name} {t.issue_summary}".lower()]
+
+    # Phones are masked unless Cedar says this principal may see this ticket's number in full.
+    phone_shown = {}
+    for t in tickets:
+        try:
+            full = cedar_authz.authorize(_cedar_principal(principal), "viewPhoneUnmasked", "Ticket", t.ticket_id,
+                                         {"brand": brand, "safety": bool(t.safety_flag)}).allowed
+        except CedarUnavailable:
+            full = False
+        phone_shown[t.ticket_id] = (t.customer_phone if full else mask_phone(t.customer_phone), full)
 
     warranty_counts = {"active": 0, "expired": 0}
     for r in registrations:
@@ -353,6 +393,7 @@ def dashboard_data(brand: str, staff_brand: str, q: str = "") -> tuple[dict, int
 
     return {
         "brand": brand,
+        "authz": {"principal": asdict(principal), "decision": {"allowed": True, "policies": decision.policies}},
         "insights": _insights(brand),
         "tickets": [
             {
@@ -362,6 +403,8 @@ def dashboard_data(brand: str, staff_brand: str, q: str = "") -> tuple[dict, int
                 "issue_summary": t.issue_summary,
                 "attempts_tried": t.attempts_tried,
                 "safety_flag": t.safety_flag,
+                "customer_phone": phone_shown[t.ticket_id][0],
+                "phone_unmasked": phone_shown[t.ticket_id][1],
                 "reason_code": t.reason_code,
                 "reason_label": agent_mod.ESCALATION_LABELS.get(t.reason_code, ""),
                 "status": t.status,
@@ -401,7 +444,6 @@ def health() -> dict:
     import time
     import urllib.request
 
-    from src.authz import cedar_authz
     from src.layer1 import opensearch_retrieval as osr
 
     def probe(fn):
@@ -426,13 +468,40 @@ def health() -> dict:
     def cedar():
         if not cedar_authz.CEDAR_BIN.exists():
             raise RuntimeError("Cedar CLI missing")
-        return {"policy_sha": hashlib.sha256(cedar_authz.POLICY_PATH.read_bytes()).hexdigest()[:8]}
+        ok, msg = cedar_authz.validate()
+        if not ok:
+            raise RuntimeError("policies fail cedar validate")
+        return {"policy_sha": hashlib.sha256(cedar_authz.POLICY_PATH.read_bytes()).hexdigest()[:8], "validated": True}
 
     return {
         "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "flask",
         "storage": "file",
         "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar)},
     }
+
+
+TICKET_STATUSES = ("new", "in_progress", "resolved")
+
+
+def update_ticket_status(ticket_id: str, status: str, token: str | None) -> tuple[dict, int]:
+    principal = session.verify(token)
+    if principal is None:
+        return {"error": "Not signed in."}, 401
+    if status not in TICKET_STATUSES:
+        return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
+    ticket = next((t for t in Ticket.load_all() if t.ticket_id == ticket_id), None)
+    if ticket is None:
+        return {"error": "Unknown ticket."}, 404
+    try:
+        d = cedar_authz.authorize(_cedar_principal(principal), "updateTicketStatus", "Ticket", ticket_id,
+                                  {"brand": brand_for(ticket.product_id).lower(), "safety": bool(ticket.safety_flag)})
+    except CedarUnavailable as exc:
+        return {"error": f"Authorization check unavailable: {exc}"}, 503
+    if not d.allowed:
+        return {"error": _deny_message(principal, f"change ticket {ticket_id}", d), "decision": {"allowed": False, "policies": d.policies}}, 403
+    ticket.status = status
+    ticket.save()
+    return {"ticket_id": ticket_id, "status": status, "decision": {"allowed": True, "policies": d.policies}}, 200
 
 
 def _clean(message: str) -> str:

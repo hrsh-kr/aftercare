@@ -13,7 +13,6 @@
 "use strict";
 
 const brand      = window.__BRAND__;
-const staffBrand = sessionStorage.getItem("staffBrand") || "";
 
 function escapeHtml(value) {
   const div = document.createElement("div");
@@ -64,13 +63,13 @@ const dashContent = document.getElementById("dash-content");
 
 // ── Load dashboard ─────────────────────────────────────────────────────────────
 
-async function loadDashboard() {
-  if (!staffBrand) { window.location.href = "/dashboard"; return; }
+let canManage = false;
 
-  const res  = await fetch(`/api/dashboard/${brand}`, {
-    headers: { "X-Staff-Brand": staffBrand },
-  });
+async function loadDashboard() {
+  const res  = await fetch(`/api/dashboard/${brand}`);   // identity = the signed session cookie, not a header
   const data = await res.json();
+
+  if (res.status === 401) { window.location.href = `/dashboard?brand=${encodeURIComponent(brand)}`; return; }
 
   if (res.status === 403) {
     sessionLine.textContent = "Denied";
@@ -86,8 +85,9 @@ async function loadDashboard() {
   }
 
   sessionLine.innerHTML =
-    `Logged in as <strong>${escapeHtml(staffBrand)} staff</strong>
-     &nbsp;<span class="cedar-badge">✓ Authorized by Cedar</span>`;
+    `Signed in as <strong>${escapeHtml(data.authz.principal.name)}</strong> · ${escapeHtml(data.authz.principal.role)}
+     &nbsp;<span class="cedar-badge" title="Decided by Cedar policy">✓ Cedar: ${escapeHtml(data.authz.decision.policies.join(", "))}</span>`;
+  canManage = data.authz.principal.role === "manager";
   dashContent.hidden = false;
 
   // ── Stats ──────────────────────────────────────────────────────────────────
@@ -188,7 +188,13 @@ async function loadDashboard() {
               ${t.created_at ? `<span class="ticket-ts">${escapeHtml(formatTs(t.created_at))}</span>` : ""}
             </div>
           </div>
-          <div class="ticket-meta">${escapeHtml(t.customer_name)} · ${escapeHtml(t.product_name)}</div>
+          <div class="ticket-meta">${escapeHtml(t.customer_name)} · ${escapeHtml(t.product_name)}
+            · <span class="ticket-phone" title="${t.phone_unmasked ? "Shown in full: Cedar permits it for safety tickets" : "Masked: Cedar permits the full number only for safety tickets"}">${escapeHtml(t.customer_phone)}${t.phone_unmasked ? " 🔓" : ""}</span></div>
+          <div class="ticket-status" data-ticket="${escapeHtml(t.ticket_id)}">
+            ${["new", "in_progress", "resolved"].map((st) =>
+              `<button type="button" class="st-btn ${t.status === st ? "on" : ""}" data-status="${st}">${st.replace("_", " ")}</button>`).join("")}
+            <span class="st-msg" role="status"></span>
+          </div>
 
           <!-- Thread-style conversation excerpt -->
           <div class="ticket-thread">
@@ -380,3 +386,23 @@ function renderWarrantyRing(counts) {
 }
 
 loadDashboard();
+
+
+// Ticket status: the server asks Cedar (updateTicketStatus); a denial is shown, not hidden.
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".st-btn");
+  if (!btn) return;
+  const row = btn.closest(".ticket-status");
+  const msg = row.querySelector(".st-msg");
+  const res = await fetch(`/api/tickets/${encodeURIComponent(row.dataset.ticket)}/status`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: btn.dataset.status }),
+  });
+  const data = await res.json();
+  msg.className = "st-msg " + (res.ok ? "ok" : "no");
+  if (res.ok) {
+    row.querySelectorAll(".st-btn").forEach((b) => b.classList.toggle("on", b === btn));
+    msg.textContent = `Allowed by ${data.decision.policies.join(", ")}`;
+  } else {
+    msg.textContent = data.error || "Not allowed";
+  }
+});

@@ -19,13 +19,7 @@ from src.webapp import api_core as core
 app = Flask(__name__)
 
 
-def _mask_phone(phone: str) -> str:
-    """+919876543210 -> '+91 98765 \u00b7\u00b7\u00b7\u00b7\u00b7' -- the landing page shows real fixture
-    rows, but never a full number."""
-    digits = phone.lstrip("+")
-    if len(digits) == 12 and digits.startswith("91"):
-        return f"+91 {digits[2:7]} \u00b7\u00b7\u00b7\u00b7\u00b7"
-    return phone[:4] + " \u00b7\u00b7\u00b7\u00b7\u00b7"
+_mask_phone = core.mask_phone
 
 
 @app.route("/")
@@ -73,8 +67,9 @@ def demo():
 
 @app.route("/dashboard")
 def dashboard_login():
-    """The 'which brand's staff am I' picker."""
-    return render_template("dashboard_login.html", brands=agent_mod.BRAND_SLUGS)
+    """Staff sign-in: pick an account, enter its passcode (server issues the session)."""
+    from src.authz import session
+    return render_template("dashboard_login.html", staff=session.staff_directory(), brands=agent_mod.BRAND_SLUGS)
 
 
 @app.route("/dashboard/<brand>")
@@ -82,13 +77,51 @@ def dashboard(brand: str):
     brand = brand.strip().lower()
     if brand not in agent_mod.BRAND_SLUGS:
         abort(404)
-    return render_template("dashboard.html", brand=brand, brand_display=agent_mod.BRAND_SLUGS[brand])
+    others = [(k, v) for k, v in agent_mod.BRAND_SLUGS.items() if k != brand]
+    return render_template("dashboard.html", brand=brand, brand_display=agent_mod.BRAND_SLUGS[brand], others=others)
+
+
+def _token() -> str | None:
+    from src.authz import session
+    return request.cookies.get(session.COOKIE)
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    from src.authz import session
+    body = request.get_json(silent=True) or {}
+    data, status = core.login(body.get("username", ""), body.get("passcode", ""))
+    token = data.pop("token", None)
+    resp = jsonify(data)
+    resp.status_code = status
+    if token:
+        resp.set_cookie(session.COOKIE, token, httponly=True, samesite="Lax", max_age=session.MAX_AGE)
+    return resp
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    from src.authz import session
+    resp = jsonify({"ok": True})
+    resp.delete_cookie(session.COOKIE)
+    return resp
+
+
+@app.route("/api/me", methods=["GET"])
+def me():
+    data, status = core.me(_token())
+    return jsonify(data), status
 
 
 @app.route("/api/dashboard/<brand>", methods=["GET"])
 def dashboard_data(brand: str):
-    staff_brand = request.headers.get("X-Staff-Brand", "")
-    data, status = core.dashboard_data(brand, staff_brand, request.args.get("q", ""))
+    data, status = core.dashboard_data(brand, _token(), request.args.get("q", ""))
+    return jsonify(data), status
+
+
+@app.route("/api/tickets/<ticket_id>/status", methods=["POST"])
+def ticket_status(ticket_id: str):
+    data, status = core.update_ticket_status(ticket_id, (request.get_json(silent=True) or {}).get("status", ""), _token())
     return jsonify(data), status
 
 

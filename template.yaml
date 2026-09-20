@@ -94,6 +94,42 @@ Resources:
             Path: /api/dashboard/{brand}
             Method: get
 
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.login
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/login
+            Method: post
+
+  MeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.me
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/me
+            Method: get
+
+  TicketStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.ticket_status
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/tickets/{ticket_id}/status
+            Method: post
+
 Outputs:
   ApiUrl:
     Description: Local API Gateway base URL (after `sam local start-api`)

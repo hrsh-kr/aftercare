@@ -17,12 +17,21 @@ import json
 from src.webapp import api_core as core
 
 
-def _response(body: dict, status: int = 200) -> dict:
-    return {
-        "statusCode": status,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(body),
-    }
+def _response(body: dict, status: int = 200, cookie: str | None = None) -> dict:
+    headers = {"Content-Type": "application/json"}
+    if cookie:
+        headers["Set-Cookie"] = cookie
+    return {"statusCode": status, "headers": headers, "body": json.dumps(body)}
+
+
+def _token(event: dict) -> str | None:
+    """The session cookie, from API Gateway's Cookie header."""
+    from src.authz import session
+    for part in _header(event, "Cookie").split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == session.COOKIE:
+            return value
+    return None
 
 
 def _body(event: dict) -> dict:
@@ -83,8 +92,28 @@ def conversation(event, context):
 
 def dashboard(event, context):
     brand = (event.get("pathParameters") or {}).get("brand", "")
-    staff_brand = _header(event, "X-Staff-Brand")
-    data, status = core.dashboard_data(brand, staff_brand)
+    q = (event.get("queryStringParameters") or {}).get("q", "")
+    data, status = core.dashboard_data(brand, _token(event), q)
+    return _response(data, status)
+
+
+def login(event, context):
+    from src.authz import session
+    body = _body(event)
+    data, status = core.login(body.get("username", ""), body.get("passcode", ""))
+    token = data.pop("token", None)
+    cookie = f"{session.COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={session.MAX_AGE}" if token else None
+    return _response(data, status, cookie)
+
+
+def me(event, context):
+    data, status = core.me(_token(event))
+    return _response(data, status)
+
+
+def ticket_status(event, context):
+    ticket_id = (event.get("pathParameters") or {}).get("ticket_id", "")
+    data, status = core.update_ticket_status(ticket_id, _body(event).get("status", ""), _token(event))
     return _response(data, status)
 
 

@@ -1,0 +1,6 @@
+entity Staff = { brand: String, role: String };
+entity Brand = { brand: String };
+entity Ticket = { brand: String, safety: Bool };
+
+action viewDashboard appliesTo { principal: Staff, resource: Brand };
+action viewTicket, updateTicketStatus, viewPhoneUnmasked appliesTo { principal: Staff, resource: Ticket };

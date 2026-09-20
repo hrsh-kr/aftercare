@@ -22,14 +22,15 @@
         <div class="brand-name dash-title">{{ brand_display }} — Support Dashboard</div>
         <div class="brand-sub" id="session-line">Checking authorization…</div>
       </div>
-      <a class="switch-brand-link" href="/dashboard">Switch brand</a>
+      <a class="switch-brand-link" href="/dashboard">Switch account</a>
+      {% for slug, name in others %}<a class="switch-brand-link try-other" href="/dashboard/{{ slug }}" title="You should be refused. Cedar will say which rule refused you.">Try {{ name }}'s dashboard</a>{% endfor %}
     </header>
 
     <div id="denied-panel" class="denied-panel" hidden>
       <div class="denied-icon">🔒</div>
       <div class="denied-title">Access denied</div>
       <p class="denied-copy" id="denied-copy"></p>
-      <a class="switch-brand-link" href="/dashboard">Log in as the correct brand</a>
+      <a class="switch-brand-link" href="/dashboard">Sign in as a different account</a>
     </div>
 
     <div id="dash-content" hidden>

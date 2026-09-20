@@ -257,8 +257,7 @@ function renderTicket(r, esc) {
   const dash = $("d-dash");
   dash.hidden = false;
   dash.textContent = `Open the ${BRAND[scenario.brand].name} dashboard`;
-  dash.onclick = () => { try { sessionStorage.setItem("staffBrand", scenario.brand); } catch (_) { /* dashboard will ask */ } };
-  dash.href = `/dashboard/${scenario.brand}`;
+  dash.href = `/dashboard/${scenario.brand}`;   // signs in first if needed
 }
 
 function finish(text) {
