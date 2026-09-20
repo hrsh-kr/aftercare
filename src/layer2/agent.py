@@ -29,7 +29,8 @@ from src.layer3b.tickets import Ticket, next_ticket_id
 # sets this to http://host.docker.internal:11434 for exactly this reason.
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
-SAFETY_KEYWORDS = ["burning smell", "burning", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell"]
+SAFETY_KEYWORDS = ["burning smell", "burning", "burnt", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell",
+                   "fumes", "melting", "short circuit", "electric"]
 COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
 MAX_ATTEMPTS = 2
 RECURRENCE_DAYS = 90
@@ -142,9 +143,34 @@ def _build_agent(model_id: str = "qwen2.5-coder:7b") -> StatelessAgent:
     return StatelessAgent(model_id)
 
 
+_NEGATORS = {"no", "not", "without", "never", "isnt", "doesnt", "dont", "cant", "nothing"}
+
+
 def _check_safety(complaint: str) -> bool:
-    lower = complaint.lower()
-    return any(kw in lower for kw in SAFETY_KEYWORDS)
+    """A safety keyword, unless it is plainly negated ("no burning smell", "without any smoke").
+
+    The two ways to be wrong are not equal: a missed safety issue is far worse than an
+    unneeded escalation. So negation only counts when the negator sits right before the
+    keyword (within two words), and "not only ..." never counts ("not only a burning smell")."""
+    text = " ".join(re.findall(r"[a-z]+", complaint.lower().replace("'", "")))
+    for kw in SAFETY_KEYWORDS:
+        for m in re.finditer(r"\b" + re.escape(kw), text):
+            words = text[: m.start()].split()
+            # "doesn't spark or smoke": the negation reaches across an "or"/"nor"
+            before = words[-4:] if words[-1:] and words[-1] in ("or", "nor") else words[-2:]
+            if not (set(before) & _NEGATORS) or "only" in before:
+                return True
+    return False
+
+
+_EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]")
+
+
+def _tidy(message: str, limit: int = 400) -> str:
+    """Model output guard, applied before anything is stored: no emoji, no wrapping quotes,
+    no runs of whitespace, bounded length. Customers see the same text the ticket records."""
+    text = re.sub(r"\s+", " ", _EMOJI.sub("", message)).strip().strip('"').strip()
+    return text[:limit].rstrip()
 
 
 def _is_coverage_question(complaint: str) -> bool:
@@ -242,7 +268,7 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         conv.ticket = _escalate(conv, "no_steps", "No self-service step found in the relevant section.")
         return conv
 
-    phrased = str(agent(PHRASE_STEP_PROMPT.format(complaint=complaint, raw_step=available_steps[0]))).strip()
+    phrased = _tidy(str(agent(PHRASE_STEP_PROMPT.format(complaint=complaint, raw_step=available_steps[0]))))
     conv.turns.append(Turn(attempt_number=1, step=phrased))
     return conv
 
@@ -277,7 +303,7 @@ def respond(conv: Conversation, customer_reply: str, agent: Agent | None = None)
         return conv
 
     raw_step = conv.available_steps[next_index]
-    phrased = str(agent(PHRASE_STEP_PROMPT.format(complaint=conv.complaint, raw_step=raw_step))).strip()
+    phrased = _tidy(str(agent(PHRASE_STEP_PROMPT.format(complaint=conv.complaint, raw_step=raw_step))))
     conv.turns.append(Turn(attempt_number=current.attempt_number + 1, step=phrased))
     return conv
 

@@ -259,7 +259,8 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
                        # A real system would match on serial_number too for absolute precision.
 
     t0 = time.perf_counter()
-    conv = agent_mod.start(reg, complaint, agent=get_agent(), history=_history(reg.serial_number)[0])
+    history, history_engine = _history(reg.serial_number)
+    conv = agent_mod.start(reg, complaint, agent=get_agent(), history=history)
     agent_ms = round((time.perf_counter() - t0) * 1000)
     conv_id = str(uuid.uuid4())
     _save_conversation(conv_id, conv)
@@ -267,6 +268,8 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
     state = _conversation_state(conv)
     obs.conversation_outcome(state, brand_for(reg.product_id).lower(), agent_ms)
     state["meta"]["model_ms"] = _drain_model_ms()
+    state["meta"]["history_engine"] = history_engine
+    state["meta"]["storage"] = get_store().name
     return {"conversation_id": conv_id, **state}, 200
 
 
@@ -283,6 +286,7 @@ def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
     state = _conversation_state(conv)
     obs.conversation_outcome(state, brand_for(conv.registration.product_id).lower(), agent_ms)
     state["meta"]["model_ms"] = _drain_model_ms()
+    state["meta"]["storage"] = get_store().name
     return state, 200
 
 
@@ -492,6 +496,70 @@ def health() -> dict:
         "storage": get_store().name,
         "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar)},
     }
+
+
+REQUIRED_COLUMNS = ("customer_name", "customer_phone", "product_id", "product_name", "serial_number", "purchase_date", "retailer", "purchase_price")
+MAX_CSV_BYTES = 200_000
+
+
+def ingest_preview(csv_text: str) -> tuple[dict, int]:
+    """Read a sales file the way onboarding would: check every row, file each product under the
+    brand that owns its product code, and report what is wrong instead of guessing. A preview:
+    the demo's registry is still fixtures/sales_data.csv. In production the upload lands in S3,
+    an event triggers this same function, and accepted rows are written to the registry."""
+    import csv
+    import io
+    import re
+
+    if len(csv_text.encode()) > MAX_CSV_BYTES:
+        return {"error": f"File too large for the demo (limit {MAX_CSV_BYTES // 1000} KB)."}, 413
+    reader = csv.DictReader(io.StringIO(csv_text.strip()))
+    missing = [c for c in REQUIRED_COLUMNS if c not in (reader.fieldnames or [])]
+    if missing:
+        return {"error": f"Missing column(s): {', '.join(missing)}", "expected": list(REQUIRED_COLUMNS)}, 422
+
+    issues: list[dict] = []
+    seen: dict[str, int] = {}
+    by_brand: dict[str, dict] = {}
+    total = 0
+    for line, row in enumerate(reader, start=2):
+        total += 1
+        if total > 2000:
+            issues.append({"line": line, "problem": "Stopped at 2,000 rows (demo limit)."})
+            break
+        problems = []
+        try:
+            brand = brand_for(row["product_id"].strip())
+        except ValueError:
+            brand = None
+            problems.append(f"Unknown product code \"{row['product_id'].strip()}\": no brand owns it")
+        try:
+            datetime.strptime(row["purchase_date"].strip(), "%Y-%m-%d")
+        except ValueError:
+            problems.append(f"Purchase date \"{row['purchase_date'].strip()}\" is not YYYY-MM-DD")
+        if not re.fullmatch(r"\+\d{10,15}", row["customer_phone"].strip()):
+            problems.append("Phone is not in +<country code><number> form")
+        serial = row["serial_number"].strip()
+        if not serial:
+            problems.append("Serial number is empty")
+        elif serial in seen:
+            problems.append(f"Serial {serial} already appears on line {seen[serial]}")
+        else:
+            seen[serial] = line
+        if problems:
+            issues.extend({"line": line, "problem": p} for p in problems)
+            continue
+        entry = by_brand.setdefault(brand, {"brand": brand, "slug": brand.lower(), "products": 0, "phones": set()})
+        entry["products"] += 1
+        entry["phones"].add(row["customer_phone"].strip())
+
+    accepted = sum(e["products"] for e in by_brand.values())
+    return {
+        "rows": total, "accepted": accepted, "rejected": total - accepted,
+        "brands": [{"brand": e["brand"], "slug": e["slug"], "products": e["products"], "customers": len(e["phones"])}
+                   for e in sorted(by_brand.values(), key=lambda e: e["brand"])],
+        "issues": issues[:25],
+    }, 200
 
 
 TICKET_STATUSES = ("new", "in_progress", "resolved")

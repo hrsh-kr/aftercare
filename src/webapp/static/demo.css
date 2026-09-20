@@ -100,4 +100,7 @@
   .d-trace li{animation:none;}
 }
 
-.d-runtime{display:inline-block;margin:0 0 18px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--on-dark-2);font-size:13px;font-weight:500;}
+.d-runtime{display:inline-block;margin:26px 0 0;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--on-dark-2);font-size:13px;font-weight:500;}
+
+.d-trace .t-tag{display:inline-block;margin:0 8px 0 0;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.09);color:var(--on-dark-2);font-size:11.5px;font-weight:600;vertical-align:1px;}
+.d-up{color:#34C759;}.d-down{color:#ff9f0a;}

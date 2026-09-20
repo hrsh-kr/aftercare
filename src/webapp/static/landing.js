@@ -222,3 +222,66 @@ function tickStory() {
 }
 onScroll(tickStory);
 tickStory();
+
+
+/* ── Step 0: check a sales file for real (POST /api/ingest) ── */
+(function () {
+  const out = document.getElementById("l-check-out");
+  if (!out) return;
+  const HEADER = "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\n";
+  const MESSY = HEADER + [
+    "Asha Rao,+919800000001,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-80001,2026-02-11,Reliance Digital,25999",
+    "Karan Shah,+919800000002,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-80002,2026-03-02,Reliance Digital,33999",
+    "Meena Iyer,+919800000003,TV-55-X,Mystery 55in TV,TV-80003,2026-03-09,Reliance Digital,45999",
+    "Rohit Jain,+919800000004,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-80002,2026-03-10,Reliance Digital,33999",
+    "Sana Ali,98000,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-80005,12/03/2026,Reliance Digital,35999",
+  ].join("\n");
+
+  function show(data, ok) {
+    out.textContent = "";
+    const line = (html) => { const p = document.createElement("p"); p.innerHTML = html; out.appendChild(p); };
+    if (!ok) { line("<b>Can't read this file.</b> "); out.lastChild.append(data.error || "Unknown error"); return; }
+    line(`<b>${data.rows} rows read.</b> ${data.accepted} filed by brand, ${data.rejected} need attention.`);
+    if (data.brands.length) {
+      const chips = document.createElement("div"); chips.className = "l-check-chips";
+      data.brands.forEach((b) => { const s = document.createElement("span"); s.textContent = `${b.brand}: ${b.products} product${b.products === 1 ? "" : "s"}, ${b.customers} customer${b.customers === 1 ? "" : "s"}`; chips.appendChild(s); });
+      out.appendChild(chips);
+    }
+    if (data.issues.length) {
+      const ul = document.createElement("ul");
+      data.issues.forEach((i) => { const li = document.createElement("li"); li.textContent = `Line ${i.line}: ${i.problem}`; ul.appendChild(li); });
+      out.appendChild(ul);
+    }
+  }
+  async function check(text) {
+    out.textContent = "Checking…";
+    try {
+      const r = await fetch("/api/ingest", { method: "POST", headers: { "Content-Type": "text/csv" }, body: text });
+      show(await r.json(), r.ok);
+    } catch (_) { out.textContent = "Couldn't reach the server."; }
+  }
+  document.querySelectorAll(".l-check-btn[data-sample]").forEach((b) => b.addEventListener("click", async () => {
+    if (b.dataset.sample === "messy") return check(MESSY);
+    const rows = Array.from(document.querySelectorAll(".l-csv-table tbody tr")).length;
+    // the file shown above is the fixture itself; ask the server to check exactly that file
+    const r = await fetch("/api/sample-csv"); check(await r.text());
+  }));
+  const file = document.getElementById("l-check-file");
+  file && file.addEventListener("change", () => { const f = file.files[0]; if (f) f.text().then(check); });
+})();
+
+/* ── Under the hood: chips from a live health probe ── */
+(async function () {
+  const chips = document.querySelectorAll("[data-chip]");
+  if (!chips.length) return;
+  const set = (name, ok, text) => document.querySelectorAll(`[data-chip="${name}"]`).forEach((c) => { c.textContent = text; c.classList.toggle("up", ok); c.classList.toggle("down", !ok); });
+  try {
+    const h = await (await fetch("/api/health")).json();
+    const c = h.components;
+    set("runtime", true, h.runtime === "lambda" ? "● running as Lambda" : "● Flask now · same handlers run as Lambdas");
+    set("ollama", c.ollama.ok, c.ollama.ok ? `● live · ${c.ollama.ms} ms · ${c.ollama.models.includes("qwen2.5-coder:7b") ? "qwen2.5-coder:7b" : c.ollama.models[0]}` : "○ offline: start ollama");
+    set("opensearch", c.opensearch.ok, c.opensearch.ok ? `● live · v${c.opensearch.version} · ${c.opensearch.documents} sections indexed` : "○ offline · keyword fallback in use");
+    set("cedar", c.cedar.ok, c.cedar.ok ? `● live · policies validated · ${c.cedar.policy_sha}` : "○ Cedar CLI missing");
+    set("storage", true, h.storage === "dynamodb" ? "● DynamoDB Local" : "● file store here · DynamoDB under SAM");
+  } catch (_) { chips.forEach((c) => { c.textContent = "○ status unavailable"; c.classList.add("down"); }); }
+})();

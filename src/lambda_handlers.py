@@ -144,3 +144,8 @@ def demo_reset(event, context):
     if os.environ.get("AFTERCARE_DEMO") != "1":
         return _response({"error": "Not found."}, 404)
     return _response(core.reset_demo_data())
+
+
+def ingest(event, context):
+    data, status = core.ingest_preview(event.get("body") or "")
+    return _response(data, status)

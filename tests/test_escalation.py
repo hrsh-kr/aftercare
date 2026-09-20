@@ -135,6 +135,22 @@ def test_each_model_call_gets_a_fresh_agent():
     assert made[0].kw["hooks"], "latency hook is attached"
 
 
+def test_safety_keywords_and_negation():
+    yes = ["There's a burning smell coming from my AC", "sparks from the plug", "I can smell fumes", "the wire is melting",
+           "not only a burning smell but it is loud", "no idea why, but there is smoke coming out", "It smells burnt"]
+    no = ["There is no burning smell, just a loud noise", "without any smoke it still stops", "the drum bangs when it spins",
+          "It doesn't spark or smoke, only leaks"]
+    for t in yes:
+        assert A._check_safety(t), f"should be safety: {t}"
+    for t in no:
+        assert not A._check_safety(t), f"should NOT be safety: {t}"
+
+
+def test_model_output_is_tidied_before_storage():
+    assert A._tidy('"Hi, please level it \U0001F321\ufe0f\U0001F44D  now!"') == "Hi, please level it now!"
+    assert len(A._tidy("x" * 900)) == 400
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     failed = 0

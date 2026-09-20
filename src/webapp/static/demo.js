@@ -76,9 +76,10 @@ function bubble(type, text) {
   return b;
 }
 function typing() { const t = el("div", "fb typing show", "•••"); chat.appendChild(t); chat.scrollTop = chat.scrollHeight; return t; }
-function traceItem(html, cls) {
+function traceItem(html, cls, tag) {
   trace.querySelector(".d-trace-empty")?.remove();
   const li = el("li", cls || "");
+  if (tag) li.appendChild(el("span", "t-tag", tag));
   html.forEach((part) => li.append(typeof part === "string" ? document.createTextNode(part) : part));
   trace.appendChild(li);
   return li;
@@ -149,7 +150,7 @@ async function onComplaint(text, my) {
   if (my !== run) return;
   if (!info.found) throw new Error("No customer found for this number.");
   state.products = info.products;
-  traceItem([strong("Recognised by phone number"), sub(`${info.customer_name} · ${info.products.length} ${info.brand} product${info.products.length > 1 ? "s" : ""} on file`)]);
+  traceItem([strong("Recognised by phone number"), sub(`${info.customer_name} · ${info.products.length} ${info.brand} product${info.products.length > 1 ? "s" : ""} on file`)], "", "Registry");
   if (info.products.length > 1) {
     await sleep(REDUCED ? 0 : 500);
     bubble("agent", `Hi ${info.customer_name.split(" ")[0]}! Which product is this about?`);
@@ -177,7 +178,7 @@ async function pickProduct(p, my, btn) {
 
 async function begin(product, my) {
   state.product = product;
-  traceItem([strong(`Product: ${product.product_name}`), sub(`Serial ${product.serial_number} · ${product.warranty_component_status === "active" ? "warranty active" : "warranty expired"}`)]);
+  traceItem([strong(`Product: ${product.product_name}`), sub(`Serial ${product.serial_number} · ${product.warranty_component_status === "active" ? "warranty active" : "warranty expired"}`)], "", "Rule");
   const t = typing();
   // One key per customer message: a network retry of *this* request can't open a second conversation.
   const r = await api("/api/start", { phone: scenario.phone, complaint: state.complaint, product_id: scenario.productId || product.product_id },
@@ -204,8 +205,9 @@ async function present(r, my) {
   const method = { opensearch: "OpenSearch BM25", keyword_fallback: "keyword search (OpenSearch offline)", safety_rule: "safety rule" }[m.retrieval_method] || m.retrieval_method;
 
   if (r.status === "waiting") {
-    if (m.attempt === 1) traceItem([strong("Searched the product manual"), sub(`${method} → ${m.section_heading}`)]);
-    traceItem([strong(`Step ${m.attempt} of ${m.max_attempts} offered`), sub("Worded by the model from one numbered step in that section")]);
+    if (m.attempt === 1) traceItem([strong("Searched the product manual"), sub(`${method} → ${m.section_heading}`)], "", m.retrieval_method === "opensearch" ? "OpenSearch" : "Keyword search");
+    const ms = (m.model_ms || []).reduce((a, b) => a + b, 0);
+    traceItem([strong(`Step ${m.attempt} of ${m.max_attempts} offered`), sub("Worded by the model from one numbered step in that section")], "", ms ? `Strands · ${(ms / 1000).toFixed(1)} s` : "Strands");
     bubble("agent", r.message);
     if (m.section_heading) bubble("source", `📄 ${BRAND[scenario.brand].name} manual · ${m.section_heading}`);
     state.phase = "reply";
@@ -225,17 +227,17 @@ async function present(r, my) {
   /* escalated */
   const code = esc && esc.code;
   if (code === "safety") {
-    traceItem([strong("Safety keyword in the message"), sub("Troubleshooting skipped. The manual's own warning is sent as written")], "t-safety");
+    traceItem([strong("Safety keyword in the message"), sub("Troubleshooting skipped. The manual's own warning is sent as written")], "t-safety", "Rule");
   } else if (code === "unmatched") {
-    traceItem([strong("Nothing in the manual matches"), sub(esc.detail)], "t-handoff");
+    traceItem([strong("Nothing in the manual matches"), sub(esc.detail.replace(" -- ", " · "))], "t-handoff", "Rule");
   } else if (code === "recurring") {
-    traceItem([strong("Same product, same problem, seen before"), sub(esc.detail)], "t-handoff");
+    traceItem([strong("Same product, same problem, seen before"), sub(esc.detail.replace(" -- ", " · "))], "t-handoff", m.history_engine === "opensearch" ? "OpenSearch" : "Case history");
   } else if (code === "attempts_exhausted") {
-    traceItem([strong("Customer says it's still broken"), sub("Both manual steps tried")], "t-handoff");
+    traceItem([strong("Customer says it's still broken"), sub("Both manual steps tried")], "t-handoff", "Rule");
   } else if (code === "no_more_steps") {
     traceItem([strong("Manual has nothing more to try"), sub("Section has no further self-service step")], "t-handoff");
   }
-  traceItem([strong(`Handed to a person: ${esc ? esc.label : "needs a person"}`), sub(`Ticket ${r.ticket_id} created with what was tried`)], code === "safety" ? "t-safety" : "t-handoff");
+  traceItem([strong(`Handed to a person: ${esc ? esc.label : "needs a person"}`), sub(`Ticket ${r.ticket_id} created with what was tried`)], code === "safety" ? "t-safety" : "t-handoff", m.storage === "dynamodb" ? "DynamoDB" : "Ticket store");
   bubble(code === "safety" ? "warn" : "sys", code === "safety" ? "⚠ Safety issue: emergency visit" : "A person will take it from here");
   bubble("agent", r.message);
   renderTicket(r, esc);
@@ -253,10 +255,11 @@ function renderTicket(r, esc) {
   row("Customer", t.customer_name);
   row("Product", `${t.product_name} (${t.serial_number})`);
   row("Their words", t.issue_summary.split(" -- ")[0]);
-  if (esc.detail) row("Why", esc.detail);
+  if (esc.detail) row("Why", esc.detail.replace(" -- ", " · "));
   const dd = el("dd");
   if (t.attempts_tried.length) { const ol = el("ol"); t.attempts_tried.forEach((a) => ol.appendChild(el("li", null, a))); dd.appendChild(ol); }
-  else dd.textContent = t.safety_flag ? "Nothing. Safety issue, no troubleshooting" : "Nothing: no manual step applied";
+  else dd.textContent = t.safety_flag ? "Nothing. Safety issue, no troubleshooting"
+    : esc.code === "recurring" ? "Nothing new. The earlier case is attached" : "Nothing: no manual step applied";
   dl.append(el("dt", null, "Tried"), dd);
   body.push(dl);
   ticketBox.replaceChildren(...body);
@@ -289,8 +292,12 @@ $("d-next").addEventListener("click", (e) => { e.preventDefault(); $("d-pick").s
   try {
     const h = await (await fetch(API + "/api/health")).json();
     const c = h.components;
-    const up = (k) => (c[k] && c[k].ok ? "●" : "○");
-    pill.textContent = `Running on ${h.runtime === "lambda" ? "AWS Lambda (SAM Local)" : "Flask"} · ${h.storage === "dynamodb" ? "DynamoDB Local" : "file store"} · OpenSearch ${up("opensearch")} · Cedar ${up("cedar")} · Ollama ${up("ollama")}`;
+    pill.textContent = "";
+    pill.append(document.createTextNode(`Running on ${h.runtime === "lambda" ? "AWS Lambda (SAM Local)" : "Flask"} · ${h.storage === "dynamodb" ? "DynamoDB Local" : "file store"}`));
+    [["OpenSearch", "opensearch"], ["Cedar", "cedar"], ["Ollama", "ollama"]].forEach(([label, k]) => {
+      const dot = el("span", c[k] && c[k].ok ? "d-up" : "d-down", "●");
+      pill.append(document.createTextNode(" · "), dot, document.createTextNode(" " + label));
+    });
     pill.hidden = false;
   } catch (_) { pill.hidden = true; }
 })();

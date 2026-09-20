@@ -145,6 +145,15 @@
                 </table>
               </div>
             </div>
+            <div class="l-check" id="l-check">
+              <p class="l-check-title">Try it: this checks a real file, row by row</p>
+              <div class="l-check-row">
+                <button class="l-check-btn" type="button" data-sample="clean">Check the file above</button>
+                <button class="l-check-btn" type="button" data-sample="messy">Check a messy store file</button>
+                <label class="l-check-btn l-check-file">Upload your own<input type="file" accept=".csv,text/csv" id="l-check-file"></label>
+              </div>
+              <div class="l-check-out" id="l-check-out" role="status" aria-live="polite"></div>
+            </div>
           </div>
         </div>
 
@@ -203,52 +212,6 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="l-tools l-reveal">
-        <p class="l-tools-title">What runs behind it</p>
-        <div class="l-tools-grid">
-          <div class="l-tool"><b>Strands Agents</b><span>Reads each complaint and runs the conversation.</span></div>
-          <div class="l-tool"><b>OpenSearch</b><span>Finds the right page of that product's manual.</span></div>
-          <div class="l-tool"><b>Cedar</b><span>Keeps each brand's data private to that brand.</span></div>
-          <div class="l-tool"><b>SAM · Lambda</b><span>The same API, packaged as serverless functions.</span></div>
-        </div>
-        <p class="l-fine">The open-source AWS stack, running locally — no AWS account. In this demo the WhatsApp line is simulated; the agent, the manual search and the access control behind it are real.</p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═════════ 4 · STEPS 1–5 — THE CUSTOMER'S SIDE (black, pinned phone) ═════════ -->
-  <section class="l-band l-band-black l-cust" id="customer">
-
-    <div class="l-head l-head-center l-reveal">
-      <p class="l-kicker">Steps 1–5 · The customer's side</p>
-      <h2 class="l-h2">Months later, something breaks.<br><span class="l-grad">One message is all it takes.</span></h2>
-    </div>
-
-    <div class="l-story" id="story">
-
-      <!-- pinned phone: centred in the viewport, exactly like each step card -->
-      <div class="l-story-right">
-        <div class="l-story-phone-wrap" id="story-phone-wrap">
-          <div class="l-story-glow" id="story-glow"></div>
-          <div class="l-phone-frame l-phone-story">
-            <div class="l-ph-header" id="story-ph-header">
-              <div class="l-ph-back">‹</div>
-              <div class="l-ph-avatar" id="story-avatar">Aq</div>
-              <div class="l-ph-headtext">
-                <div class="l-ph-name" id="story-ph-name">AquaSpin Support</div>
-                <div class="l-ph-sub">Usually replies instantly</div>
-              </div>
-            </div>
-            <div class="l-ph-body l-ph-body-story" id="story-messages" aria-live="polite"></div>
-          </div>
-          <div class="l-story-progress" id="story-progress" aria-hidden="true">
-            <i></i><i></i><i></i><i></i><i></i><i></i>
-            <span id="story-progress-label">Step 1 of 6</span>
-          </div>
-        </div>
       </div>
 
       <!-- steps: each exactly one viewport tall, card centred in it -->
@@ -369,6 +332,49 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 4b · UNDER THE HOOD (black) ═════════ -->
+  <section class="l-band l-band-black l-uh" id="under-the-hood">
+    <div class="l-wrap">
+      <div class="l-head l-reveal">
+        <p class="l-kicker">Under the hood</p>
+        <h2 class="l-h2">The model words it.<br><span class="l-grad">Code decides the rest.</span></h2>
+        <p class="l-sub">A small local model can phrase a manual step well and judge a safety call badly. So every decision that matters is a rule, a query or a policy. Each card below is checked live, right now.</p>
+      </div>
+
+      <div class="l-uh-grid l-reveal">
+        <article class="l-uh-card" data-c="lambda"><span class="l-uh-n">1</span><h3>API Gateway + Lambda</h3>
+          <p>One handler set runs under Flask and, unchanged, as Lambdas in SAM Local. Logs and CloudWatch metrics via Lambda Powertools.</p><span class="l-uh-chip" data-chip="runtime">checking…</span></article>
+        <article class="l-uh-card" data-c="strands"><span class="l-uh-n">2</span><h3>Strands Agents</h3>
+          <p>Phrases one manual step and reads the customer's reply, on a local Ollama model. A fresh agent per call, timed by hooks.</p><span class="l-uh-chip" data-chip="ollama">checking…</span></article>
+        <article class="l-uh-card" data-c="os"><span class="l-uh-n">3</span><h3>OpenSearch</h3>
+          <p>Finds the right manual section (BM25), spots a recurring problem with a time-window query, and counts why customers escalate.</p><span class="l-uh-chip" data-chip="opensearch">checking…</span></article>
+        <article class="l-uh-card" data-c="cedar"><span class="l-uh-n">4</span><h3>Cedar</h3>
+          <p>Decides what each signed-in person may see and change. Every answer names the policy that decided it.</p><span class="l-uh-chip" data-chip="cedar">checking…</span></article>
+        <article class="l-uh-card" data-c="ddb"><span class="l-uh-n">5</span><h3>DynamoDB</h3>
+          <p>One table holds conversations, tickets and cases, with an atomic ticket counter. Under SAM Local it is DynamoDB Local.</p><span class="l-uh-chip" data-chip="storage">checking…</span></article>
+      </div>
+
+      <div class="l-uh-rules l-reveal">
+        <p class="l-tools-title">Never left to the model</p>
+        <ul>
+          <li><b>Safety</b> is a keyword rule that skips troubleshooting.</li>
+          <li><b>Which step comes next</b> is read from the manual's numbered list.</li>
+          <li><b>Two tries, then a person</b> is a counter.</li>
+          <li><b>Not in the manual</b> is a word-overlap test.</li>
+          <li><b>Seen it before</b> is an OpenSearch query.</li>
+          <li><b>Warranty dates</b> are arithmetic.</li>
+          <li><b>Who sees what</b> is a Cedar policy.</li>
+        </ul>
+      </div>
+
+      <div class="l-uh-honest l-reveal">
+        <div><h4>Real</h4><p>The agent, manual search, escalation rules, tickets, Cedar policies, DynamoDB and Lambda handlers, all running on this machine.</p></div>
+        <div><h4>Simulated</h4><p>WhatsApp itself, the QR sticker, and the customer's typing. The sales file is checked for real but not yet saved as the registry.</p></div>
+        <div><h4>Not used</h4><p>An AWS account. Nothing here is deployed. Bedrock, Verified Permissions and OpenSearch Serverless are where each piece would go.</p></div>
       </div>
     </div>
   </section>

@@ -166,6 +166,19 @@ def respond():
     return jsonify(data), status
 
 
+@app.route("/api/sample-csv", methods=["GET"])
+def sample_csv():
+    """The fixture file the landing page's table is drawn from, so 'check the file above' checks exactly that file."""
+    from src.layer1.registration import SALES_DATA
+    return SALES_DATA.read_text(), 200, {"Content-Type": "text/csv"}
+
+
+@app.route("/api/ingest", methods=["POST"])
+def ingest():
+    data, status = core.ingest_preview(request.get_data(as_text=True))
+    return jsonify(data), status
+
+
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify(core.health())

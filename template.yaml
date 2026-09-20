@@ -192,6 +192,18 @@ Resources:
             Path: /api/demo/reset
             Method: post
 
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.ingest
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/ingest
+            Method: post
+
 Outputs:
   ApiUrl:
     Description: Local API Gateway base URL (after `sam local start-api`)
