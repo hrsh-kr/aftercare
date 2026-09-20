@@ -65,7 +65,8 @@ def test_http_forged_header_is_ignored_and_cross_brand_denied():
 
 def test_only_managers_change_ticket_status():
     with tempfile.TemporaryDirectory() as d:
-        tickets.DATA_DIR = Path(d)
+        from src.storage import get_store
+        get_store().ticket_dir = Path(d)
         t = tickets.Ticket(ticket_id="TBB-9999", customer_name="X", customer_phone="+919876543210", product_name="P",
                            serial_number="S", issue_summary="i", product_id="WM-FC-700", reason_code="unmatched")
         t.save()

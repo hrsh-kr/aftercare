@@ -35,7 +35,8 @@ class FakeAgent:
 
 
 def _setup():
-    tickets.DATA_DIR = Path(tempfile.mkdtemp())
+    from src.storage import get_store
+    get_store().ticket_dir = Path(tempfile.mkdtemp())
     opensearch_retrieval.retrieve = lambda q, p: (*keyword_retrieve(q, load_sections(p)), "keyword_fallback")
     return {(r.customer_name, r.product_id): r for r in load_registrations()}
 

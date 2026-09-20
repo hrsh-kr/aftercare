@@ -52,14 +52,10 @@ from src.layer1.catalog import BRAND_SLUGS, brand_for
 from src.layer1.registration import Registration, load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
 from src.layer3b import case_index
+from src.storage import get_store
 from src.layer3b.tickets import Ticket
 
 _agent = None  # built lazily, once, on first use -- avoids paying Ollama startup cost at import time
-# Same AFTERCARE_DATA_DIR override as tickets.py -- /var/task is
-# read-only under real Lambda (and SAM Local), only /tmp is writable.
-CONV_DIR = Path(os.environ.get("AFTERCARE_DATA_DIR", str(Path(__file__).resolve().parent.parent.parent / "data"))) / "conversations"
-
-
 def get_agent():
     global _agent
     if _agent is None:
@@ -68,15 +64,13 @@ def get_agent():
 
 
 def _save_conversation(conv_id: str, conv: agent_mod.Conversation) -> None:
-    CONV_DIR.mkdir(parents=True, exist_ok=True)
-    (CONV_DIR / f"{conv_id}.json").write_text(json.dumps(asdict(conv), indent=2))
+    get_store().put_conversation(conv_id, asdict(conv))
 
 
 def _load_conversation(conv_id: str) -> agent_mod.Conversation | None:
-    path = CONV_DIR / f"{conv_id}.json"
-    if not conv_id or not path.exists():
+    data = get_store().get_conversation(conv_id)
+    if data is None:
         return None
-    data = json.loads(path.read_text())
     return agent_mod.Conversation(
         registration=Registration(**data["registration"]),
         complaint=data["complaint"],
@@ -99,13 +93,13 @@ HISTORY_SEED = Path(__file__).resolve().parent.parent.parent / "fixtures" / "his
 
 
 def _history(serial: str = "") -> tuple[list[agent_mod.PriorCase], str]:
-    """Earlier cases the agent can recognise a recurring problem from: every
-    saved conversation, plus the seeded history (what a brand's ticketing
-    system would already hold on day one). Seed ages are relative, so the
-    demo scenario doesn't drift out of the recurrence window.
+    """Earlier cases the agent can recognise a recurring problem from. Returns (cases, engine).
 
-    OpenSearch answers it as a query (serial + time window); if it's unreachable the
-    same question is answered from files. Returns (cases, engine) so it can be shown."""
+    OpenSearch answers it as a query (serial + time window, seeded with the history a
+    brand's ticketing system would already hold). If it is unreachable, the storage
+    backend answers the same question from its own access pattern (DynamoDB: a GSI query
+    on the serial; files: a scan), plus the seed file. Seed ages are relative, so the
+    demo scenario doesn't drift out of the window."""
     try:
         found = case_index.prior_cases(serial, agent_mod.RECURRENCE_DAYS)
         return [agent_mod.PriorCase(serial_number=d["serial_number"], section_heading=d["section_heading"],
@@ -113,41 +107,25 @@ def _history(serial: str = "") -> tuple[list[agent_mod.PriorCase], str]:
                                     outcome=d["outcome"]) for d in found], "opensearch"
     except Exception:
         pass
-    cases: list[agent_mod.PriorCase] = []
+    cutoff = (datetime.now() - timedelta(days=agent_mod.RECURRENCE_DAYS)).isoformat()
+    cases = [
+        agent_mod.PriorCase(serial_number=c["serial_number"], section_heading=c["section_heading"],
+                            when=datetime.fromisoformat(c["created_at"]), outcome=c["outcome"])
+        for c in get_store().cases_for_serial(serial, cutoff) if c.get("source") == "manual"
+    ]
     if HISTORY_SEED.exists():
         for e in json.loads(HISTORY_SEED.read_text()):
-            cases.append(agent_mod.PriorCase(
-                serial_number=e["serial_number"], section_heading=e["section_heading"],
-                when=datetime.now() - timedelta(days=e["days_ago"]), outcome=e["outcome"],
-            ))
-    if CONV_DIR.exists():
-        for path in CONV_DIR.glob("*.json"):
-            try:
-                c = json.loads(path.read_text())
-            except ValueError:
-                continue
-            if not (c.get("resolved") or c.get("ticket")) or c.get("safety_flag") or not c.get("section_heading"):
-                continue
-            if c.get("source") != "manual" or not c.get("created_at"):
-                continue
-            cases.append(agent_mod.PriorCase(
-                serial_number=c["registration"]["serial_number"], section_heading=c["section_heading"],
-                when=datetime.fromisoformat(c["created_at"]),
-                outcome="resolved" if c.get("resolved") else "escalated",
-            ))
-    return cases, "file"
+            if e["serial_number"] == serial:
+                cases.append(agent_mod.PriorCase(
+                    serial_number=serial, section_heading=e["section_heading"],
+                    when=datetime.now() - timedelta(days=e["days_ago"]), outcome=e["outcome"]))
+    return cases, get_store().name
 
 
 def reset_demo_data() -> dict:
-    """Clear conversations and tickets so a demo run starts clean (otherwise
-    the first run makes the second look like a recurring issue)."""
-    import shutil
-    from src.layer3b import tickets as tickets_mod
-    n = 0
-    for d in (CONV_DIR, tickets_mod.DATA_DIR):
-        if d.exists():
-            n += len(list(d.glob("*.json")))
-            shutil.rmtree(d)
+    """Clear conversations and tickets so a demo run starts clean (otherwise the first run
+    makes the second look like a recurring issue)."""
+    n = get_store().clear()
     try:
         case_index.reset()
     except Exception:
@@ -156,10 +134,23 @@ def reset_demo_data() -> dict:
 
 
 def _record(conv_id: str, conv: agent_mod.Conversation) -> None:
-    """Index a finished conversation for recurrence and insights. Best effort: the
-    JSON file is the source of truth, so an OpenSearch outage never breaks a reply."""
+    """A finished conversation becomes a *case*: written to the storage backend (recurrence
+    fallback, insights fallback) and indexed in OpenSearch (recurrence and insights as
+    queries). Best effort: the conversation itself is already saved, so a failure here
+    never breaks a reply."""
     if not (conv.resolved or conv.ticket):
         return
+    reg = conv.registration
+    brand = brand_for(reg.product_id).lower()
+    try:
+        get_store().put_case(brand, {
+            "conversation_id": conv_id, "brand": brand, "serial_number": reg.serial_number, "product_id": reg.product_id,
+            "section_heading": conv.section_heading, "source": "safety" if conv.safety_flag else conv.source,
+            "outcome": "resolved" if conv.resolved else "escalated", "reason_code": conv.escalation_code,
+            "created_at": conv.created_at,
+        })
+    except Exception:
+        pass
     try:
         case_index.record(conv_id, conv)
     except Exception:
@@ -270,35 +261,29 @@ def _insights(brand: str) -> dict:
     try:
         out = case_index.insights(brand)
     except Exception:
-        out = _insights_from_files(brand)
+        out = _insights_from_store(brand)
     for r in out["by_reason"]:
         r["label"] = agent_mod.ESCALATION_LABELS.get(r["code"], r["code"])
     return out
 
 
-def _insights_from_files(brand: str) -> dict:
+def _insights_from_store(brand: str) -> dict:
     """Same shape as case_index.insights(), computed by hand when OpenSearch is down."""
     resolved = escalated = 0
     reasons: dict[str, int] = {}
     sections: dict[str, list[int]] = {}
-    for path in (CONV_DIR.glob("*.json") if CONV_DIR.exists() else []):
-        try:
-            c = json.loads(path.read_text())
-        except ValueError:
-            continue
-        if brand_for(c["registration"]["product_id"]).lower() != brand or not (c.get("resolved") or c.get("ticket")):
-            continue
-        done = bool(c.get("resolved"))
+    for c in get_store().cases_for_brand(brand):
+        done = c["outcome"] == "resolved"
         resolved += done
         escalated += not done
-        if not done and c.get("escalation_code"):
-            reasons[c["escalation_code"]] = reasons.get(c["escalation_code"], 0) + 1
+        if not done and c.get("reason_code"):
+            reasons[c["reason_code"]] = reasons.get(c["reason_code"], 0) + 1
         if c.get("section_heading"):
             row = sections.setdefault(c["section_heading"], [0, 0])
             row[0] += 1
             row[1] += (not done)
     return {
-        "engine": "file", "resolved": resolved, "escalated": escalated,
+        "engine": get_store().name, "resolved": resolved, "escalated": escalated,
         "by_reason": [{"code": k, "count": v} for k, v in sorted(reasons.items(), key=lambda kv: -kv[1])],
         "top_sections": [{"heading": k, "count": v[0], "escalated": v[1]}
                          for k, v in sorted(sections.items(), key=lambda kv: -kv[1][0])[:5]],
@@ -352,10 +337,7 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
         return {"error": _deny_message(principal, f"view {brand}'s dashboard", decision), "decision": {"allowed": False, "policies": decision.policies}}, 403
 
     registrations = [r for r in load_registrations() if brand_for(r.product_id).lower() == brand]
-    tickets = sorted(
-        [t for t in Ticket.load_all() if t.product_id and brand_for(t.product_id).lower() == brand],
-        key=lambda t: t.ticket_id,
-    )
+    tickets = [Ticket(**d) for d in get_store().tickets(brand)]
 
     if q.strip():
         try:
@@ -475,7 +457,7 @@ def health() -> dict:
 
     return {
         "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "flask",
-        "storage": "file",
+        "storage": get_store().name,
         "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar)},
     }
 
@@ -489,9 +471,10 @@ def update_ticket_status(ticket_id: str, status: str, token: str | None) -> tupl
         return {"error": "Not signed in."}, 401
     if status not in TICKET_STATUSES:
         return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
-    ticket = next((t for t in Ticket.load_all() if t.ticket_id == ticket_id), None)
-    if ticket is None:
+    row = get_store().get_ticket(ticket_id)
+    if row is None:
         return {"error": "Unknown ticket."}, 404
+    ticket = Ticket(**row)
     try:
         d = cedar_authz.authorize(_cedar_principal(principal), "updateTicketStatus", "Ticket", ticket_id,
                                   {"brand": brand_for(ticket.product_id).lower(), "safety": bool(ticket.safety_flag)})
