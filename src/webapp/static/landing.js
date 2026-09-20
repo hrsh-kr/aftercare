@@ -218,7 +218,8 @@ function tickStory() {
     storyCards[i].style.setProperty("--p", (p * p).toFixed(3));
     if (dist < bestDist) { bestDist = dist; best = i; }
   });
-  if (bestDist < vh * 0.14) showStep(best);
+  // wide: play only when card and phone are aligned; narrow (stacked): the nearest card always wins
+  if (bestDist < vh * 0.14 || window.innerWidth <= 700) showStep(best);
 }
 onScroll(tickStory);
 tickStory();

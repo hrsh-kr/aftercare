@@ -294,7 +294,9 @@ body{
    step is scrolled to the middle — a sliding window. No padding above the
    first step or below the last, or they'd drift apart. */
 .l-story{display:grid;grid-template-columns:1fr 1fr;position:relative;}
-.l-story-left{position:relative;z-index:1;padding:0 clamp(24px,5vw,80px) 0 0;}
+/* phone on the left, cards on the right */
+.l-story-right{order:-1;}
+.l-story-left{position:relative;z-index:1;padding:0 0 0 clamp(24px,5vw,80px);}
 .l-story-right{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;justify-content:center;z-index:1;align-self:start;}
 .l-story-phone-wrap{position:relative;}
 .l-story-glow{position:absolute;inset:-70px;border-radius:50%;pointer-events:none;transition:background .6s ease;filter:blur(56px);}
@@ -347,10 +349,25 @@ body{
 @media(max-width:900px){
   .l-gal{grid-template-columns:1fr;}
   .l-gal-card:nth-child(n){grid-column:auto;min-height:0;}
+  .l-story{grid-template-columns:minmax(0,300px) minmax(0,1fr);}
+  .l-phone-story,.l-story-phone-wrap .l-phone-frame{width:250px;}
+  .l-story-left{padding:0 24px 0 24px;}
+  .l-sstep-inner{padding:30px 26px 26px;}
+  .l-story-progress{flex-wrap:wrap;justify-content:center;width:250px;white-space:normal;row-gap:8px;}
+  .l-story-progress span{flex-basis:100%;text-align:center;margin-left:0;}
+}
+@media(max-width:700px){
+  /* narrow: the phone stays, pinned compactly at the top; cards scroll beneath it */
   .l-story{grid-template-columns:1fr;}
-  .l-story-right{display:none;}
-  .l-story-left{padding:0 24px;}
-  .l-story-step{height:auto;padding:14px 0;}
+  /* phone and cards share one grid cell, so the sticky phone can travel the whole story */
+  .l-story-right,.l-story-left{grid-row:1;grid-column:1;}
+  .l-story-right{order:0;position:sticky;top:52px;height:auto;padding:10px 0 34px;background:#000;z-index:3;align-self:start;}
+  .l-phone-story,.l-story-phone-wrap .l-phone-frame{width:min(300px,86vw);}
+  .l-ph-body-story{min-height:150px;max-height:170px;}
+  .l-story-glow{display:none;}
+  .l-story-progress{top:calc(100% + 6px);}
+  .l-story-left{padding:300px 22px 0;}
+  .l-story-step{height:auto;min-height:70svh;padding:14px 0;}
   .l-sstep-inner{--p:1 !important;max-width:none;}
 }
 @media(max-width:640px){
