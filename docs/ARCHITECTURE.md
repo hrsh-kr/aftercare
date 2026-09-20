@@ -105,6 +105,10 @@ Lambda Powertools: JSON logs that never contain a phone number or complaint text
 | Meta-shaped webhook | AWS End User Messaging Social / WhatsApp Cloud API |
 | Order file check on demand | S3 upload → event → the same `ingest_commit` |
 
-## 10. Limits, stated plainly
+## 10. The static site (`site/`)
+
+A static host can't run the stack, so `scripts/export_static_site.py` builds `site/` from the *same* Jinja templates and assets the Lambda serves plus `site_src/recording.json`, which `scripts/record_playback.py` captured from the running stack through the real webhook and staff endpoints (nothing hand-written except the persona blurbs). `public/static/replay-shim.js` answers the handful of `/api` calls those pages make from the recording; `playback.js` replays each persona; the real `dashboard.js` renders the recorded dashboard (read-only, including Cedar's real cross-brand refusal). Every surface says it is a recording, and the health chips say "recorded", never "live".
+
+## 11. Limits, stated plainly
 
 Nothing is deployed and no AWS account is used (Build It track). WhatsApp's network is simulated; customers, orders and manuals are fabricated. Chat is polled every 1.1 s (production would push). "Not in the manual" is a word-overlap test; recurrence matches on manual section, not on wording. A code change needs a ~1 minute `sam build`. Multi-language input only works where the rules or model happen to catch it. The model-timing list in `StatelessAgent` is not concurrency-safe.

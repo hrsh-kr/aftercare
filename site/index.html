@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Aftercare — Support, redefined.</title>
+  <meta name="description" content="Aftercare: after-sales support that already knows what you bought. Grounded in the product manual, powered by the open-source AWS stack.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body>
+<style>.static-note{position:relative;z-index:300;background:#0a2a52;color:#cfe4ff;font:500 13px/1.4 Inter,system-ui,sans-serif;text-align:center;padding:8px 16px}.static-note a{color:#8ec0ff}body.db .static-note{border-radius:0 0 14px 14px}</style><div class="static-note">A static copy of the site. The demo here is a <b>recording</b> of the real run; to run it live, see <a href="/run">Run it yourself</a>.</div>
+
+  <!-- NAV — slim, translucent, one pill -->
+  <nav class="l-nav" id="l-nav" aria-label="Primary">
+    <a class="l-nav-brand" href="/">
+      <span class="l-nav-mark">A</span>
+      <span class="l-nav-wordmark">Aftercare</span>
+    </a>
+    <span class="l-nav-cta">
+      <a class="l-pill l-pill-sm l-pill-alt" href="/run">Run it</a>
+      <a class="l-pill l-pill-sm" href="/sandbox">Recorded run</a>
+    </span>
+  </nav>
+
+  <!-- ═════════ 1 · HERO (black) ═════════ -->
+  <section class="l-hero">
+    <div class="l-hero-glow" aria-hidden="true"></div>
+    <div class="l-hero-copy">
+      <p class="l-eyebrow"><span class="l-pip"></span>WeMakeDevs × AWS · First Commit</p>
+      <h1 class="l-h1">Support.<br><span class="l-grad">Redefined.</span></h1>
+      <p class="l-lead">The support line that already knows what you bought.</p>
+      <div class="l-cta-row">
+        <a class="l-pill" href="/sandbox">Watch the recorded run</a>
+        <a class="l-pill l-pill-alt" href="/run">Run it yourself</a>
+        <a class="l-link" href="#step-0">How it works</a>
+      </div>
+    </div>
+
+    <!-- the product: a phone rising from the bottom edge, playing one real exchange -->
+    <div class="l-hero-phone" aria-hidden="true">
+      <div class="l-phone-frame">
+        <div class="l-ph-header">
+          <div class="l-ph-back">‹</div>
+          <div class="l-ph-avatar">Aq</div>
+          <div class="l-ph-headtext">
+            <div class="l-ph-name">AquaSpin Support</div>
+            <div class="l-ph-sub">Usually replies instantly</div>
+          </div>
+        </div>
+        <div class="l-ph-body" id="hero-messages"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · THE PROBLEM (light) ═════════ -->
+  <section class="l-band l-band-light l-problem">
+    <div class="l-wrap">
+      <p class="l-kicker l-kicker-dark">The problem</p>
+      <p class="l-lit" id="l-lit">When something breaks, you hunt for the model number, wait on hold, and explain it all three times — to a company that already has your purchase on file.</p>
+      <p class="l-lead l-lead-dark l-reveal">There's a better way, and it lives in WhatsApp.</p>
+    </div>
+
+    <div class="l-gal-head l-wrap l-reveal">
+      <h2 class="l-h2 l-h2-dark">Five things you<br>never do again.</h2>
+    </div>
+
+    <div class="l-wrap"><div class="l-gal" id="l-gal" aria-label="Before and after">
+      <article class="l-gal-card">
+        <div class="l-gal-ico">🔍</div>
+        <p class="l-gal-label">Before</p>
+        <p class="l-gal-old"><span>Hunt for model numbers</span></p>
+        <p class="l-gal-label l-gal-label-new">Aftercare</p>
+        <p class="l-gal-new">One message. It already knows what you own.</p>
+      </article>
+      <article class="l-gal-card">
+        <div class="l-gal-ico">🏷️</div>
+        <p class="l-gal-label">Before</p>
+        <p class="l-gal-old"><span>Register the warranty by hand</span></p>
+        <p class="l-gal-label l-gal-label-new">Aftercare</p>
+        <p class="l-gal-new">Registered at the point of sale. A WhatsApp confirmation, instantly.</p>
+      </article>
+      <article class="l-gal-card">
+        <div class="l-gal-ico">💬</div>
+        <p class="l-gal-label">Before</p>
+        <p class="l-gal-old"><span>Call centres and hold music</span></p>
+        <p class="l-gal-label l-gal-label-new">Aftercare</p>
+        <p class="l-gal-new">A reply on WhatsApp, not a place in a queue.</p>
+      </article>
+      <article class="l-gal-card">
+        <div class="l-gal-ico">📖</div>
+        <p class="l-gal-label">Before</p>
+        <p class="l-gal-old"><span>Generic copy-paste answers</span></p>
+        <p class="l-gal-label l-gal-label-new">Aftercare</p>
+        <p class="l-gal-new">Every step from your product's own manual. Section cited.</p>
+      </article>
+      <article class="l-gal-card">
+        <div class="l-gal-ico">📋</div>
+        <p class="l-gal-label">Before</p>
+        <p class="l-gal-old"><span>Explaining it three times</span></p>
+        <p class="l-gal-label l-gal-label-new">Aftercare</p>
+        <p class="l-gal-new">A pre-filled ticket. The human is already briefed.</p>
+      </article>
+    </div></div>
+  </section>
+
+  <!-- ═════════ 3 · STEP 0 — THE BRAND PLUGS IN (black) ═════════ -->
+  <section class="l-band l-band-black l-step0" id="step-0">
+    <div class="l-wrap">
+
+      <div class="l-head l-reveal">
+        <p class="l-kicker">Step 0 · The brand plugs in</p>
+        <h2 class="l-h2">One CSV.<br><span class="l-grad">Every brand, live.</span></h2>
+        <p class="l-sub">Whoever made the sale — the brand itself, or a store that sells many brands — uploads one sales file. That's the whole setup.</p>
+      </div>
+
+      <div class="l-s0-list">
+
+        <!-- 1 · upload -->
+        <div class="l-s0-row l-reveal">
+          <div class="l-s0-copy">
+            <span class="l-s0-num">1</span>
+            <h3 class="l-s0-h3">Upload the sales file</h3>
+            <p class="l-s0-p">The export the point-of-sale system already produces: customer, phone, product, serial, date.</p>
+          </div>
+          <div class="l-s0-vis">
+            <div class="l-vcard l-csv">
+              <div class="l-csv-bar">
+                <span class="l-csv-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="l-csv-file">sales_export.csv</span>
+                <span class="l-csv-badge">Uploaded</span>
+              </div>
+              <div class="l-csv-scroll">
+                <table class="l-csv-table">
+                  <thead><tr><th>customer</th><th>phone</th><th>product</th><th>serial</th><th>purchased</th></tr></thead>
+                  <tbody>
+                    
+                    <tr style="--i:0">
+                      <td>Priya Sharma</td>
+                      <td class="l-mono">+91 98765 ·····</td>
+                      <td>AquaSpin FC-700 Washing Machine</td>
+                      <td class="l-mono">WM-FC-78234</td>
+                      <td class="l-mono">2025-06-05</td>
+                    </tr>
+                    
+                    <tr style="--i:1">
+                      <td>Priya Sharma</td>
+                      <td class="l-mono">+91 98765 ·····</td>
+                      <td>AquaSpin FL-900 Front Loader</td>
+                      <td class="l-mono">WM-FL-90012</td>
+                      <td class="l-mono">2026-01-18</td>
+                    </tr>
+                    
+                    <tr style="--i:2">
+                      <td>Ravi Kumar</td>
+                      <td class="l-mono">+91 98123 ·····</td>
+                      <td>ArcticAir 1.5T Split AC</td>
+                      <td class="l-mono">AC-CB-78901</td>
+                      <td class="l-mono">2024-11-12</td>
+                    </tr>
+                    
+                    <tr style="--i:3">
+                      <td>Ananya Iyer</td>
+                      <td class="l-mono">+91 98450 ·····</td>
+                      <td>AquaSpin FC-700 Washing Machine</td>
+                      <td class="l-mono">WM-FC-79345</td>
+                      <td class="l-mono">2025-08-20</td>
+                    </tr>
+                    
+                    <tr style="--i:4">
+                      <td>Sameer Khan</td>
+                      <td class="l-mono">+91 99001 ·····</td>
+                      <td>ArcticAir 1.5T Split AC</td>
+                      <td class="l-mono">AC-CB-77102</td>
+                      <td class="l-mono">2023-03-15</td>
+                    </tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="l-check" id="l-check">
+              <p class="l-check-title">Try it: this checks a real file, row by row</p>
+              <div class="l-check-row">
+                <button class="l-check-btn" type="button" data-sample="clean">Check the file above</button>
+                <button class="l-check-btn glow" type="button" data-sample="messy">Check a messy store file</button>
+                <label class="l-check-btn l-check-file">Upload your own<input type="file" accept=".csv,text/csv" id="l-check-file"></label>
+              </div>
+              <div class="l-check-out" id="l-check-out" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 · sort (only when a store sells many brands) -->
+        <div class="l-s0-row l-reveal">
+          <div class="l-s0-copy">
+            <span class="l-s0-num">2</span>
+            <span class="l-s0-tag">Multi-brand stores only</span>
+            <h3 class="l-s0-h3">Sorted into the right brand, automatically</h3>
+            <p class="l-s0-p">A store's file mixes brands. Aftercare reads each product code and files every sale under its brand — so one brand's customers never mix with another's.</p>
+          </div>
+          <div class="l-s0-vis">
+            <div class="l-vcard l-sort">
+              <ul class="l-sort-list">
+                
+                <li style="--i:0">
+                  <span class="l-sort-what"><b>AquaSpin FC-700 Washing Machine</b><em class="l-mono">WM-FC-78234</em></span>
+                  <span class="l-sort-arrow" aria-hidden="true">→</span>
+                  <span class="l-sort-chip l-b-aquaspin">AquaSpin</span>
+                </li>
+                
+                <li style="--i:1">
+                  <span class="l-sort-what"><b>AquaSpin FL-900 Front Loader</b><em class="l-mono">WM-FL-90012</em></span>
+                  <span class="l-sort-arrow" aria-hidden="true">→</span>
+                  <span class="l-sort-chip l-b-aquaspin">AquaSpin</span>
+                </li>
+                
+                <li style="--i:2">
+                  <span class="l-sort-what"><b>ArcticAir 1.5T Split AC</b><em class="l-mono">AC-CB-78901</em></span>
+                  <span class="l-sort-arrow" aria-hidden="true">→</span>
+                  <span class="l-sort-chip l-b-arcticair">ArcticAir</span>
+                </li>
+                
+                <li style="--i:3">
+                  <span class="l-sort-what"><b>AquaSpin FC-700 Washing Machine</b><em class="l-mono">WM-FC-79345</em></span>
+                  <span class="l-sort-arrow" aria-hidden="true">→</span>
+                  <span class="l-sort-chip l-b-aquaspin">AquaSpin</span>
+                </li>
+                
+                <li style="--i:4">
+                  <span class="l-sort-what"><b>ArcticAir 1.5T Split AC</b><em class="l-mono">AC-CB-77102</em></span>
+                  <span class="l-sort-arrow" aria-hidden="true">→</span>
+                  <span class="l-sort-chip l-b-arcticair">ArcticAir</span>
+                </li>
+                
+              </ul>
+              <div class="l-buckets">
+                
+                <div class="l-bucket l-b-aquaspin">
+                  <span class="l-bucket-mark">Aq</span>
+                  <span class="l-bucket-name">AquaSpin</span>
+                  <span class="l-bucket-n">3 products · 2 customers</span>
+                </div>
+                
+                <div class="l-bucket l-b-arcticair">
+                  <span class="l-bucket-mark">Ar</span>
+                  <span class="l-bucket-name">ArcticAir</span>
+                  <span class="l-bucket-n">2 products · 2 customers</span>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · connect -->
+        <div class="l-s0-row l-reveal">
+          <div class="l-s0-copy">
+            <span class="l-s0-num">3</span>
+            <h3 class="l-s0-h3">Connect the WhatsApp line</h3>
+            <p class="l-s0-p">Point the brand's support number at Aftercare's agent. From the next message on, every customer is already known — and the brand gets its own private dashboard.</p>
+          </div>
+          <div class="l-s0-vis">
+            <div class="l-lines">
+              
+              <div class="l-vcard l-line l-b-aquaspin" style="--i:0">
+                <div class="l-line-head"><span class="l-bucket-mark">Aq</span><b>AquaSpin</b></div>
+                <ul class="l-line-rows">
+                  <li><span>WhatsApp support line</span><em class="l-ok">Connected</em></li>
+                  <li><span>Agent, grounded in AquaSpin's manuals</span><em class="l-ok">Ready</em></li>
+                  <li><span>Dashboard, private to AquaSpin</span><em class="l-ok">Ready</em></li>
+                </ul>
+              </div>
+              
+              <div class="l-vcard l-line l-b-arcticair" style="--i:1">
+                <div class="l-line-head"><span class="l-bucket-mark">Ar</span><b>ArcticAir</b></div>
+                <ul class="l-line-rows">
+                  <li><span>WhatsApp support line</span><em class="l-ok">Connected</em></li>
+                  <li><span>Agent, grounded in ArcticAir's manuals</span><em class="l-ok">Ready</em></li>
+                  <li><span>Dashboard, private to ArcticAir</span><em class="l-ok">Ready</em></li>
+                </ul>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · STEPS 1–6 — THE CUSTOMER'S SIDE (black, pinned phone) ═════════ -->
+  <section class="l-band l-band-black l-cust" id="customer">
+
+    <div class="l-head l-head-center l-reveal">
+      <p class="l-kicker">Steps 1–6 · The customer's side</p>
+      <h2 class="l-h2">Months later, something breaks.<br><span class="l-grad">One message is all it takes.</span></h2>
+    </div>
+
+    <div class="l-story" id="story">
+
+      <!-- pinned phone: centred in the viewport, exactly like each step card -->
+      <div class="l-story-right">
+        <div class="l-story-phone-wrap" id="story-phone-wrap">
+          <div class="l-story-glow" id="story-glow"></div>
+          <div class="l-phone-frame l-phone-story">
+            <div class="l-ph-header" id="story-ph-header">
+              <div class="l-ph-back">‹</div>
+              <div class="l-ph-avatar" id="story-avatar">Aq</div>
+              <div class="l-ph-headtext">
+                <div class="l-ph-name" id="story-ph-name">AquaSpin Support</div>
+                <div class="l-ph-sub">Usually replies instantly</div>
+              </div>
+            </div>
+            <div class="l-ph-body l-ph-body-story" id="story-messages" aria-live="polite"></div>
+          </div>
+          <div class="l-story-progress" id="story-progress" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+            <span id="story-progress-label">Step 1 of 6</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- steps: each exactly one viewport tall, card centred in it -->
+      <div class="l-story-left">
+
+        <div class="l-story-step" data-si="0" id="sstep-0">
+          <div class="l-sstep-inner l-step-green">
+            <div class="l-sstep-num">01</div>
+            <div class="l-sstep-chip">Registration</div>
+            <h3 class="l-sstep-h2">Registered before<br>you leave the store.</h3>
+            <p class="l-sstep-p">
+              The moment you buy a product, it's registered in your name —
+              linked to your phone number, automatically. You get a WhatsApp
+              message with your warranty details, and a small QR sticker goes
+              on your product. That's it. Nothing to fill out later.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">🏷️ QR sticker on your product</div>
+              <div class="l-detail-item">📱 WhatsApp warranty confirmation</div>
+              <div class="l-detail-item">0️⃣ Zero action required from you</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="l-story-step" data-si="1" id="sstep-1">
+          <div class="l-sstep-inner l-step-blue">
+            <div class="l-sstep-num">02</div>
+            <div class="l-sstep-chip">Lookup</div>
+            <h3 class="l-sstep-h2">One message.<br>No triage.</h3>
+            <p class="l-sstep-p">
+              Something goes wrong months later. You message the brand's
+              WhatsApp. The agent already knows who you are from your phone
+              number. It shows you your registered products and asks which
+              one needs attention — you tap to pick. Not a word about
+              model numbers or purchase dates.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">🔍 Identified by phone number</div>
+              <div class="l-detail-item">📦 All your products shown</div>
+              <div class="l-detail-item">⏱️ 0 minutes of triage</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="l-story-step" data-si="2" id="sstep-2">
+          <div class="l-sstep-inner l-step-amber">
+            <div class="l-sstep-num">03</div>
+            <div class="l-sstep-chip">Manual</div>
+            <h3 class="l-sstep-h2">Real help from<br>the actual manual.</h3>
+            <p class="l-sstep-p">
+              Every answer comes from that product's actual user manual —
+              not a generic FAQ, not a canned response. One real, doable
+              step with a reference to the exact section it came from.
+              If it doesn't fix it, the next step comes from the manual too.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">📖 Grounded in your product's manual</div>
+              <div class="l-detail-item">🎯 One specific, actionable step</div>
+              <div class="l-detail-item">🔗 Source section shown</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="l-story-step" data-si="3" id="sstep-3">
+          <div class="l-sstep-inner l-step-violet">
+            <div class="l-sstep-num">04</div>
+            <div class="l-sstep-chip">Back &amp; forth</div>
+            <h3 class="l-sstep-h2">It follows up.<br>It doesn't forget.</h3>
+            <p class="l-sstep-p">
+              It waits for your reply. Fixed? Great — no ticket, no wait.
+              Still broken? The next real step. The agent follows the actual
+              conversation, not a rigid script. It adapts to what you report
+              back, step by step, until the issue is resolved.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">🔄 Adapts to your responses</div>
+              <div class="l-detail-item">💬 Full conversation memory</div>
+              <div class="l-detail-item">✅ Resolved with no ticket if possible</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="l-story-step" data-si="4" id="sstep-4">
+          <div class="l-sstep-inner l-step-teal">
+            <div class="l-sstep-num">05</div>
+            <div class="l-sstep-chip">Human handoff</div>
+            <h3 class="l-sstep-h2">Not fixed?<br>A person takes over.</h3>
+            <p class="l-sstep-p">
+              Safety isn't the only reason. If two manual steps don't fix it,
+              if your problem isn't in the manual at all, or if the same
+              problem is back after a fix — the agent stops and hands over.
+              It never guesses. The ticket arrives with what was tried, and why.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">🔁 Two steps tried, still broken</div>
+              <div class="l-detail-item">📖 Not in the manual — no guessing</div>
+              <div class="l-detail-item">↩️ Same problem back after a fix</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="l-story-step" data-si="5" id="sstep-5">
+          <div class="l-sstep-inner l-step-crimson">
+            <div class="l-sstep-num">06</div>
+            <div class="l-sstep-chip">Safety</div>
+            <h3 class="l-sstep-h2">When it's serious,<br>people take over.</h3>
+            <p class="l-sstep-p">
+              A burning smell. Sparking. An exposed wire. These skip the AI
+              entirely — a pre-filled ticket goes to a human immediately.
+              Your name, your product, your exact words are already captured.
+              You don't have to explain again. A technician is dispatched.
+            </p>
+            <div class="l-sstep-detail">
+              <div class="l-detail-item">⚠️ Safety flag triggers instantly</div>
+              <div class="l-detail-item">📋 Pre-filled ticket, no re-explanation</div>
+              <div class="l-detail-item">👤 Human technician dispatched</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 4b · UNDER THE HOOD (black) ═════════ -->
+  <section class="l-band l-band-black l-uh" id="under-the-hood">
+    <div class="l-wrap">
+      <div class="l-head l-reveal">
+        <p class="l-kicker">Under the hood</p>
+        <h2 class="l-h2">The model words it.<br><span class="l-grad">Code decides the rest.</span></h2>
+        <p class="l-sub">A small local model can phrase a manual step well and judge a safety call badly. So every decision that matters is a rule, a query or a policy. Each card below is checked live, right now.</p>
+      </div>
+
+      <div class="l-uh-grid l-reveal">
+        <article class="l-uh-card" data-c="lambda"><span class="l-uh-n">1</span><h3>API Gateway + Lambda</h3>
+          <p>This whole site, the pages and every API route, is one Lambda behind API Gateway in SAM Local. Logs and CloudWatch metrics via Lambda Powertools.</p><span class="l-uh-chip" data-chip="runtime">checking…</span></article>
+        <article class="l-uh-card" data-c="strands"><span class="l-uh-n">2</span><h3>Strands Agents</h3>
+          <p>Phrases one manual step and reads the customer's reply, on a local Ollama model. A fresh agent per call, timed by hooks.</p><span class="l-uh-chip" data-chip="ollama">checking…</span></article>
+        <article class="l-uh-card" data-c="os"><span class="l-uh-n">3</span><h3>OpenSearch</h3>
+          <p>Finds the right manual section (BM25), spots a recurring problem with a time-window query, and counts why customers escalate.</p><span class="l-uh-chip" data-chip="opensearch">checking…</span></article>
+        <article class="l-uh-card" data-c="cedar"><span class="l-uh-n">4</span><h3>Cedar</h3>
+          <p>Decides what each signed-in person may see and change. Every answer names the policy that decided it.</p><span class="l-uh-chip" data-chip="cedar">checking…</span></article>
+        <article class="l-uh-card" data-c="ddb"><span class="l-uh-n">5</span><h3>DynamoDB</h3>
+          <p>One table holds the customer registry, conversations, tickets, the WhatsApp message log and cases, with an atomic ticket counter. Here it is DynamoDB Local.</p><span class="l-uh-chip" data-chip="storage">checking…</span></article>
+      </div>
+
+      <div class="l-uh-rules l-reveal">
+        <p class="l-tools-title">Never left to the model</p>
+        <ul>
+          <li><b>Safety</b> is a keyword rule, or the manual's own safety section, that skips troubleshooting.</li>
+          <li><b>Which step comes next</b> is read from the manual's numbered list.</li>
+          <li><b>Two tries, then a person</b> is a counter.</li>
+          <li><b>Not in the manual</b> is a word-overlap test.</li>
+          <li><b>Seen it before</b> is an OpenSearch query.</li>
+          <li><b>Warranty dates</b> are arithmetic.</li>
+          <li><b>Who sees what</b> is a Cedar policy.</li>
+        </ul>
+      </div>
+
+      <div class="l-uh-honest l-reveal">
+        <div><h4>Real</h4><p>The order-file check and customer registry, the agent, manual search, escalation rules, tickets, the chat log and inbox where a person replies, Cedar policies, DynamoDB and the Lambda, all running on this machine.</p></div>
+        <div><h4>Simulated</h4><p>WhatsApp's network (the phone talks to a Meta-shaped webhook on this server), the QR sticker, and the customers, orders and manuals, which are all fabricated.</p></div>
+        <div><h4>Not used</h4><p>An AWS account. Nothing here is deployed. Bedrock, Verified Permissions and OpenSearch Serverless are where each piece would go.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 5 · CTA (white) ═════════ -->
+  <section class="l-band l-band-white l-cta" id="try">
+    <div class="l-wrap l-cta-inner">
+      <h2 class="l-cta-h2 l-reveal">Now see it run.</h2>
+      <p class="l-lead l-lead-dark l-reveal rd1">Watch a recorded run: eight customers, the agent at work, and a person taking over. Then run it yourself.</p>
+      <div class="l-cta-row l-cta-row-center l-reveal rd2">
+        <a class="l-pill l-pill-lg" href="/sandbox">Watch the recorded run</a>
+        <a class="l-pill l-pill-lg l-pill-alt" href="/run">Run it yourself</a>
+        <a class="l-link l-link-dark" href="#top" id="l-top-link">Back to the top</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="l-footer">
+    <div class="l-footer-inner">
+      <p>Aftercare — built for First Commit (WeMakeDevs × AWS): Build It · Best UI.</p>
+      <p>Strands Agents · OpenSearch · Cedar · SAM Local, running locally with no AWS account. WhatsApp is simulated in this demo; the agent, manual search and access control are real.</p>
+      <p><a href="/sandbox">Recorded run</a> · <a href="/run">Run it yourself</a></p>
+    </div>
+  </footer>
+
+  <script src="/static/replay-shim.js"></script>
+<script src="/static/landing.js"></script>
+</body>
+</html>

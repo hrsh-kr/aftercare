@@ -54,6 +54,18 @@ Cedar refuses them a resolve; "Try ArcticAir" while signed in to AquaSpin shows 
 deployed. `template.yaml` is written for `sam deploy`; [ARCHITECTURE §9](docs/ARCHITECTURE.md) maps each piece to its managed
 service. **Not used, and why:** LocalStack (needs its own auth token), PartyRock (personal sign-in), Finch, EKS Distro/Anywhere and Firecracker (no natural role).
 
+## Static site (Vercel)
+
+The live demo can't run on a static host (it needs OpenSearch, DynamoDB, Cedar and a model). `site/` is a **static copy** made
+for Vercel: the story page, a **recorded run** of the sandbox (eight customers replayed from real transcripts captured from the
+running stack), and a read-only dashboard snapshot, each labelled as a recording. Deploy it by importing the repo in Vercel with
+**Root Directory = `site`** (no build command), or `cd site && npx vercel --prod`. Regenerate after any change:
+
+```bash
+.venv/bin/python scripts/record_playback.py         # needs `bash scripts/dev.sh` running; writes site_src/recording.json
+.venv/bin/python scripts/export_static_site.py      # renders the real templates + assets into site/
+```
+
 ## Verify the claims
 
 ```bash

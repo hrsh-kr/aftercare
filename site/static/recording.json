@@ -1,0 +1,1436 @@
+{
+ "recorded_at": "2026-09-20T18:08:51",
+ "model": "gemma2:9b",
+ "stack": {
+  "ollama": "ok",
+  "opensearch": "ok",
+  "cedar": "ok",
+  "dynamodb": "ok"
+ },
+ "ingest": {
+  "rows": 11,
+  "accepted": 9,
+  "rejected": 2,
+  "brands": [
+   {
+    "brand": "AquaSpin",
+    "slug": "aquaspin",
+    "products": 6,
+    "customers": 5
+   },
+   {
+    "brand": "ArcticAir",
+    "slug": "arcticair",
+    "products": 3,
+    "customers": 3
+   }
+  ],
+  "issues": [
+   {
+    "line": 11,
+    "problem": "Unknown product code \"TV-55-X\": no brand owns it"
+   },
+   {
+    "line": 12,
+    "problem": "Phone is not in +<country code><number> form"
+   }
+  ],
+  "registered": 9,
+  "messages_sent": 9
+ },
+ "personas": [
+  {
+   "id": "arjun",
+   "name": "Arjun Mehta",
+   "brand": "aquaspin",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "One product. A noisy washing machine, fixed in one step.",
+   "outcome": "Resolved, no ticket",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "My washing machine bangs loudly when it spins",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Check if your washing machine is level by gently rocking it from each corner \u2014 adjust the feet until it doesn't rock, and let me know how it goes.",
+       "created_at": "2026-09-20T12:38:38.495411",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.1 Drum wobbling or banging noise during spin",
+        "retrieval_method": "opensearch",
+        "attempt": 1,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "motor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [
+         4105
+        ],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "waiting",
+        "ticket_id": ""
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "AquaSpin manual \u00b7 4.1 Drum wobbling or banging noise during spin",
+       "created_at": "2026-09-20T12:38:38.498514"
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "That fixed it, thank you!",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Glad that fixed it! Let us know if anything else comes up.",
+       "created_at": "2026-09-20T12:38:38.634553",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.1 Drum wobbling or banging noise during spin",
+        "retrieval_method": "opensearch",
+        "attempt": 1,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "motor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [],
+        "storage": "dynamodb",
+        "status": "resolved",
+        "ticket_id": ""
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Resolved. No ticket needed.",
+       "created_at": "2026-09-20T12:38:38.636545"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91011",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.285155",
+     "text": "Hi Arjun! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91011, bought 14 Jul 2026.\nMotor warranty (2 years): active until 14 Jul 2028.\nOther parts (1 year): active until 14 Jul 2027.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "kavya",
+   "name": "Kavya Nair",
+   "brand": "arcticair",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "An AC that won't cool. Two manual steps don't fix it.",
+   "outcome": "Handed to a person: two steps tried",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "My AC isn't cooling the room",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Try turning off the AC, removing and checking both filters for dustiness, cleaning them if needed, and letting them dry fully before reinstalling. Let me know how it goes.",
+       "created_at": "2026-09-20T12:38:43.119956",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+        "retrieval_method": "opensearch",
+        "attempt": 1,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [
+         4165
+        ],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "waiting",
+        "ticket_id": ""
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
+       "created_at": "2026-09-20T12:38:43.125293"
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "Still blowing warm air",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Please check that the outdoor unit isn't blocked or enclosed and let me know if that makes a difference.",
+       "created_at": "2026-09-20T12:38:46.259056",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+        "retrieval_method": "opensearch",
+        "attempt": 2,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [
+         2690
+        ],
+        "storage": "dynamodb",
+        "status": "waiting",
+        "ticket_id": ""
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
+       "created_at": "2026-09-20T12:38:46.265727"
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "No change, still not cooling",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Sorry those two steps didn't fix it. I've handed this to our service team as ticket TBB-0001, including what we already tried, so you won't be asked to repeat it.",
+       "created_at": "2026-09-20T12:38:46.481163",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+        "retrieval_method": "opensearch",
+        "attempt": 2,
+        "max_attempts": 2,
+        "escalation": {
+         "code": "attempts_exhausted",
+         "label": "Two steps tried",
+         "detail": ""
+        },
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [],
+        "storage": "dynamodb",
+        "status": "escalated",
+        "ticket_id": "TBB-0001"
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Ticket TBB-0001 \u00b7 Two steps tried",
+       "created_at": "2026-09-20T12:38:46.483114"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "AC-CB-91012",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.290596",
+     "text": "Hi Kavya! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91012, bought 22 Jan 2026.\nCompressor warranty (5 years): active until 22 Jan 2031.\nOther parts (1 year): active until 22 Jan 2027.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "rohan",
+   "name": "Rohan Desai",
+   "brand": "aquaspin",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "Owns two machines. The smell is back, and the agent remembers.",
+   "outcome": "Handed to a person: recurring issue",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "Hi",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "buttons",
+       "text": "Hi Rohan! I'm AquaSpin's support assistant. I can see your AquaSpin FC-700 Washing Machine, AquaSpin FL-900 Front Loader. Ask me about your warranty, or tell me what's going wrong.",
+       "created_at": "2026-09-20T12:38:46.550117",
+       "buttons": [
+        {
+         "id": "cmd:warranty",
+         "title": "Check my warranty"
+        },
+        {
+         "id": "cmd:problem",
+         "title": "Report a problem"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "My clothes smell bad after washing",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "buttons",
+       "text": "Thanks Rohan. Which product is this about?",
+       "created_at": "2026-09-20T12:38:46.568538",
+       "buttons": [
+        {
+         "id": "prod:WM-FC-91013",
+         "title": "FC-700 Washing Machine"
+        },
+        {
+         "id": "prod:WM-FL-91014",
+         "title": "FL-900 Front Loader"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "FC-700 Washing Machine",
+     "button": true,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "This looks like the same problem we handled on 13 Aug 2026. Repeating the same fix won't help, so I've passed it to our service team as ticket TBB-0002, with the earlier case attached. You won't have to explain it again.",
+       "created_at": "2026-09-20T12:38:46.655595",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.2 Foul smell or dirt/residue left on clothes after washing",
+        "retrieval_method": "opensearch",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": {
+         "code": "recurring",
+         "label": "Recurring issue",
+         "detail": "4.2 Foul smell or dirt/residue left on clothes after washing -- handled 13 Aug 2026 (resolved)"
+        },
+        "warranty": {
+         "component": "motor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "escalated",
+        "ticket_id": "TBB-0002"
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Ticket TBB-0002 \u00b7 Recurring issue",
+       "created_at": "2026-09-20T12:38:46.657791"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91013",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.295536",
+     "text": "Hi Rohan! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91013, bought 03 Nov 2025.\nMotor warranty (2 years): active until 03 Nov 2027.\nOther parts (1 year): active until 03 Nov 2026.\nMessage us here any time you need help or want to check your warranty."
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FL-91014",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.299827",
+     "text": "Hi Rohan! Your AquaSpin FL-900 Front Loader is registered with AquaSpin.\nSerial WM-FL-91014, bought 30 May 2026.\nMotor warranty (2 years): active until 30 May 2028.\nOther parts (1 year): active until 30 May 2027.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "neha",
+   "name": "Neha Kulkarni",
+   "brand": "aquaspin",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "Asks about her warranty: motor still covered, parts expired.",
+   "outcome": "Answered from the purchase date, no model",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "Is my machine still under warranty?",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91015) was bought on 01 Jul 2025.\n- Motor (2 years): active until 01 Jul 2027, about 9 months left.\n- Other parts (1 year): expired on 01 Jul 2026.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
+       "created_at": "2026-09-20T12:38:46.701221",
+       "meta": {
+        "source": "terms",
+        "section_heading": "1. Warranty Period",
+        "retrieval_method": "opensearch",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "motor",
+         "component_status": "active",
+         "parts_status": "expired"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "answered",
+        "ticket_id": ""
+       }
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91015",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.303156",
+     "text": "Hi Neha! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91015, bought 01 Jul 2025.\nMotor warranty (2 years): active until 01 Jul 2027.\nOther parts (1 year): expired on 01 Jul 2026.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "imran",
+   "name": "Imran Sheikh",
+   "brand": "arcticair",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "Compressor warranty question, then water dripping from the AC.",
+   "outcome": "Answered, then a step from the manual",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "Is my AC compressor covered under warranty?",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Your ArcticAir 1.5T Split AC (serial AC-CB-91016) was bought on 10 Aug 2022.\n- Compressor (5 years): active until 10 Aug 2027, about 11 months left.\n- Other parts (1 year): expired on 10 Aug 2023.\nFrom the terms (2. What Is Covered): Manufacturing defects in the covered components above. Mechanical or electrical faults arising from normal household use, when the product was installed and maintained per the user manual. One free service visit per warranty year for a covered issue.\nIf something is wrong with it, just tell me what's happening.",
+       "created_at": "2026-09-20T12:38:46.747137",
+       "meta": {
+        "source": "terms",
+        "section_heading": "2. What Is Covered",
+        "retrieval_method": "opensearch",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "expired"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "answered",
+        "ticket_id": ""
+       }
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "Water is dripping from my AC",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Switch the AC off and look at the drain pipe (the thin pipe from the indoor unit to the outside) for kinks, sags or a blocked end, then let us know what you find.",
+       "created_at": "2026-09-20T12:38:51.292714",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.3 Water dripping from the indoor unit",
+        "retrieval_method": "opensearch",
+        "attempt": 1,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "expired"
+        },
+        "model_ms": [
+         4470
+        ],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "waiting",
+        "ticket_id": ""
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "ArcticAir manual \u00b7 4.3 Water dripping from the indoor unit",
+       "created_at": "2026-09-20T12:38:51.301062"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "AC-CB-91016",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.307139",
+     "text": "Hi Imran! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91016, bought 10 Aug 2022.\nCompressor warranty (5 years): active until 10 Aug 2027.\nOther parts (1 year): expired on 10 Aug 2023.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "divya",
+   "name": "Divya Rao",
+   "brand": "aquaspin",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "Out of warranty, then a fault that isn't in the manual at all.",
+   "outcome": "Handed to a person: not in the manual",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "Is my machine still under warranty?",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91017) was bought on 05 Sep 2023.\n- Motor (2 years): expired on 05 Sep 2025.\n- Other parts (1 year): expired on 05 Sep 2024.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
+       "created_at": "2026-09-20T12:38:51.480384",
+       "meta": {
+        "source": "terms",
+        "section_heading": "1. Warranty Period",
+        "retrieval_method": "opensearch",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": null,
+        "warranty": {
+         "component": "motor",
+         "component_status": "expired",
+         "parts_status": "expired"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "answered",
+        "ticket_id": ""
+       }
+      }
+     ]
+    },
+    {
+     "who": "customer",
+     "text": "The touch panel flickers and won't respond",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "I couldn't find this in your product manual, and I won't guess at it. I've handed it to our service team as ticket TBB-0003 with your description as written.",
+       "created_at": "2026-09-20T12:38:51.546198",
+       "meta": {
+        "source": "manual",
+        "section_heading": "",
+        "retrieval_method": "opensearch",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": {
+         "code": "unmatched",
+         "label": "Not in the manual",
+         "detail": "Closest section, \"4.3 Machine won't start / no power\", shares no meaningful word with the complaint"
+        },
+        "warranty": {
+         "component": "motor",
+         "component_status": "expired",
+         "parts_status": "expired"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "escalated",
+        "ticket_id": "TBB-0003"
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Ticket TBB-0003 \u00b7 Not in the manual",
+       "created_at": "2026-09-20T12:38:51.547953"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91017",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.310979",
+     "text": "Hi Divya! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91017, bought 05 Sep 2023.\nMotor warranty (2 years): expired on 05 Sep 2025.\nOther parts (1 year): expired on 05 Sep 2024.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "sanjay",
+   "name": "Sanjay Iyer",
+   "brand": "arcticair",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "A burning smell. No troubleshooting.",
+   "outcome": "Safety: the manual's own warning, a ticket",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "There's a burning smell coming from my AC",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Stop use immediately. Switch off power at the breaker, not just the remote. Do not attempt any troubleshooting yourself.\n\nThis is a safety issue, so I won't try to troubleshoot it over chat. I've raised ticket TBB-0004 for an emergency technician visit -- free of charge whatever your warranty status.",
+       "created_at": "2026-09-20T12:38:51.598898",
+       "meta": {
+        "source": "manual",
+        "section_heading": "4.4 Burning smell, sparking, unusual smell resembling gas, or visible smoke",
+        "retrieval_method": "safety_rule",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": {
+         "code": "safety",
+         "label": "Safety",
+         "detail": ""
+        },
+        "warranty": {
+         "component": "compressor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "escalated",
+        "ticket_id": "TBB-0004"
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Ticket TBB-0004 \u00b7 Safety",
+       "created_at": "2026-09-20T12:38:51.600528"
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "AC-CB-91018",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.314880",
+     "text": "Hi Sanjay! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91018, bought 29 Aug 2026.\nCompressor warranty (5 years): active until 29 Aug 2031.\nOther parts (1 year): active until 29 Aug 2027.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  },
+  {
+   "id": "meera",
+   "name": "Meera Pillai",
+   "brand": "aquaspin",
+   "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
+   "blurb": "Asks for a person; the brand replies from its inbox, in the same chat.",
+   "outcome": "A person takes over and resolves it",
+   "steps": [
+    {
+     "who": "customer",
+     "text": "I want to talk to a person",
+     "button": false,
+     "replies": [
+      {
+       "sender": "aftercare",
+       "kind": "text",
+       "text": "Of course. I've passed this to our service team as ticket TBB-0005, with your details attached. A person will reply to you here on WhatsApp.",
+       "created_at": "2026-09-20T12:38:51.665932",
+       "meta": {
+        "source": "manual",
+        "section_heading": "",
+        "retrieval_method": "rule",
+        "attempt": 0,
+        "max_attempts": 2,
+        "escalation": {
+         "code": "human_requested",
+         "label": "Asked for a person",
+         "detail": ""
+        },
+        "warranty": {
+         "component": "motor",
+         "component_status": "active",
+         "parts_status": "active"
+        },
+        "model_ms": [],
+        "history_engine": "opensearch",
+        "storage": "dynamodb",
+        "status": "escalated",
+        "ticket_id": "TBB-0005"
+       }
+      },
+      {
+       "sender": "system",
+       "kind": "note",
+       "text": "Ticket TBB-0005 \u00b7 Asked for a person",
+       "created_at": "2026-09-20T12:38:51.667514"
+      }
+     ]
+    },
+    {
+     "who": "staff",
+     "actor": "Dev Patel (agent)",
+     "text": "Hi Meera, this is Dev from AquaSpin. Which cycle is the machine on?",
+     "result": "Allowed by same-brand-staff-reply",
+     "replies": []
+    },
+    {
+     "who": "staff_action",
+     "actor": "Dev Patel (agent)",
+     "action": "Resolve ticket",
+     "ok": false,
+     "result": "Dev Patel (aquaspin agent) may not change ticket TBB-0005. Cedar decided by: no policy permits it.",
+     "replies": []
+    },
+    {
+     "who": "staff_action",
+     "actor": "Meera Nair (manager)",
+     "action": "Resolve ticket",
+     "ok": true,
+     "result": "Allowed by managers-update-ticket-status",
+     "replies": [
+      {
+       "sender": "system",
+       "kind": "note",
+       "created_at": "2026-09-20T12:38:51.793751",
+       "text": "Ticket TBB-0005 was marked resolved by Meera Nair."
+      }
+     ]
+    }
+   ],
+   "registration": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91019",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.318654",
+     "text": "Hi Meera! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91019, bought 18 Apr 2026.\nMotor warranty (2 years): active until 18 Apr 2028.\nOther parts (1 year): active until 18 Apr 2027.\nMessage us here any time you need help or want to check your warranty."
+    }
+   ]
+  }
+ ],
+ "dashboard": {
+  "aquaspin": {
+   "brand": "aquaspin",
+   "authz": {
+    "principal": {
+     "username": "meera.nair",
+     "name": "Meera Nair",
+     "brand": "aquaspin",
+     "role": "manager"
+    },
+    "decision": {
+     "allowed": true,
+     "policies": [
+      "same-brand-views-dashboard"
+     ]
+    }
+   },
+   "insights": {
+    "engine": "opensearch",
+    "resolved": 1,
+    "answered": 2,
+    "escalated": 3,
+    "by_reason": [
+     {
+      "code": "human_requested",
+      "count": 1,
+      "label": "Asked for a person"
+     },
+     {
+      "code": "recurring",
+      "count": 1,
+      "label": "Recurring issue"
+     },
+     {
+      "code": "unmatched",
+      "count": 1,
+      "label": "Not in the manual"
+     }
+    ],
+    "top_sections": [
+     {
+      "heading": "1. Warranty Period",
+      "count": 2,
+      "escalated": 0
+     },
+     {
+      "heading": "4.1 Drum wobbling or banging noise during spin",
+      "count": 1,
+      "escalated": 0
+     },
+     {
+      "heading": "4.2 Foul smell or dirt/residue left on clothes after washing",
+      "count": 1,
+      "escalated": 1
+     }
+    ]
+   },
+   "tickets": [
+    {
+     "ticket_id": "TBB-0002",
+     "customer_name": "Rohan Desai",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "issue_summary": "My clothes smell bad after washing -- Recurring issue: '4.2 Foul smell or dirt/residue left on clothes after washing' was already handled on 13 Aug 2026 (resolved).",
+     "attempts_tried": [],
+     "safety_flag": false,
+     "customer_phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "phone_unmasked": false,
+     "reason_code": "recurring",
+     "reason_label": "Recurring issue",
+     "status": "new",
+     "created_at": "2026-09-20T12:38:46.626294"
+    },
+    {
+     "ticket_id": "TBB-0003",
+     "customer_name": "Divya Rao",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "issue_summary": "The touch panel flickers and won't respond -- Nothing in the product manual matches this complaint -- not guessing.",
+     "attempts_tried": [],
+     "safety_flag": false,
+     "customer_phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "phone_unmasked": false,
+     "reason_code": "unmatched",
+     "reason_label": "Not in the manual",
+     "status": "new",
+     "created_at": "2026-09-20T12:38:51.524079"
+    },
+    {
+     "ticket_id": "TBB-0005",
+     "customer_name": "Meera Pillai",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "issue_summary": "I want to talk to a person -- Customer asked to speak to a person.",
+     "attempts_tried": [],
+     "safety_flag": false,
+     "customer_phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "phone_unmasked": false,
+     "reason_code": "human_requested",
+     "reason_label": "Asked for a person",
+     "status": "resolved",
+     "created_at": "2026-09-20T12:38:51.630790"
+    }
+   ],
+   "warranty_counts": {
+    "active": 13,
+    "expired": 5
+   },
+   "product_feedback": [
+    {
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "count": 3
+    }
+   ],
+   "registered_count": 9,
+   "registrations": [
+    {
+     "customer_name": "Priya Sharma",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-78234",
+     "purchase_date": "2025-06-05",
+     "retailer": "Amazon.in",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-78234"
+    },
+    {
+     "customer_name": "Ananya Iyer",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-79345",
+     "purchase_date": "2025-08-20",
+     "retailer": "Croma (Chennai)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-79345"
+    },
+    {
+     "customer_name": "Arjun Mehta",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-91011",
+     "purchase_date": "2026-07-14",
+     "retailer": "Croma (Pune)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-91011"
+    },
+    {
+     "customer_name": "Rohan Desai",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-91013",
+     "purchase_date": "2025-11-03",
+     "retailer": "Croma (Mumbai)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-91013"
+    },
+    {
+     "customer_name": "Neha Kulkarni",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-91015",
+     "purchase_date": "2025-07-01",
+     "retailer": "Croma (Nagpur)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-91015"
+    },
+    {
+     "customer_name": "Divya Rao",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-91017",
+     "purchase_date": "2023-09-05",
+     "retailer": "Croma (Bengaluru)",
+     "warranty_component": "motor",
+     "warranty_component_status": "expired",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-91017"
+    },
+    {
+     "customer_name": "Meera Pillai",
+     "product_id": "WM-FC-700",
+     "product_name": "AquaSpin FC-700 Washing Machine",
+     "serial_number": "WM-FC-91019",
+     "purchase_date": "2026-04-18",
+     "retailer": "Croma (Kochi)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FC-91019"
+    },
+    {
+     "customer_name": "Priya Sharma",
+     "product_id": "WM-FL-900",
+     "product_name": "AquaSpin FL-900 Front Loader",
+     "serial_number": "WM-FL-90012",
+     "purchase_date": "2026-01-18",
+     "retailer": "Croma (Bengaluru)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FL-90012"
+    },
+    {
+     "customer_name": "Rohan Desai",
+     "product_id": "WM-FL-900",
+     "product_name": "AquaSpin FL-900 Front Loader",
+     "serial_number": "WM-FL-91014",
+     "purchase_date": "2026-05-30",
+     "retailer": "Croma (Mumbai)",
+     "warranty_component": "motor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/aquaspin?serial=WM-FL-91014"
+    }
+   ]
+  },
+  "arcticair": {
+   "_status": 403,
+   "error": "Meera Nair (aquaspin manager) may not view arcticair's dashboard. Cedar decided by: no-cross-brand.",
+   "decision": {
+    "allowed": false,
+    "policies": [
+     "no-cross-brand"
+    ]
+   }
+  }
+ },
+ "threads": {
+  "TBB-0002": {
+   "ticket": {
+    "ticket_id": "TBB-0002",
+    "status": "new",
+    "customer_name": "Rohan Desai",
+    "product_name": "AquaSpin FC-700 Washing Machine",
+    "reason_label": "Recurring issue",
+    "safety_flag": false
+   },
+   "messages": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91013",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.295536",
+     "text": "Hi Rohan! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91013, bought 03 Nov 2025.\nMotor warranty (2 years): active until 03 Nov 2027.\nOther parts (1 year): active until 03 Nov 2026.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T12:38:34.295539#999a2b"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FL-91014",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.299827",
+     "text": "Hi Rohan! Your AquaSpin FL-900 Front Loader is registered with AquaSpin.\nSerial WM-FL-91014, bought 30 May 2026.\nMotor warranty (2 years): active until 30 May 2028.\nOther parts (1 year): active until 30 May 2027.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T12:38:34.299830#d277f9"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:46.546078",
+     "text": "Hi",
+     "cursor": "MSG#2026-09-20T12:38:46.546084#614b18"
+    },
+    {
+     "buttons": [
+      {
+       "title": "Check my warranty",
+       "id": "cmd:warranty"
+      },
+      {
+       "title": "Report a problem",
+       "id": "cmd:problem"
+      }
+     ],
+     "sender": "aftercare",
+     "kind": "buttons",
+     "created_at": "2026-09-20T12:38:46.550117",
+     "text": "Hi Rohan! I'm AquaSpin's support assistant. I can see your AquaSpin FC-700 Washing Machine, AquaSpin FL-900 Front Loader. Ask me about your warranty, or tell me what's going wrong.",
+     "cursor": "MSG#2026-09-20T12:38:46.550121#092171"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:46.564387",
+     "text": "My clothes smell bad after washing",
+     "cursor": "MSG#2026-09-20T12:38:46.564394#fd5986"
+    },
+    {
+     "buttons": [
+      {
+       "title": "FC-700 Washing Machine",
+       "id": "prod:WM-FC-91013"
+      },
+      {
+       "title": "FL-900 Front Loader",
+       "id": "prod:WM-FL-91014"
+      }
+     ],
+     "sender": "aftercare",
+     "kind": "buttons",
+     "created_at": "2026-09-20T12:38:46.568538",
+     "text": "Thanks Rohan. Which product is this about?",
+     "cursor": "MSG#2026-09-20T12:38:46.568541#e9a40f"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:46.598861",
+     "text": "FC-700 Washing Machine",
+     "cursor": "MSG#2026-09-20T12:38:46.598871#63f8d9"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": {
+       "code": "recurring",
+       "label": "Recurring issue",
+       "detail": "4.2 Foul smell or dirt/residue left on clothes after washing -- handled 13 Aug 2026 (resolved)"
+      },
+      "model_ms": [],
+      "section_heading": "4.2 Foul smell or dirt/residue left on clothes after washing",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "motor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "TBB-0002",
+      "attempt": 0,
+      "retrieval_method": "opensearch",
+      "status": "escalated"
+     },
+     "created_at": "2026-09-20T12:38:46.655595",
+     "text": "This looks like the same problem we handled on 13 Aug 2026. Repeating the same fix won't help, so I've passed it to our service team as ticket TBB-0002, with the earlier case attached. You won't have to explain it again.",
+     "cursor": "MSG#2026-09-20T12:38:46.655603#beaa00"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T12:38:46.657791",
+     "text": "Ticket TBB-0002 \u00b7 Recurring issue",
+     "cursor": "MSG#2026-09-20T12:38:46.657806#cdf7a3"
+    }
+   ]
+  },
+  "TBB-0003": {
+   "ticket": {
+    "ticket_id": "TBB-0003",
+    "status": "new",
+    "customer_name": "Divya Rao",
+    "product_name": "AquaSpin FC-700 Washing Machine",
+    "reason_label": "Not in the manual",
+    "safety_flag": false
+   },
+   "messages": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91017",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.310979",
+     "text": "Hi Divya! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91017, bought 05 Sep 2023.\nMotor warranty (2 years): expired on 05 Sep 2025.\nOther parts (1 year): expired on 05 Sep 2024.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T12:38:34.310981#86ef8d"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:51.422124",
+     "text": "Is my machine still under warranty?",
+     "cursor": "MSG#2026-09-20T12:38:51.422133#192d75"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": null,
+      "model_ms": [],
+      "section_heading": "1. Warranty Period",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "expired",
+       "component": "motor",
+       "parts_status": "expired"
+      },
+      "source": "terms",
+      "storage": "dynamodb",
+      "ticket_id": "",
+      "attempt": 0,
+      "retrieval_method": "opensearch",
+      "status": "answered"
+     },
+     "created_at": "2026-09-20T12:38:51.480384",
+     "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91017) was bought on 05 Sep 2023.\n- Motor (2 years): expired on 05 Sep 2025.\n- Other parts (1 year): expired on 05 Sep 2024.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
+     "cursor": "MSG#2026-09-20T12:38:51.480396#5a7392"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:51.509598",
+     "text": "The touch panel flickers and won't respond",
+     "cursor": "MSG#2026-09-20T12:38:51.509609#240fef"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": {
+       "code": "unmatched",
+       "label": "Not in the manual",
+       "detail": "Closest section, \"4.3 Machine won't start / no power\", shares no meaningful word with the complaint"
+      },
+      "model_ms": [],
+      "section_heading": "",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "expired",
+       "component": "motor",
+       "parts_status": "expired"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "TBB-0003",
+      "attempt": 0,
+      "retrieval_method": "opensearch",
+      "status": "escalated"
+     },
+     "created_at": "2026-09-20T12:38:51.546198",
+     "text": "I couldn't find this in your product manual, and I won't guess at it. I've handed it to our service team as ticket TBB-0003 with your description as written.",
+     "cursor": "MSG#2026-09-20T12:38:51.546207#b369d6"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T12:38:51.547953",
+     "text": "Ticket TBB-0003 \u00b7 Not in the manual",
+     "cursor": "MSG#2026-09-20T12:38:51.547956#67a955"
+    }
+   ]
+  },
+  "TBB-0005": {
+   "ticket": {
+    "ticket_id": "TBB-0005",
+    "status": "resolved",
+    "customer_name": "Meera Pillai",
+    "product_name": "AquaSpin FC-700 Washing Machine",
+    "reason_label": "Asked for a person",
+    "safety_flag": false
+   },
+   "messages": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "WM-FC-91019",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T12:38:34.318654",
+     "text": "Hi Meera! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91019, bought 18 Apr 2026.\nMotor warranty (2 years): active until 18 Apr 2028.\nOther parts (1 year): active until 18 Apr 2027.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T12:38:34.318656#64218d"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T12:38:51.624091",
+     "text": "I want to talk to a person",
+     "cursor": "MSG#2026-09-20T12:38:51.624097#5e5de8"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": {
+       "code": "human_requested",
+       "label": "Asked for a person",
+       "detail": ""
+      },
+      "model_ms": [],
+      "section_heading": "",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "motor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "TBB-0005",
+      "attempt": 0,
+      "retrieval_method": "rule",
+      "status": "escalated"
+     },
+     "created_at": "2026-09-20T12:38:51.665932",
+     "text": "Of course. I've passed this to our service team as ticket TBB-0005, with your details attached. A person will reply to you here on WhatsApp.",
+     "cursor": "MSG#2026-09-20T12:38:51.665942#9a5dab"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T12:38:51.667514",
+     "text": "Ticket TBB-0005 \u00b7 Asked for a person",
+     "cursor": "MSG#2026-09-20T12:38:51.667519#41c5c3"
+    },
+    {
+     "sender": "human",
+     "kind": "text",
+     "meta": {
+      "ticket_id": "TBB-0005",
+      "staff": "Dev Patel"
+     },
+     "created_at": "2026-09-20T12:38:51.737609",
+     "text": "Hi Meera, this is Dev from AquaSpin. Which cycle is the machine on?",
+     "cursor": "MSG#2026-09-20T12:38:51.737617#18bfff"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T12:38:51.793751",
+     "text": "Ticket TBB-0005 was marked resolved by Meera Nair.",
+     "cursor": "MSG#2026-09-20T12:38:51.793758#32f1ee"
+    }
+   ]
+  }
+ },
+ "health": {
+  "runtime": "lambda",
+  "storage": "dynamodb",
+  "components": {
+   "ollama": {
+    "ok": true,
+    "ms": 10,
+    "models": [
+     "gemma2:9b",
+     "qwen2.5-coder:7b",
+     "llama3.2:3b",
+     "qwen2.5:7b",
+     "llama3.1:8b",
+     "llama3:8b"
+    ]
+   },
+   "opensearch": {
+    "ok": true,
+    "ms": 4,
+    "version": "2.19.6",
+    "index": "aftercare-sections-v4",
+    "documents": 51
+   },
+   "cedar": {
+    "ok": true,
+    "ms": 8,
+    "policy_sha": "ceb4742d",
+    "validated": true
+   },
+   "dynamodb": {
+    "ok": true,
+    "ms": 3,
+    "backend": "dynamodb",
+    "table": "AftercareTable",
+    "items": 106
+   }
+  }
+ },
+ "csv": {
+  "clean": "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\nPriya Sharma,+919876543210,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-78234,2025-06-05,Amazon.in,24999\nPriya Sharma,+919876543210,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-90012,2026-01-18,Croma (Bengaluru),34999\nRavi Kumar,+919812345678,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-78901,2024-11-12,Flipkart,32999\nAnanya Iyer,+919845098450,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-79345,2025-08-20,Croma (Chennai),25999\nSameer Khan,+919900112233,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-77102,2023-03-15,Amazon.in,31499\n"
+ },
+ "ingest_check": {
+  "clean": {
+   "rows": 5,
+   "accepted": 5,
+   "rejected": 0,
+   "brands": [
+    {
+     "brand": "AquaSpin",
+     "slug": "aquaspin",
+     "products": 3,
+     "customers": 2
+    },
+    {
+     "brand": "ArcticAir",
+     "slug": "arcticair",
+     "products": 2,
+     "customers": 2
+    }
+   ],
+   "issues": []
+  },
+  "messy": {
+   "rows": 5,
+   "accepted": 2,
+   "rejected": 3,
+   "brands": [
+    {
+     "brand": "AquaSpin",
+     "slug": "aquaspin",
+     "products": 1,
+     "customers": 1
+    },
+    {
+     "brand": "ArcticAir",
+     "slug": "arcticair",
+     "products": 1,
+     "customers": 1
+    }
+   ],
+   "issues": [
+    {
+     "line": 4,
+     "problem": "Unknown product code \"TV-55-X\": no brand owns it"
+    },
+    {
+     "line": 5,
+     "problem": "Serial AC-CB-80002 already appears on line 3"
+    },
+    {
+     "line": 6,
+     "problem": "Purchase date \"12/03/2026\" is not YYYY-MM-DD"
+    },
+    {
+     "line": 6,
+     "problem": "Phone is not in +<country code><number> form"
+    }
+   ]
+  }
+ }
+}

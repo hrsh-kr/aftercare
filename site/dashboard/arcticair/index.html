@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ArcticAir — Aftercare Dashboard</title>
+  <meta name="description" content="ArcticAir support dashboard: complaints and their status, registered products, and analytics, powered by Aftercare.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="db">
+<style>.static-note{position:relative;z-index:300;background:#0a2a52;color:#cfe4ff;font:500 13px/1.4 Inter,system-ui,sans-serif;text-align:center;padding:8px 16px}.static-note a{color:#8ec0ff}body.db .static-note{border-radius:0 0 14px 14px}</style><div class="static-note">A static copy of the site. The demo here is a <b>recording</b> of the real run; to run it live, see <a href="/run">Run it yourself</a>.</div>
+<div class="db-wrap">
+
+  <header class="db-head">
+    <div class="db-brand">
+      <span class="db-mark">Ar</span>
+      <div>
+        <h1>ArcticAir support</h1>
+        <p id="session-line">Checking sign-in…</p>
+      </div>
+    </div>
+    <nav class="db-nav" aria-label="Dashboard links">
+      <a href="/sandbox">Recorded run</a>
+      <a href="/dashboard">Switch account</a>
+      <a href="/dashboard/aquaspin" title="You should be refused. Cedar will say which rule refused you.">Try AquaSpin</a>
+    </nav>
+  </header>
+
+  <div id="denied-panel" class="db-card db-denied" hidden>
+    <h2>Access denied</h2>
+    <p id="denied-copy"></p>
+    <a class="db-btn" href="/dashboard">Sign in as a different account</a>
+  </div>
+
+  <main id="dash-content" hidden>
+    <section class="db-kpis" id="stat-row" aria-label="Summary"></section>
+
+    <section class="db-card" aria-labelledby="h-complaints">
+      <div class="db-card-head">
+        <h2 id="h-complaints">Complaints</h2>
+        <div class="db-filter" id="db-filter" role="tablist" aria-label="Filter by status">
+          <button class="on" data-f="all" role="tab">All</button>
+          <button data-f="open" role="tab"><i class="d red"></i>Open</button>
+          <button data-f="progress" role="tab"><i class="d yellow"></i>In progress</button>
+          <button data-f="done" role="tab"><i class="d green"></i>Resolved</button>
+        </div>
+      </div>
+      <p class="db-hint">Only people who reached a person are listed. The three dots are the status: red is waiting, yellow is being handled, green is resolved. Click a dot to change it (managers only). Open a row to read the chat and reply.</p>
+      <div id="ticket-list" class="db-list"></div>
+    </section>
+
+    <section class="db-card" aria-labelledby="h-products">
+      <div class="db-card-head"><h2 id="h-products">Registered products</h2><span class="db-muted" id="db-prod-count"></span></div>
+      <div class="db-table-wrap"><table class="db-table" id="db-products"></table></div>
+    </section>
+  </main>
+
+</div>
+
+<!-- the AI analytics bar: always at the bottom -->
+<footer class="db-ai" id="db-ai" hidden>
+  <div class="db-ai-panel" id="db-ai-panel" hidden></div>
+  <div class="db-ai-bar">
+    <span class="db-ai-tag">AI analytics</span>
+    <p id="db-ai-text">Reading your conversations…</p>
+    <button type="button" id="db-ai-toggle" aria-expanded="false">Details</button>
+  </div>
+</footer>
+
+<script>window.__BRAND__ = "arcticair";</script>
+<script src="/static/replay-shim.js"></script>
+<script src="/static/dashboard.js"></script>
+</body>
+</html>

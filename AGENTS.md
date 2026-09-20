@@ -28,6 +28,7 @@ tests/run_all.sh                         # tests (services from dev.sh must be u
 | Manuals / terms / order files | `fixtures/` (re-run `scripts/bootstrap_local.py` to re-index) |
 | Who may do what | `policies/aftercare.cedar` + `.cedarschema` (`tests/test_cedar.py`) |
 | A DynamoDB access pattern | `src/storage/dynamodb_store.py` + `docs/DYNAMODB_DESIGN.md` (`tests/test_store_contract.py`) |
+| The static/Vercel copy | `scripts/record_playback.py` then `scripts/export_static_site.py` (`site/` is generated: never edit it by hand) |
 | UI | `public/static/*.{css,js}`, `src/webapp/templates/*.html` (static files are live; templates need a rebuild) |
 
 Names: `domain/` (catalog, registration, retrieval), `agent/`, `records/` (tickets, cases), `storage/`, `authz/`, `channel/`. Everything in `fixtures/` is fabricated.
