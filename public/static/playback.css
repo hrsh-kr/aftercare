@@ -129,3 +129,10 @@
 .pb-page .sb-honest{text-align:left;max-width:1360px;padding-top:clamp(40px,6vw,80px);}
 .pb-page .pb-hero .l-sub{font-size:clamp(20px,2.4vw,30px);}
 @media(max-width:760px){.pb-trio{grid-template-columns:1fr;gap:12px;}.pb-frame{height:1000px;}}
+
+/* "More customers": a small Apple-blue pill floating over the list, sized to its text, no backdrop */
+.pb-scrollhint{left:50%;right:auto;bottom:10px;height:auto;transform:translateX(-50%);padding:8px 16px;gap:8px;align-items:center;
+  background:#0071e3;border-radius:999px;color:#fff;font-weight:700;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;box-shadow:0 6px 18px rgba(0,60,140,.45);white-space:nowrap;}
+.pb-scrollhint:hover{background:#0a84ff;}
+.pb-scrollhint:focus-visible{outline:2px solid #fff;outline-offset:2px;}
