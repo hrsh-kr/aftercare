@@ -39,6 +39,7 @@ as a side effect.
 import json
 import os
 import sys
+import time
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
@@ -53,6 +54,7 @@ from src.layer1.registration import Registration, load_registrations, lookup_by_
 from src.layer2 import agent as agent_mod
 from src.layer3b import case_index
 from src.storage import get_store
+from src.webapp import observability as obs
 from src.layer3b.tickets import Ticket
 
 _agent = None  # built lazily, once, on first use -- avoids paying Ollama startup cost at import time
@@ -221,7 +223,18 @@ def lookup(phone: str, brand: str = "") -> dict:
     }
 
 
-def start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dict, int]:
+def start_conversation(phone: str, complaint: str, product_id: str, idempotency_key: str | None = None) -> tuple[dict, int]:
+    """Idempotent when the caller supplies a key (Idempotency-Key header) and the DynamoDB
+    store is active: a retried request returns the same conversation instead of creating a
+    second conversation and a second ticket."""
+    if idempotency_key and get_store().name == "dynamodb":
+        from src.webapp.idempotency import once
+        out = once(payload={"key": idempotency_key, "phone": phone, "complaint": complaint, "product_id": product_id})
+        return out["data"], out["status"]
+    return _start_conversation(phone, complaint, product_id)
+
+
+def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dict, int]:
     """Start a support conversation for a specific product.
 
     product_id is required -- the customer has already selected which
@@ -239,11 +252,15 @@ def start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dic
                        # product_id on this phone are the same product type; take first.
                        # A real system would match on serial_number too for absolute precision.
 
+    t0 = time.perf_counter()
     conv = agent_mod.start(reg, complaint, agent=get_agent(), history=_history(reg.serial_number)[0])
+    agent_ms = round((time.perf_counter() - t0) * 1000)
     conv_id = str(uuid.uuid4())
     _save_conversation(conv_id, conv)
     _record(conv_id, conv)
-    return {"conversation_id": conv_id, **_conversation_state(conv)}, 200
+    state = _conversation_state(conv)
+    obs.conversation_outcome(state, brand_for(reg.product_id).lower(), agent_ms)
+    return {"conversation_id": conv_id, **state}, 200
 
 
 def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
@@ -251,10 +268,14 @@ def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
     if conv is None:
         return {"error": "Unknown conversation."}, 404
 
+    t0 = time.perf_counter()
     conv = agent_mod.respond(conv, reply, agent=get_agent())
+    agent_ms = round((time.perf_counter() - t0) * 1000)
     _save_conversation(conversation_id, conv)
     _record(conversation_id, conv)
-    return _conversation_state(conv), 200
+    state = _conversation_state(conv)
+    obs.conversation_outcome(state, brand_for(conv.registration.product_id).lower(), agent_ms)
+    return state, 200
 
 
 def _insights(brand: str) -> dict:
@@ -334,6 +355,9 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
         return {"error": f"Authorization check unavailable: {exc}"}, 503
 
     if not decision.allowed:
+        obs.logger.warning("authz_denied", action="viewDashboard", principal_brand=principal.brand, role=principal.role,
+                           resource_brand=brand, policies=decision.policies)
+        obs.metric("AuthzDenied", Action="viewDashboard")
         return {"error": _deny_message(principal, f"view {brand}'s dashboard", decision), "decision": {"allowed": False, "policies": decision.policies}}, 403
 
     registrations = [r for r in load_registrations() if brand_for(r.product_id).lower() == brand]

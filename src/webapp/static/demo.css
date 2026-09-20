@@ -99,3 +99,5 @@
 @media(prefers-reduced-motion:reduce){
   .d-trace li{animation:none;}
 }
+
+.d-runtime{display:inline-block;margin:0 0 18px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--on-dark-2);font-size:13px;font-weight:500;}

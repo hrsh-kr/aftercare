@@ -34,6 +34,10 @@ const SCENARIOS = [
     complaint: "There's a burning smell coming from my AC", replies: [] },
 ];
 
+/* Which backend answers: same origin (Flask) by default, or ?api=http://127.0.0.1:3000 to run
+   the identical page against the SAM Local Lambdas. */
+const API = (new URLSearchParams(location.search).get("api") || "").replace(/\/$/, "");
+
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -47,8 +51,8 @@ let run = 0;           // bumps on restart so a stale async flow stops writing
 let state = null;      // { phase, products, product, conversationId, replyIdx }
 
 /* ── API ── */
-async function api(path, body) {
-  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function api(path, body, headers = {}) {
+  const res = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
   let data = {};
   try { data = await res.json(); } catch (_) { /* non-JSON error page */ }
   if (!res.ok) { const e = new Error(data.error || `HTTP ${res.status}`); e.status = res.status; throw e; }
@@ -175,7 +179,9 @@ async function begin(product, my) {
   state.product = product;
   traceItem([strong(`Product: ${product.product_name}`), sub(`Serial ${product.serial_number} · ${product.warranty_component_status === "active" ? "warranty active" : "warranty expired"}`)]);
   const t = typing();
-  const r = await api("/api/start", { phone: scenario.phone, complaint: state.complaint, product_id: scenario.productId || product.product_id });
+  // One key per customer message: a network retry of *this* request can't open a second conversation.
+  const r = await api("/api/start", { phone: scenario.phone, complaint: state.complaint, product_id: scenario.productId || product.product_id },
+                      { "Idempotency-Key": crypto.randomUUID() });
   if (my !== run) return;
   t.remove();
   state.conversationId = r.conversation_id;
@@ -275,5 +281,18 @@ $("d-reset").addEventListener("click", async () => {
   if (scenario) start();
 });
 $("d-next").addEventListener("click", (e) => { e.preventDefault(); $("d-pick").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); });
+
+/* runtime pill: what is actually answering, from a live probe */
+(async function () {
+  const pill = $("d-runtime");
+  if (!pill) return;
+  try {
+    const h = await (await fetch(API + "/api/health")).json();
+    const c = h.components;
+    const up = (k) => (c[k] && c[k].ok ? "●" : "○");
+    pill.textContent = `Running on ${h.runtime === "lambda" ? "AWS Lambda (SAM Local)" : "Flask"} · ${h.storage === "dynamodb" ? "DynamoDB Local" : "file store"} · OpenSearch ${up("opensearch")} · Cedar ${up("cedar")} · Ollama ${up("ollama")}`;
+    pill.hidden = false;
+  } catch (_) { pill.hidden = true; }
+})();
 
 renderCards();

@@ -13,3 +13,10 @@
 - **Cedar** policies read like the requirement ("principal.brand == resource.brand"); fail-closed on any error was easy to build around.
 - **SAM**: one `template.yaml` describes the API and functions, and the same handlers run under Flask and `sam local`.
 - **Strands**: (to fill in.)
+
+## Added while building the serverless phase
+- **SAM Local + OpenSearch (a bug only Lambda revealed):** documents were indexed with the *absolute file path* as the filter key. Inside the Lambda container the path is `/var/task/...`, so every search matched nothing and silently fell back to keyword search. Nothing failed; the engine label on each response is the only reason we noticed. Key by file name.
+- **SAM Local**: `sam build` with `CodeUri: .` copies the whole repo (docs, archive, 129 MB) into every function package and there is no ignore file. `Globals` accepts `Api.Cors` but not everything you'd expect for functions.
+- **DynamoDB Local** is not in the Build It table but is AWS's own downloadable emulator, and it made the single-table design testable with real `Query`, GSI and atomic `ADD` semantics. Worth naming in the table.
+- **Lambda Powertools idempotency**: `event_key_jmespath` alone silently returns the cached result even when the request body differs; you must add `payload_validation_jmespath` to get a validation error. Also warns unless `register_lambda_context` is called.
+- **Powertools Metrics/EMF** were a pleasure: one `single_metric` call prints a CloudWatch-EMF JSON line; no client, no API call, works identically under `sam local`.

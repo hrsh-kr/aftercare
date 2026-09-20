@@ -8,6 +8,13 @@ Description: >
   this is the "it isn't just a Flask app" proof, same logic underneath.
 
 Globals:
+  Api:
+    # The demo page is served by Flask on another port, so the browser needs CORS to call
+    # this API. Wide-open origin is fine for localhost, never for a real deployment.
+    Cors:
+      AllowOrigin: "'*'"
+      AllowHeaders: "'Content-Type,Idempotency-Key'"
+      AllowMethods: "'GET,POST,OPTIONS'"
   Function:
     Runtime: python3.12
     Architectures: [arm64]
@@ -24,8 +31,51 @@ Globals:
         # /var/task (the code mount) is read-only under real Lambda;
         # only /tmp is writable. See tickets.py / api_core.py.
         AFTERCARE_DATA_DIR: /tmp/aftercare-data
+        # Lambdas have no disk worth keeping: state lives in DynamoDB. Locally that is
+        # DynamoDB Local on the host; in an account, drop DYNAMODB_ENDPOINT and it is real.
+        AFTERCARE_STORE: dynamodb
+        DYNAMODB_ENDPOINT: http://host.docker.internal:8000
+        AFTERCARE_TABLE: !Ref AftercareTable
+        AFTERCARE_IDEMPOTENCY_TABLE: !Ref IdempotencyTable
+        OPENSEARCH_HOST: http://host.docker.internal:9200
+        AFTERCARE_DEMO: "1"   # enables POST /api/demo/reset. Remove for any real deployment.
+        POWERTOOLS_SERVICE_NAME: aftercare
+        LOG_LEVEL: INFO
+        AFTERCARE_SECRET: local-dev-only-change-me
 
 Resources:
+  # Single-table design, see docs/DYNAMODB_DESIGN.md. Declared here so this template is a
+  # complete, deployable description; under `sam local` the tables live in DynamoDB Local.
+  AftercareTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: PK, AttributeType: S}
+        - {AttributeName: SK, AttributeType: S}
+        - {AttributeName: GSI1PK, AttributeType: S}
+        - {AttributeName: GSI1SK, AttributeType: S}
+      KeySchema:
+        - {AttributeName: PK, KeyType: HASH}
+        - {AttributeName: SK, KeyType: RANGE}
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - {AttributeName: GSI1PK, KeyType: HASH}
+            - {AttributeName: GSI1SK, KeyType: RANGE}
+          Projection: {ProjectionType: ALL}
+      TimeToLiveSpecification: {AttributeName: ttl, Enabled: true}
+
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: id, AttributeType: S}
+      KeySchema:
+        - {AttributeName: id, KeyType: HASH}
+      TimeToLiveSpecification: {AttributeName: expiration, Enabled: true}
+
   CustomersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -128,6 +178,18 @@ Resources:
           Type: Api
           Properties:
             Path: /api/tickets/{ticket_id}/status
+            Method: post
+
+  DemoResetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.lambda_handlers.demo_reset
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/demo/reset
             Method: post
 
 Outputs:
