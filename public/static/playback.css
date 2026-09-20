@@ -300,3 +300,7 @@ button{font:inherit;color:inherit;}
 .pb-foot p{padding-top:0;}
 
 @media(max-width:860px){.pb-order{grid-template-columns:minmax(0,1fr);}}
+
+/* old-terminal look for the commands and file names in "Run it yourself" */
+.pb-band.b4 .pb-run-body pre,.pb-band.b4 .pb-run-body code,.pb-band.b4 code{background:#000;color:#39ff14;text-shadow:0 0 6px rgba(57,255,20,.45);border:1px solid #14532d;}
+.pb-band.b4 .pb-run-body code{border-radius:4px;padding:2px 7px;}
