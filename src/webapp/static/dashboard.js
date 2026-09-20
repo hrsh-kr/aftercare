@@ -170,6 +170,8 @@ async function loadDashboard() {
     regList.innerHTML = `<p class="empty-state">No products registered yet.</p>`;
   }
 
+  renderInsights(data.insights);
+
   // ── Tickets ────────────────────────────────────────────────────────────────
 
   const ticketList = document.getElementById("ticket-list");
@@ -210,6 +212,27 @@ async function loadDashboard() {
 }
 
 // ── Complaint breakdown ────────────────────────────────────────────────────────
+
+function renderInsights(ins) {
+  const box = document.getElementById("insights");
+  const eng = document.getElementById("insights-engine");
+  if (!box || !ins) return;
+  eng.textContent = ins.engine === "opensearch" ? "Computed by OpenSearch aggregations" : "Computed from files (OpenSearch offline)";
+  const total = ins.resolved + ins.escalated;
+  if (!total) { box.innerHTML = '<p class="empty-state">No finished conversations yet. Run one in the live demo.</p>'; return; }
+  const bar = (label, n, of, cls) =>
+    `<div class="ins-row"><span class="ins-label">${escapeHtml(label)}</span>
+       <span class="ins-track"><span class="ins-fill ${cls || ""}" style="width:${Math.max(4, Math.round(100 * n / of))}%"></span></span>
+       <span class="ins-n">${n}</span></div>`;
+  const reasons = ins.by_reason.map((r) => bar(r.label, r.count, ins.escalated || 1)).join("") || '<p class="empty-state">None escalated.</p>';
+  const sections = ins.top_sections.map((s) =>
+    bar(s.heading, s.escalated, s.count, "ins-warn") .replace('<span class="ins-n">' + s.escalated + '</span>', `<span class="ins-n">${s.escalated} of ${s.count}</span>`)).join("");
+  box.innerHTML = `
+    <div class="ins-card"><div class="ins-big">${Math.round(100 * ins.resolved / total)}%</div>
+      <div class="ins-cap">resolved by the agent, no ticket<br>(${ins.resolved} of ${total} conversations)</div></div>
+    <div class="ins-card"><h3>Why they escalated</h3>${reasons}</div>
+    <div class="ins-card"><h3>Manual sections that send people to a person</h3>${sections}</div>`;
+}
 
 function renderComplaintBreakdown(tickets) {
   const el = document.getElementById("complaint-breakdown");

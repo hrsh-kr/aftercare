@@ -9,7 +9,7 @@ Supersedes the priority list in TARGET.md where they differ. Source of the deliv
 | Public repo, README, **commit history** | Judges read how it came together | Commit after every phase, small and honest (§4) |
 | Video ≤3 min | About · tech stack + architecture · how AWS was used · learning | Script in §6; the architecture chapter and the live trace are the shots |
 | "Build it": AWS open-source stack, tool names | Real use, not decorative | Strands, OpenSearch, Cedar, SAM CLI (+ DynamoDB Local, Lambda Powertools) |
-| "Ship it": AWS services, names | Understanding of the cloud counterparts | `docs/AWS_MAPPING.md`: every local piece → managed service, with the code seam. **Not deployed (no account); say so.** |
+| "Ship it": AWS services, names | Not our track | One honest sentence + short README table (§2). Not deployed. |
 | Feedback: dislikes / likes, per service | Specific, named | `docs/AWS_FEEDBACK_LOG.md`, appended as friction happens (§5) |
 | Team leader's contributions, blog | Written | §6 |
 
@@ -30,18 +30,8 @@ Browser ─▶ API Gateway ─▶ Lambda (SAM Local)  ◀── same handlers �
 
 DynamoDB single-table design: `PK=BRAND#<slug>`, `SK=TICKET#<id>` / `CASE#<serial>#<ts>`; `PK=CONV#<id>`, `SK=STATE`; `PK=CTR`, `SK=TICKET` with atomic `ADD` for ticket IDs. GSI1 (`serial`, `created_at`) for recurrence. Access patterns are listed in the doc before any code.
 
-## 2. Ship-it mapping (documented, seam in code, not deployed)
-
-| Local | AWS service | Seam |
-|---|---|---|
-| Ollama qwen2.5 | Amazon Bedrock via Strands `BedrockModel` | `MODEL_PROVIDER` env var |
-| OpenSearch container | Amazon OpenSearch Serverless (or Service) | `OPENSEARCH_HOST` + SigV4 auth |
-| Cedar CLI | Amazon Verified Permissions (managed Cedar) | policies + schema unchanged |
-| DynamoDB Local | Amazon DynamoDB | `DYNAMODB_ENDPOINT` unset |
-| SAM Local | API Gateway + Lambda, `sam deploy` | same `template.yaml` |
-| Powertools EMF/logs | CloudWatch Logs + Metrics, X-Ray | no change |
-| CSV ingest | S3 upload → event → Lambda | `POST /api/ingest` is the handler body |
-| WhatsApp (simulated) | AWS End User Messaging Social | webhook → same `/api/start` |
+## 2. Ship it: deliberately out of scope
+We submit on Build It; no AWS account, nothing deployed. The form's "Ship it" line gets one honest sentence ("not used; `template.yaml` is written to deploy with `sam deploy`") plus a short README table, "Where each piece goes in production" (Ollama→Bedrock, OpenSearch container→OpenSearch Serverless, Cedar CLI→Verified Permissions, DynamoDB Local→DynamoDB, SAM Local→API Gateway+Lambda, Powertools→CloudWatch). Only two code seams are kept because they cost minutes: `MODEL_PROVIDER` and `DYNAMODB_ENDPOINT`. No hours go to Ship it.
 
 ## 3. Phases (hours are budgets, cut lines in §7)
 

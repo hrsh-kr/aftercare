@@ -50,6 +50,7 @@ from src.authz.cedar_authz import CedarUnavailable, can_view_dashboard
 from src.layer1.catalog import BRAND_SLUGS, brand_for
 from src.layer1.registration import Registration, load_registrations, lookup_by_phone
 from src.layer2 import agent as agent_mod
+from src.layer3b import case_index
 from src.layer3b.tickets import Ticket
 
 _agent = None  # built lazily, once, on first use -- avoids paying Ollama startup cost at import time
@@ -96,11 +97,21 @@ def _load_conversation(conv_id: str) -> agent_mod.Conversation | None:
 HISTORY_SEED = Path(__file__).resolve().parent.parent.parent / "fixtures" / "history_seed.json"
 
 
-def _history() -> list[agent_mod.PriorCase]:
+def _history(serial: str = "") -> tuple[list[agent_mod.PriorCase], str]:
     """Earlier cases the agent can recognise a recurring problem from: every
     saved conversation, plus the seeded history (what a brand's ticketing
     system would already hold on day one). Seed ages are relative, so the
-    demo scenario doesn't drift out of the recurrence window."""
+    demo scenario doesn't drift out of the recurrence window.
+
+    OpenSearch answers it as a query (serial + time window); if it's unreachable the
+    same question is answered from files. Returns (cases, engine) so it can be shown."""
+    try:
+        found = case_index.prior_cases(serial, agent_mod.RECURRENCE_DAYS)
+        return [agent_mod.PriorCase(serial_number=d["serial_number"], section_heading=d["section_heading"],
+                                    when=datetime.fromisoformat(d["created_at"]).replace(tzinfo=None),
+                                    outcome=d["outcome"]) for d in found], "opensearch"
+    except Exception:
+        pass
     cases: list[agent_mod.PriorCase] = []
     if HISTORY_SEED.exists():
         for e in json.loads(HISTORY_SEED.read_text()):
@@ -123,7 +134,7 @@ def _history() -> list[agent_mod.PriorCase]:
                 when=datetime.fromisoformat(c["created_at"]),
                 outcome="resolved" if c.get("resolved") else "escalated",
             ))
-    return cases
+    return cases, "file"
 
 
 def reset_demo_data() -> dict:
@@ -136,7 +147,22 @@ def reset_demo_data() -> dict:
         if d.exists():
             n += len(list(d.glob("*.json")))
             shutil.rmtree(d)
+    try:
+        case_index.reset()
+    except Exception:
+        pass
     return {"cleared": n}
+
+
+def _record(conv_id: str, conv: agent_mod.Conversation) -> None:
+    """Index a finished conversation for recurrence and insights. Best effort: the
+    JSON file is the source of truth, so an OpenSearch outage never breaks a reply."""
+    if not (conv.resolved or conv.ticket):
+        return
+    try:
+        case_index.record(conv_id, conv)
+    except Exception:
+        pass
 
 
 def list_customers(brand: str = "") -> list[dict]:
@@ -221,9 +247,10 @@ def start_conversation(phone: str, complaint: str, product_id: str) -> tuple[dic
                        # product_id on this phone are the same product type; take first.
                        # A real system would match on serial_number too for absolute precision.
 
-    conv = agent_mod.start(reg, complaint, agent=get_agent(), history=_history())
+    conv = agent_mod.start(reg, complaint, agent=get_agent(), history=_history(reg.serial_number)[0])
     conv_id = str(uuid.uuid4())
     _save_conversation(conv_id, conv)
+    _record(conv_id, conv)
     return {"conversation_id": conv_id, **_conversation_state(conv)}, 200
 
 
@@ -234,10 +261,50 @@ def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
 
     conv = agent_mod.respond(conv, reply, agent=get_agent())
     _save_conversation(conversation_id, conv)
+    _record(conversation_id, conv)
     return _conversation_state(conv), 200
 
 
-def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
+def _insights(brand: str) -> dict:
+    try:
+        out = case_index.insights(brand)
+    except Exception:
+        out = _insights_from_files(brand)
+    for r in out["by_reason"]:
+        r["label"] = agent_mod.ESCALATION_LABELS.get(r["code"], r["code"])
+    return out
+
+
+def _insights_from_files(brand: str) -> dict:
+    """Same shape as case_index.insights(), computed by hand when OpenSearch is down."""
+    resolved = escalated = 0
+    reasons: dict[str, int] = {}
+    sections: dict[str, list[int]] = {}
+    for path in (CONV_DIR.glob("*.json") if CONV_DIR.exists() else []):
+        try:
+            c = json.loads(path.read_text())
+        except ValueError:
+            continue
+        if brand_for(c["registration"]["product_id"]).lower() != brand or not (c.get("resolved") or c.get("ticket")):
+            continue
+        done = bool(c.get("resolved"))
+        resolved += done
+        escalated += not done
+        if not done and c.get("escalation_code"):
+            reasons[c["escalation_code"]] = reasons.get(c["escalation_code"], 0) + 1
+        if c.get("section_heading"):
+            row = sections.setdefault(c["section_heading"], [0, 0])
+            row[0] += 1
+            row[1] += (not done)
+    return {
+        "engine": "file", "resolved": resolved, "escalated": escalated,
+        "by_reason": [{"code": k, "count": v} for k, v in sorted(reasons.items(), key=lambda kv: -kv[1])],
+        "top_sections": [{"heading": k, "count": v[0], "escalated": v[1]}
+                         for k, v in sorted(sections.items(), key=lambda kv: -kv[1][0])[:5]],
+    }
+
+
+def dashboard_data(brand: str, staff_brand: str, q: str = "") -> tuple[dict, int]:
     """Brand-scoped, Cedar-authorized. staff_brand is who the request
     claims to be logged in as; brand is whose data is being asked for.
     These can disagree -- e.g. an ArcticAir staff session asking for
@@ -260,6 +327,14 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
         key=lambda t: t.ticket_id,
     )
 
+    if q.strip():
+        try:
+            hits = set(case_index.search_tickets(brand, q.strip()))
+            tickets = [t for t in tickets if t.ticket_id in hits]
+        except Exception:
+            ql = q.strip().lower()
+            tickets = [t for t in tickets if ql in f"{t.customer_name} {t.product_name} {t.issue_summary}".lower()]
+
     warranty_counts = {"active": 0, "expired": 0}
     for r in registrations:
         warranty_counts["active" if r.warranty_component_status == "active" else "expired"] += 1
@@ -278,6 +353,7 @@ def dashboard_data(brand: str, staff_brand: str) -> tuple[dict, int]:
 
     return {
         "brand": brand,
+        "insights": _insights(brand),
         "tickets": [
             {
                 "ticket_id": t.ticket_id,

@@ -88,7 +88,7 @@ def dashboard(brand: str):
 @app.route("/api/dashboard/<brand>", methods=["GET"])
 def dashboard_data(brand: str):
     staff_brand = request.headers.get("X-Staff-Brand", "")
-    data, status = core.dashboard_data(brand, staff_brand)
+    data, status = core.dashboard_data(brand, staff_brand, request.args.get("q", ""))
     return jsonify(data), status
 
 
