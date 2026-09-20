@@ -15,7 +15,7 @@ commit.py
 CONTEXT.md
 TARGET.md
 submission.txt
-SUBMISSION_ANSWERS.md
+submission/
 archive/
 site_src/
 .DS_Store
