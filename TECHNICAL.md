@@ -91,13 +91,18 @@ served identically by Flask (`src/webapp/app.py`) and by SAM Local
 (`src/lambda_handlers.py`, same logic in `src/webapp/api_core.py`):
 
 ```
-GET  /api/customers                         -> [ { phone, name }, ... ]
-POST /api/lookup        { phone }           -> { found, customer_name, brand, products[] }
-POST /api/start         { phone, complaint } -> { conversation_id, status, message, ticket_id? }
+GET  /api/customers?brand=<slug>            -> [ { phone, name }, ... ]   (brand filter optional)
+POST /api/lookup        { phone, brand }    -> { found, customer_name, brand, brand_slug, products[] (with warranty status) }
+POST /api/start         { phone, product_id, complaint } -> { conversation_id, status, message, ticket_id? }   (400 without product_id)
 POST /api/respond       { conversation_id, reply } -> { status, message, ticket_id? }
-GET  /api/dashboard/{brand}   [X-Staff-Brand header] -> { tickets[], warranty_counts, product_feedback[], registered_count }
+GET  /api/dashboard/{brand}   [X-Staff-Brand header] -> { tickets[], warranty_counts, product_feedback[], registered_count, registrations[] }
                               -- 403 if Cedar denies the staff_brand/brand pair, 503 if Cedar's unreachable
 ```
+
+Known weakness: the staff identity in `X-Staff-Brand` is asserted by the client
+(planned fix: server-signed session — `TARGET.md` A1). Planned: a Meta-shaped
+`/webhook/whatsapp` so the simulated channel enters through the same door a real
+WhatsApp number would (`TARGET.md` A3).
 
 Full request-by-request behavior in `FLOW.md` §2.
 
@@ -119,6 +124,8 @@ Full request-by-request behavior in `FLOW.md` §2.
 **Simulated, and said so in the video:** the WhatsApp channel itself — a styled web chat UI stands in for it. The logic behind it is real.
 
 ## 8. Demo script
+
+> *Note (2026-09-20):* this script assumes the demo runs the real agent. The routed `/demo` page is currently a scripted animation, so recording this script today would show illustrative data. Fix first (`TARGET.md` P0.1); revised 3-minute script in `TARGET.md` §6.
 
 1. Open on the real, felt moment: re-explaining your product to support from scratch, every single time.
 2. **The before:** a real screenshot of a well-known appliance brand's actual support page — logo blacked out, since we're not naming them — showing the genuine broken or maze-like experience (a form that doesn't submit, a phone tree that goes nowhere). This is the contrast the whole pitch rests on, so it comes first, not last.

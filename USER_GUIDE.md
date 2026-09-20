@@ -1,172 +1,118 @@
 # Aftercare — User Guide
 
-A practical walkthrough: what to install, how to start it, and what to
-actually click. For how it works under the hood, see `FLOW.md`; this
-doc is just "how do I run this and use it."
+How to install it, run it, and click through it. For how it works inside, see
+`FLOW.md`; for where the project stands and what's next, see `CONTEXT.md` and
+`TARGET.md`.
+
+> **Read this first — what is real and what isn't (2026-09-20).**
+> The **agent, retrieval, Cedar authorization, tickets and dashboards are real.**
+> The **`/demo` page is currently a scripted animation with illustrative data** — it
+> does not call the agent. To talk to the *real* agent today, use the API directly
+> (§5) or the dashboard's real data (§4). Rewiring `/demo` to the real backend is the
+> first item in `TARGET.md`. WhatsApp itself is simulated everywhere.
 
 ---
 
-## 1. What you need installed
+## 1. What you need
 
-| Tool | Why | Check it's there |
+| Tool | Why | Check |
 |---|---|---|
-| Python 3.11+ | Runs the app | `python3 --version` |
-| [Ollama](https://ollama.com) | Runs the local model | `ollama --version` |
-| Docker Desktop | Runs OpenSearch (and SAM Local, if you use it) | `docker --version` |
-| Homebrew (macOS) | Installs the SAM CLI, if you use it | `brew --version` |
+| Python 3.11+ | runs the app | `python3 --version` |
+| [Ollama](https://ollama.com) | local model | `ollama --version` |
+| Docker Desktop | OpenSearch (and SAM Local) — optional for the basic run | `docker --version` |
+| Homebrew (macOS) | SAM CLI — optional | `brew --version` |
 
-Everything else (Cedar's CLI, OpenSearch itself) gets installed by
-scripts in this repo — nothing to hunt down manually.
-
----
-
-## 2. One-time setup
-
-Run these once, in order, from the repo root:
+## 2. One-time setup (from the repo root)
 
 ```bash
-# Python environment + dependencies
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-
-# The local model the agent uses
-ollama pull qwen2.5-coder:7b
-
-# The real Cedar CLI (the PyPI package is an empty placeholder -- see FLOW.md)
-./scripts/install_cedar_cli.sh
-
-# A local OpenSearch container for retrieval
-./scripts/start_opensearch.sh
+ollama pull qwen2.5-coder:7b          # the model the agent uses today
+./scripts/install_cedar_cli.sh        # real Cedar CLI (the PyPI package is an empty placeholder)
+./scripts/start_opensearch.sh         # optional; without it retrieval silently uses keyword overlap
 ```
 
-Each script prints what it did and confirms success — if one fails,
-the error message says why (usually: Docker isn't running, or you're
-not connected to the internet for the download).
+## 3. Start it
 
----
-
-## 3. Starting the demo
-
-Two things need to be running at the same time, in separate terminal
-tabs:
-
-**Terminal 1 — the local model server:**
 ```bash
-ollama serve
+ollama serve                          # skip if already running: curl -s localhost:11434/api/tags
+.venv/bin/python src/webapp/app.py    # http://localhost:5001
 ```
-(Skip this if Ollama is already running in the background — check with
-`curl -s http://localhost:11434/api/tags`.)
 
-**Terminal 2 — the app itself:**
+## 4. What you can click
+
+| URL | What you'll see | Real? |
+|---|---|---|
+| `/` | the whole story in one scroll: problem → **Step 0** (a brand or store uploads a sales CSV → it's sorted into the right brand → the WhatsApp line is connected; rows and counts come from `fixtures/sales_data.csv`) → the customer's five steps (a pinned phone that stays level with each step) → "Live demo" | data-driven (Step 0) + illustrative story |
+| `/demo` | phone + brand inbox + analytics, pre-written scenarios | **scripted** |
+| `/dashboard` | pick which brand's staff you are (simulated login) | real Cedar underneath |
+| `/dashboard/aquaspin`, `/dashboard/arcticair` | that brand's tickets, registered products + QR codes, warranty ring | **real data** |
+
+**See Cedar enforce tenancy for real:** at `/dashboard`, log in as one brand, then
+edit the URL to the other brand's dashboard. You get an "Access denied" screen —
+a genuine Cedar evaluation (403 from `/api/dashboard/<brand>`). *(Caveat: the staff
+identity is asserted by the browser today; making it server-verified is item A1 in
+`TARGET.md`.)*
+
+## 5. Talk to the real agent (until `/demo` is rewired)
+
+Fixture customers: **Priya Sharma** `+919876543210` (two AquaSpin machines:
+`WM-FC-700`, `WM-FL-900`), **Ananya Iyer** `+919845098450` (`WM-FC-700`),
+**Ravi Kumar** `+919812345678` and **Sameer Khan** `+919900112233` (ArcticAir `AC-CB-15T`).
+
 ```bash
-.venv/bin/python src/webapp/app.py
+# 1) who is on this brand's line
+curl 'localhost:5001/api/customers?brand=arcticair'
+
+# 2) look up a customer on that brand (returns products + warranty status)
+curl -s localhost:5001/api/lookup -H 'content-type: application/json' \
+  -d '{"phone":"+919812345678","brand":"arcticair"}'
+
+# 3) start a conversation — product_id is REQUIRED (400 without it)
+curl -s localhost:5001/api/start -H 'content-type: application/json' \
+  -d '{"phone":"+919812345678","product_id":"AC-CB-15T","complaint":"AC is not cooling at all"}'
+# -> {conversation_id, status:"waiting", message:"<one step from the manual>"}
+
+# 4) reply; repeat "still broken" twice -> escalates with a ticket
+curl -s localhost:5001/api/respond -H 'content-type: application/json' \
+  -d '{"conversation_id":"<id from step 3>","reply":"cleaned the filter, still not cooling"}'
 ```
 
-You should see `Running on http://127.0.0.1:5001`. Open that URL in a
-browser.
+Try these complaints to see each path:
+- *"washing machine banging on spin"* (Priya/Ananya) — one step: level the machine.
+- *"AC isn't cooling"* (Ravi) — filter, then outdoor unit, then a ticket if still broken.
+- *"burning smell from the AC"* (Sameer) — skips troubleshooting, immediate safety ticket.
 
-If you restarted your machine since setup, also re-run
-`./scripts/start_opensearch.sh` — it's a no-op if the container's
-already running, and starts it back up if it isn't. The chat still
-works without it (it falls back to a simpler retrieval method
-automatically), but the real BM25 search needs the container up.
+Then open `/dashboard/<brand>` (log in as that brand) to see the ticket with its
+full thread.
 
----
-
-## 4. Using the customer chat (`http://localhost:5001/`)
-
-1. **Pick who you're simulating.** You'll see four names — this
-   stands in for "the customer's phone number is already in the
-   message," which is how it'd work with real WhatsApp. Pick anyone;
-   Ravi Kumar and Sameer Khan own an AC (ArcticAir), Priya Sharma and
-   Ananya Iyer own a washing machine (AquaSpin).
-2. **Two phone screens appear** — the brand's WhatsApp Business inbox
-   on the left, that customer's WhatsApp on the right. Same
-   conversation, both sides, mirrored: what the customer sends shows
-   up as "received" on the brand's side and vice versa.
-3. **Type a real complaint** in the box on the right, in your own
-   words — not a menu, whatever you'd actually type. A few that
-   exercise different paths:
-   - *"My washing machine is banging loudly when it spins"* — resolves
-     in one step (level the machine).
-   - *"AC isn't cooling at all"* — first step is cleaning the filter;
-     if you reply that it's still not cooling, it offers a second,
-     different step (check the outdoor unit).
-   - *"There's a burning smell from the AC"* — skips troubleshooting
-     entirely and escalates immediately. This is intentional — see
-     `DESIGN.md`'s honesty rules.
-4. **Reply honestly to what the agent asks.** If you say it's fixed,
-   it closes out, no ticket. If you say it's still broken twice in a
-   row, it escalates with a real ticket instead of guessing a third
-   time.
-5. **On escalation**, an **"Open dashboard →"** button appears on the
-   brand's (left) pane. Click it.
-
----
-
-## 5. Using the brand dashboard (`http://localhost:5001/dashboard`)
-
-1. **Pick which brand's staff you're logged in as.** This is the
-   simulated login — a real deployment already knows who's signed in.
-2. You'll see that brand's own tickets, warranty counts, and a
-   product-feedback view — never another brand's data. To see this
-   enforced for real rather than just trust it: log in as one brand,
-   then edit the URL to the other brand's dashboard
-   (`/dashboard/aquaspin` while logged in as ArcticAir, for example).
-   You'll get a real "Access denied" screen — that's Cedar, a genuine
-   policy evaluation, not a UI trick.
-
----
-
-## 6. Resetting to a clean demo state
-
-Escalated tickets and in-progress conversations are saved as files
-under `data/`. To wipe them and start fresh (e.g. before recording a
-demo video):
+## 6. Reset to a clean state (e.g. before recording)
 
 ```bash
 rm -f data/tickets/*.json data/conversations/*.json
 ```
+Generated files only; fixtures are untouched.
 
-This is safe — nothing here is source data, it's all generated by
-using the app. The fixture data (customers, products, manuals) is
-untouched.
-
----
-
-## 7. Optional: the serverless-readiness proof (SAM Local)
-
-Not needed for the normal demo — this is a separate way of running the
-exact same API as real AWS Lambda functions, to prove the logic isn't
-tied to Flask.
+## 7. Optional: SAM Local (the same API as Lambda functions)
 
 ```bash
 brew install aws-sam-cli
 sam build --use-container
-sam local start-api --warm-containers LAZY
+sam local start-api --warm-containers LAZY     # http://127.0.0.1:3000
+curl 'http://127.0.0.1:3000/api/customers?brand=aquaspin'
 ```
+`--use-container` (host Python ≠ Lambda's 3.12) and `--warm-containers LAZY`
+(`/api/start` and `/api/respond` share one function's `/tmp`) both matter — see
+`FLOW.md` §5. *Not re-verified since the brand/`product_id` API changes (A8 in `TARGET.md`).*
 
-Then hit the same endpoints on a different port:
-```bash
-curl http://127.0.0.1:3000/api/customers
-```
+## 8. If something's off
 
-`--use-container` and `--warm-containers LAZY` both matter here — see
-`FLOW.md` §5 for why.
-
----
-
-## 8. If something's not working
-
-| Symptom | Likely cause | Fix |
+| Symptom | Cause | Fix |
 |---|---|---|
-| Chat never replies, spins forever | Ollama isn't running | `ollama serve` in another terminal |
-| "Authorization check unavailable" on the dashboard | Cedar CLI missing | `./scripts/install_cedar_cli.sh` |
-| Retrieval feels slower / a bit less precise | OpenSearch isn't running | `./scripts/start_opensearch.sh` — the app still works, it just falls back to a simpler search |
-| `Address already in use` on port 5001 | Another instance is already running | `pkill -f "python.*app.py"`, then start it again |
-| Dashboard says "Access denied" unexpectedly | You're logged in as a different brand than the URL | Go to `/dashboard` and pick the right one (or that's the point — see §5) |
-
----
-
-For exactly how any of this works internally — the agent's reasoning,
-the data model, where each AWS tool lives in the code — read `FLOW.md`.
+| `/api/start` hangs or errors | Ollama not running | `ollama serve` |
+| Dashboard: "Authorization check unavailable" | Cedar binary missing | `./scripts/install_cedar_cli.sh` |
+| Answers feel less precise | OpenSearch down (silent fallback) | `open -a Docker && ./scripts/start_opensearch.sh` |
+| `Address already in use` :5001 | old instance | `pkill -f "python.*app.py"` |
+| Dashboard "Access denied" unexpectedly | logged in as the other brand | go to `/dashboard`, pick the right one |
+| Dashboard empty | no tickets yet | run an escalating conversation (§5) |
+| QR codes blank offline | QR library loads from a CDN today | connect to the internet (fix is P0.4 in `TARGET.md`) |

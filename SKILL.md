@@ -39,6 +39,8 @@ We're competing for Best UI as well as the main track, so this section isn't dec
 
 Same taste, two different jobs. Don't bring the dashboard's restraint to the landing page, and don't bring the landing page's drama into the dashboard.
 
+**One theme, chosen per chapter — no toggle.** Balance comes from composition, as on Apple's product pages: full-bleed chapters alternate black, light grey and white, one idea each, with calm type (weight 600–700, tight tracking), generous padding and restrained pill buttons. Define colours as tokens, keep the accent gradient consistent, respect `prefers-reduced-motion`. (A dark/light toggle was built and then dropped; see `archive/landing-v1/`.)
+
 ## How we write
 
 For explanation — docs, architecture, anything answering "what is this and how does it work" — closer to how YC evaluates a pitch than to how a spec usually gets written. This does not apply to pain-selling copy — see "which voice for which job" above; that stays Hormozi, on purpose, and shouldn't be cut to the bone:
@@ -90,6 +92,8 @@ After each build milestone in `DESIGN.md`'s build order, check: does `README.md`
 
 ## The doc set
 
+- **`CONTEXT.md`** — handoff: who/what/why, hackathon rules, current state, audit findings, working agreements. Read first in a new session.
+- **`TARGET.md`** — what to do next and why: prioritized plan (Build It + Best UI, fast-track goal), simplify/add/subtract notes, definition of done.
 - **`PITCH.md`** — why this, why now. The story.
 - **`DESIGN.md`** — what we're building, layer by layer, and what we're deliberately not.
 - **`TECHNICAL.md`** — how, concretely: the pipeline, the data, what's real versus mocked.

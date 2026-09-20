@@ -6,6 +6,27 @@ are the plan and the pitch context; this is what's actually running.
 Written during a full audit pass — see `IMPLEMENTATION.md`'s Phase 7.9
 entry for what that audit found and fixed.
 
+> **Status banner (2026-09-20).** §1, §3–§9 (agent loop, catalog, AWS stack,
+> data, real-vs-simulated, running it) match the code. **§2's customer-side
+> walkthrough describes the earlier two-pane `/` page and is partly stale**:
+> the UI has since been rebuilt. Current reality:
+>
+> | Route | What it is |
+> |---|---|
+> | `/` | one-page story in five chapters: hero (phone) → problem → **Step 0** (upload CSV → auto-sorted into brands → WhatsApp line connected; rows/chips/counts are real fixture data) → customer story (pinned phone) → "Now see it run". No theme toggle. `/brand` and `/customer` were removed (archived). |
+> | `/demo` | **scripted animation, no API calls** (illustrative data) |
+> | `/dashboard`, `/dashboard/<brand>` | real, Cedar-gated |
+> | *(unrouted)* `index.html` + `chat.js` | the real-backend chat UI: brand router → scenario cards → product picker → mirrored panes |
+>
+> API changes since §2 was written: `GET /api/customers?brand=<slug>` filters to
+> one brand; `POST /api/lookup` takes `{phone, brand}` and returns only that
+> brand's products (with warranty status); **`POST /api/start` now requires
+> `product_id`** (400 without it — the old "first registration wins" behavior was
+> a silent wrong-product bug); `/api/dashboard/<brand>` also returns
+> `registrations[]` (used for QR codes). The dashboard's principal is still
+> asserted by the client (`X-Staff-Brand`) — see `CONTEXT.md` §5–6.
+> `CONTEXT.md` + `TARGET.md` carry the current picture and the plan.
+
 ---
 
 ## 1. The shape of it, in one paragraph
@@ -30,7 +51,7 @@ authorization, the escalation logic — is real.
 
 ## 2. Request-by-request walkthrough
 
-### Customer side (`/`, `index.html` + `chat.js`) — two mirrored panes, one conversation
+### Customer side — the real-backend chat UI (`index.html` + `chat.js`, currently *unrouted*; the routed `/demo` is scripted) — two mirrored panes, one conversation
 
 This isn't one chat window with an inline "agent" — it's **two phone
 frames side by side**, styled like two separate WhatsApp installs: the
