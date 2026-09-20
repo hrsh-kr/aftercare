@@ -10,7 +10,12 @@ Access patterns first, keys second. These are the only questions the application
 | AP4 | The next ticket number | escalation | `UpdateItem PK=CTR, SK=TICKET  ADD n :1  ReturnValues=UPDATED_NEW` (atomic) |
 | AP5 | Earlier cases for a serial in a time window | recurrence check when OpenSearch is unreachable | `Query GSI1 GSI1PK=SERIAL#<serial>, GSI1SK >= CASE#<iso cutoff>` |
 | AP6 | Every case for a brand | brand insights when OpenSearch is unreachable | `Query PK=BRAND#<brand>, SK begins_with CASE#` |
-| AP7 | Wipe demo data | demo reset only | `Scan` + `DeleteItem` (never on a request path) |
+| AP7 | Wipe demo data (not the registry) | demo/sandbox reset only | `Scan` + `DeleteItem`, skipping `REG#` items (never on a request path) |
+| AP8 | Everything a phone number has bought | every WhatsApp message | `Query GSI1 GSI1PK=PHONE#<phone>, GSI1SK begins_with REG#` |
+| AP9 | All registered products of a brand | dashboard, sandbox customer list | `Query PK=BRAND#<brand>, SK begins_with REG#` |
+| AP10 | A chat's messages, oldest first, resumable | the customer's phone (polling), a ticket's thread | `Query PK=CHAT#<brand>#<phone>, SK begins_with MSG#` or `SK > <last cursor>` |
+| AP11 | A chat's small state (which step we are on) | every WhatsApp message | `GetItem PK=CHAT#<brand>#<phone>, SK=STATE` |
+| AP12 | A brand's inbox, most recent first | the inbox | `Query PK=BRAND#<brand>, SK begins_with CHATIDX#` (one summary item per chat, rewritten on each message) |
 
 ## Items
 
@@ -19,6 +24,10 @@ Access patterns first, keys second. These are the only questions the application
 | conversation (whole state as one JSON attribute, `ttl` = 7 days) | `CONV#<id>` | `STATE` | | |
 | ticket | `BRAND#<brand>` | `TICKET#<id>` | `TICKET#<id>` | `BRAND#<brand>` |
 | case | `BRAND#<brand>` | `CASE#<iso>#<conv id>` | `SERIAL#<serial>` | `CASE#<iso>` |
+| registration (from an order file) | `BRAND#<brand>` | `REG#<serial>` | `PHONE#<phone>` | `REG#<serial>` |
+| chat message | `CHAT#<brand>#<phone>` | `MSG#<iso>#<id>` | | |
+| chat state | `CHAT#<brand>#<phone>` | `STATE` | | |
+| inbox row | `BRAND#<brand>` | `CHATIDX#<phone>` | | |
 | ticket counter | `CTR` | `TICKET` | | |
 
 ## Why these choices
@@ -27,6 +36,9 @@ Access patterns first, keys second. These are the only questions the application
 - **Atomic counter** (AP4): `ADD` returns the new value in the same call, so two escalations at once can never draw the same id. The file store's `len(files)+1` could. This is why ticket ids moved off files.
 - **Conversation as one JSON attribute.** It is only ever read and written whole, so splitting it into attributes would buy nothing and add write cost.
 - **TTL** on conversations (`ttl`) and on the idempotency table (`expiration`) means expiry costs nothing to run.
+- **The registry is loaded data, not runtime data.** Warranty status is never stored: it is computed on read from `purchase_date`, so it cannot go stale. `clear()` skips `REG#` items.
+- **Chat messages carry their time in the sort key**, so the customer's phone polls with `SK > last cursor` and the brand's ticket thread is one Query. Messages expire by TTL like conversations.
+- **GSI1 is now overloaded three ways** (ticket id, serial, phone); each namespace has its own prefix so they can't collide.
 - **Idempotency table** is separate because Lambda Powertools owns its schema (`id` hash key); it stores each `Idempotency-Key`'s result for 60 s so a retried `POST /api/start` returns the same conversation instead of opening a second one and a second ticket.
 
 ## Local vs cloud

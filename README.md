@@ -13,10 +13,11 @@ Warranty and service is where a brand's promise gets tested, and it is still a p
 ## What it does
 
 1. **Onboarding:** a brand, or a store selling many brands, uploads its sales CSV. Aftercare files every sale under the brand that owns the product code and reports what it can't place (unknown codes, bad dates, duplicate serials) instead of guessing.
-2. **The customer's message:** identified by phone number, product picked if they own several, warranty read from the record.
+2. **The customer's message:** identified by phone number, product picked (buttons) if they own several. **Warranty questions are answered from the purchase date and the brand's Terms**, with no model involved.
 3. **One real step, from the manual.** A second one if needed. Fixed means no ticket.
-4. **A person takes over, and says why.** Six reasons, each decided by code, not by the model: a safety issue, two steps tried and still broken, the manual has nothing more, the problem is not in the manual, the same problem is back within 90 days, or a question that needs a human.
-5. **The brand's dashboard:** its own tickets, private to it, with *why customers reach a person* (OpenSearch aggregations) and which manual sections send them there.
+4. **A person takes over, and says why.** Six reasons, each decided by code, not by the model: a safety issue, two steps tried and still broken, the manual has nothing more, the problem is not in the manual, the same problem is back within 90 days, or the customer asks for a person.
+5. **A person replies in the same WhatsApp chat** from the brand's inbox (Cedar decides who may reply or resolve), and the customer is told when the ticket is resolved.
+6. **The brand's dashboard:** its own tickets, private to it, with *why customers reach a person* (OpenSearch aggregations) and which manual sections send them there.
 
 **The principle behind all of it: deterministic before model.** A 7B local model phrases a step well and judges a safety call badly. So every decision that matters is a rule, a query or a policy. The model only words the step and reads the reply.
 
@@ -24,7 +25,7 @@ Warranty and service is where a brand's promise gets tested, and it is still a p
 
 | Tool | What it does here | Where |
 |---|---|---|
-| **Strands Agents** | Words one manual step and classifies the reply, on a local Ollama model. A fresh agent per call (a shared one leaked context between customers); `HookProvider` times every model call for the demo's trace. | `src/layer2/agent.py` |
+| **Strands Agents** | Words one manual step and classifies the reply, on a local Ollama model (gemma2:9b, picked by an eval of five). A fresh agent per call (a shared one leaked context between customers); `HookProvider` times every model call for the demo's trace. | `src/layer2/agent.py` |
 | **OpenSearch** | Manual retrieval (BM25, English analyzer); recurrence as a serial + `now-90d` range query; brand insights as `terms` aggregations; ticket text search. Required: no keyword fallback. | `src/layer1/opensearch_retrieval.py`, `src/layer3b/case_index.py` |
 | **Cedar** | Schema-checked policies (`cedar validate` in tests) for `viewDashboard`, `viewTicket`, `updateTicketStatus` (managers only), `viewPhoneUnmasked` (safety tickets only) and a `forbid` across brands. The principal comes from a signed server-side session, and every decision names the policy that made it. | `policies/`, `src/authz/` |
 | **SAM CLI (SAM Local) + API Gateway + Lambda** | The whole site is one Lambda (Lambda Powertools' API Gateway resolver) serving the pages and every `/api` route; static files via `sam local --static-dir`. `template.yaml` declares the function, 17 explicit routes and both tables. | `template.yaml`, `src/lambda_app.py`, `src/pages.py` |
@@ -35,7 +36,7 @@ Warranty and service is where a brand's promise gets tested, and it is still a p
 
 **Not used, and why:** LocalStack needs a LocalStack auth token (their account), so S3/SQS/Cognito/SES are not used; PartyRock needs a personal Amazon sign-in; Finch, EKS Distro/Anywhere and Firecracker have no natural role here (Docker runs the containers).
 
-**Real vs simulated.** Real: the agent, manual search, escalation rules, tickets, Cedar policies, DynamoDB, Lambda handlers. Simulated: WhatsApp itself, the QR sticker, the customer's typing. The sales-file check is real but a preview; the registry is still `fixtures/sales_data.csv`.
+**Real vs simulated.** Real: the order-file check and customer registry (DynamoDB), the agent, manual search, escalation rules, tickets, the message log and the person-in-the-loop inbox, Cedar policies, the Lambda. Simulated: WhatsApp's network (the phone talks to a Meta-shaped webhook on this server), the QR sticker, and all customers, orders and manuals, which are fabricated.
 
 ## Architecture
 
@@ -49,7 +50,7 @@ Browser ─▶ API Gateway (SAM Local) ─▶ one Lambda: pages (Jinja) + /api r
   hooks: latency   tickets, aggs     policies        single table
 ```
 
-Agent loop: safety keywords (with negation) → coverage vs troubleshooting → retrieve one section from that product's manual → **regex-parse the numbered steps** → gate: *not in the manual?* → gate: *seen this before?* → model words step 1 → customer replies → model reads the reply → step 2 or hand over. Two tries, then a person.
+Agent loop: safety keywords (with negation) → asked for a person? → warranty question? (answered from dates) → retrieve one section from that product's manual → **regex-parse the numbered steps** → gate: *not in the manual?* → gate: *seen this before?* → model words step 1 → customer replies → model reads the reply → step 2 or hand over. Two tries, then a person.
 
 ## Run it
 
@@ -58,17 +59,22 @@ Everything runs as AWS Lambda under SAM Local: pages and API are one function be
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 bash scripts/install_cedar_cli.sh            # the real Cedar CLI (the PyPI package is an empty placeholder)
-ollama pull qwen2.5-coder:7b && ollama serve # the local model, in another terminal
+ollama serve                                 # the local model server, in another terminal (dev.sh pulls gemma2:9b if missing)
 bash scripts/dev.sh                          # OpenSearch + DynamoDB Local (Corretto) -> create tables/indices -> sam build -> sam local start-api
-# open http://127.0.0.1:3000   (landing, /demo, /dashboard)
+# open http://127.0.0.1:3000   (landing, /demo, /sandbox, /dashboard)
 ```
 
 `scripts/dev.sh` needs Docker. Set `SKIP_BUILD=1` to reuse the last `sam build`. After editing code, re-run it (a rebuild takes about a minute; static files in `public/` are served live).
 
+**The real demo is `/sandbox`**: load a fabricated order file, message as any customer on WhatsApp (click-to-send chips or free text), watch the agent work, reply as a person from the brand's inbox, and see analytics update. The click-through for recording is [`docs/SANDBOX_RUNBOOK.md`](docs/SANDBOX_RUNBOOK.md). `/demo` is the separate guided page.
+
 Dashboard sign-ins (demo passcodes, also shown on the login page): `meera.nair` / `aqua-manager`, `dev.patel` / `aqua-agent` (AquaSpin); `sara.thomas` / `arctic-manager`, `ben.dsouza` / `arctic-agent` (ArcticAir). Managers can change ticket status; agents are refused by Cedar. While signed in as AquaSpin staff, "Try ArcticAir's dashboard" shows the cross-brand refusal.
 
 ```bash
-.venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000   # the five demo scenarios, five endings, through the Lambda
+.venv/bin/python scripts/run_sandbox_scenarios.py -v                # eight sandbox personas through the WhatsApp webhook, with transcripts
+.venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000   # the /demo page's five scenarios, five endings
+PYTHONPATH=. .venv/bin/python scripts/eval_routing.py               # 41 customer phrasings route to the right thing
+PYTHONPATH=. .venv/bin/python scripts/eval_model.py                 # how the local model does its two jobs
 tests/run_all.sh                                                   # unit + integration tests (needs the services up)
 ```
 

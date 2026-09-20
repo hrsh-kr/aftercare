@@ -6,6 +6,8 @@ are the plan and the pitch context; this is what's actually running.
 Written during a full audit pass — see `IMPLEMENTATION.md`'s Phase 7.9
 entry for what that audit found and fixed.
 
+> **Latest: `/sandbox` + the server-side WhatsApp channel (`src/channel/bot.py`, message log and inbox in DynamoDB, `POST /api/wa/webhook`), warranty answers and human replies: see IMPLEMENTATION.md 7.18 and docs/SANDBOX_RUNBOOK.md.**
+>
 > **Status (2026-09-20, after the all-Lambda pass): the app runs only as a Lambda behind API Gateway (SAM Local), `src/lambda_app.py`; Flask and all fallbacks are gone (see IMPLEMENTATION.md 7.17). Anything below that mentions Flask, `app.py`, port 5001 or a fallback is historical.**
 >
 > Earlier status (AWS-depth pass): Current routes and API:

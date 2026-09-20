@@ -105,6 +105,8 @@ Also: `POST /api/login|logout`, `GET /api/me`, `POST /api/tickets/{id}/status` (
 
 ## 8. Demo script
 
+> *Note (sandbox pass): the model is gemma2:9b; the WhatsApp channel, registry and person-in-the-loop inbox are real (see IMPLEMENTATION.md 7.18).*
+>
 > *Note (all-Lambda pass): the app runs only as one Lambda behind API Gateway on SAM Local; no Flask, no fallbacks; 503 naming the service when one is down.* `/demo` now runs the real agent, so this script can be recorded as written. The tighter 3-minute shot list is `docs/VIDEO_SCRIPT.md`.
 
 1. Open on the real, felt moment: re-explaining your product to support from scratch, every single time.
