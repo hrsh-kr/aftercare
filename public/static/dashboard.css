@@ -780,3 +780,6 @@
 .st-msg.ok { color: #1a7f4b; }
 .st-msg.no { color: #c41840; }
 .try-other { margin-left: 14px; font-size: 12.5px; }
+
+/* the product-health table scrolls inside its card instead of widening the page on a phone */
+#product-health { overflow-x: auto; }
