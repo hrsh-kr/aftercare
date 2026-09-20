@@ -92,7 +92,7 @@ scripts/                 dev.sh, bootstrap, evals, scenario runners      tests/ 
 
 Nothing deployed, no AWS account. WhatsApp's network is simulated; customers, orders and manuals are fabricated. Chat is
 polled (production would push). "Not in the manual" is word overlap; recurrence matches on manual section. A code change
-needs a ~1 minute `sam build`. More in [ARCHITECTURE §10](docs/ARCHITECTURE.md).
+needs a ~1 minute `sam build`. More in [ARCHITECTURE §11](docs/ARCHITECTURE.md).
 
 ## Docs
 
