@@ -1,84 +1,104 @@
-# I planned to ship on AWS. My account wasn't verified. So I built the whole thing on AWS's open-source stack
+# Putting a small model in its place: building WhatsApp after-sales support on AWS's open-source stack
 
-*Draft for AWS Builder Center. First person, written after the build. Author: Harsh (team of one), with Claude Code as a coding partner (disclosed in the README).*
+*By Harsh · First Commit hackathon (WeMakeDevs × AWS) · Build It track · solo build*
 
-The plan I had on day one was not the plan I submitted. That is the whole story, so I'll tell it in order.
+**TL;DR.** I built Aftercare, a WhatsApp support line that already knows what you bought, using Strands Agents, OpenSearch, Cedar, SAM (API Gateway + Lambda) and DynamoDB, all running locally with no AWS account. The design rule that made it work: a small model may only *word* things; code, queries and policy *decide* things. I lost my first plan (deploying on AWS) to an unverified account, replaced my first idea, threw away three versions of the demo, and ended with a system whose claims are backed by tests and recorded runs. This post is the reasoning, the decisions and the bugs.
 
-## Days 1 to 4: the wrong idea, and the right constraint
+Code: `github.com/hrsh-kr/aftercare` · Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Run it: [`SANDBOX_RUNBOOK.md`](SANDBOX_RUNBOOK.md)
 
-I started with an idea called **GroundTruth**: check whether a candidate's GitHub repo really shows what their resume claims. I spent days on it. I read the hackathon page, looked at the judges' backgrounds, argued with myself about which of two ideas would score better (that one, or a health-insurance estimator called ClaimCast), and built a working three-layer prototype on a local model.
+---
 
-It worked, and I still didn't trust it. The judges have thousands of entries to get through. The idea also had a problem I couldn't argue away: a repo can't prove who wrote it, so the product's central promise was one it couldn't keep.
+## 1. Start with the data problem, not the chatbot
 
-At the same time I was planning to compete on the **Ship It** track, using deployed AWS services (Bedrock for the model, and so on). On the 17th, when the build window opened, I tried to actually start.
+When a washing machine starts banging on every spin, the customer messages the brand and the first fifteen minutes go on proving ownership: the model number off a sticker behind the door, the purchase date from an old email, an invoice screenshot. I have lived this.
 
-- I opened the Bedrock playground. It failed until I noticed my region was US East and the models I wanted were in Asia Pacific (Mumbai). Switching fixed it. First lesson: model availability is per region.
-- I tried to open **CloudShell**. It said: *"Unable to create the environment. Your account verification is in progress. This may take up to two days for new accounts."*
-- I gave my user `AWSCloudShellFullAccess` anyway, in case it was a permissions problem. It wasn't. The account simply wasn't verified yet, and the whole build window was only four days long.
+Most people frame it as a support-quality problem. I framed it as a **missing join**. The brand sold the product, so it holds every fact the agent is asking for. Nothing connects the person on WhatsApp to that sale. Fix the join and the conversation gets short by itself.
 
-I could have faked it: write code against Bedrock that I couldn't run, or wire in a model call that was "swappable later". I decided against that. An AI judge or a human judge would read it as unfinished, a workaround dressed up as design. So I dropped the Ship track and committed to **Build It** (the open-source AWS stack, running on my machine, no account needed) plus **Best UI**.
+That gave me the product in four decisions:
 
-That decision felt like a loss. It turned out to be the best thing that happened to the project, because it forced a question I'd been dodging: *if I can't lean on a big hosted model, where should the model actually sit in the system?*
+1. Register each sale **once, at the point of sale**, from the brand's own order file. Never make the customer do it.
+2. Use **the WhatsApp number as the identity.** The sender is already authenticated, so I removed the "enter your phone number" step from my first flow.
+3. Answer from **that product's own manual and warranty terms**, never from model memory.
+4. Make the **handover to a person** a designed path with everything attached, not a failure mode.
 
-## Day 5: throw the idea away, keep the discipline
+## 2. The mistake that defined the architecture
 
-On the 18th I did something uncomfortable: I archived GroundTruth and started over. I asked for ten ideas people actually want, then picked the one I had lived myself.
+I did what everyone does first: give the model the job. I asked a local model to work out warranty status from a purchase date, on four customers.
 
-Something breaks (a washing machine bangs on every spin, an AC stops cooling in a heatwave). You message the brand. Then you spend fifteen minutes proving that you own the thing: model number off a sticker behind the door, purchase date from an old email, a screenshot of the invoice. The brand sold it to you. They have all of it on file. Nothing connects the person messaging them to the sale.
+It got **two of the four exactly backwards.** An active motor warranty came back expired; a lapsed parts warranty came back live. The answers were fluent and confident, which is the dangerous part.
 
-That became **Aftercare**: a customer is registered once, at the point of sale, from the brand's own order file. Months later they send one WhatsApp message. The agent already knows who they are, which product it is and its warranty. It gives one step from *that product's own manual*, follows up, and hands over to a person, with everything attached, when it should.
+I did not respond by prompting harder. I asked a different question: *for each decision in this system, is it a language task?* Most were not.
 
-I used fictional brands (AquaSpin washing machines, ArcticAir ACs) and fabricated customers, orders and manuals. Only WhatsApp's network is simulated. Everything else runs for real.
+| Decision | Made by |
+|---|---|
+| Is this a safety issue? | A keyword rule with negation, or retrieval landing on the manual's own safety section |
+| Which step is next? | A regex over the manual's numbered list |
+| Two failed attempts, then a person | A counter |
+| Is this even in the manual? | A word-overlap gate |
+| Has this product had this problem before? | An OpenSearch query: same serial, `range now-90d` |
+| Warranty status | Date arithmetic |
+| Who may view, reply or resolve | A Cedar policy |
+| **Word one manual step; read a vague reply** | **The model** |
 
-## The design lesson that came from the constraint
+I call this *deterministic before model*. The model has two small jobs. Everything else can be tested without it (my tests use a stub model) and fails safe. One consequence I like: **anything short of a clear "yes, fixed" counts as "still broken"**, because a false "resolved" leaves a broken product with an unhappy customer and no ticket.
 
-My first test of the model taught me the rule the whole project is built on. I asked the local model to work out warranty status from a purchase date. It got two of four customers **exactly backwards**: it said the motor warranty had expired when it was active, and it marked a lapsed parts warranty as live. I moved warranty arithmetic into plain Python, and all four came back right.
+I compared five local models on those two jobs (`scripts/eval_model.py`). `gemma2:9b` phrased 8 of 8 correctly. The others ranged from 2 to 8, mostly failing by opening with a greeting or adding advice nobody asked for. Reply-reading is rules first, and only the ambiguous middle reaches the model. It scored 18/18 on the set I developed against and 22/23 on a held-out set I wrote afterwards. The one miss is conservative ("Done. Smells fresh now" read as not-fixed).
 
-That became the principle: **deterministic before model.**
+## 3. The stack, and the trade-off I accepted with each piece
 
-- Safety ("burning smell") is a keyword rule, or landing on the manual's own safety section. It skips troubleshooting entirely.
-- Which step comes next is read from the manual's numbered list.
-- "Two tries, then a person" is a counter.
-- "Not in the manual" is a word-overlap test. The agent won't guess.
-- "Seen this before" is an OpenSearch time-window query.
-- Warranty dates are arithmetic.
-- Who may do what is a Cedar policy.
+I wanted every component to have a job that only it could do well, and I wanted to be able to say what each one cost me.
 
-The model has two small jobs: word one manual step, and read an ambiguous reply. I compared five local models on those two jobs (`scripts/eval_model.py`) and picked `gemma2:9b`, which phrased 8 of 8 correctly. The others scored between 2 and 8 out of 8, mostly by opening with a greeting or adding advice. The lesson is not that the model is smart. It's that a small model placed in a narrow job, surrounded by code that can be tested, beats a big model given the whole problem.
+- **API Gateway + Lambda (SAM CLI).** The whole site, pages and all 26 routes, is *one* Lambda behind API Gateway, using Powertools' resolver. It is stateless by construction, since chat state lives in DynamoDB. *Cost:* cold starts, and a code change needs a roughly one-minute `sam build`.
+- **Strands Agents.** A thin agent layer over a local Ollama model. I use a **fresh agent per call** and a `HookProvider` on model-call events for exact latency. *Cost:* a local model is slower, and Strands' structured output needs a tool-calling model, so I use plain text with a strict parser.
+- **OpenSearch.** One engine does three things: BM25 manual retrieval through a custom analyzer (synonym filter, stop, stemmer), the recurrence window, and the `terms` aggregations behind the dashboard's "why did people need a person?". *Cost:* heavier than a database, and keyword relevance rather than semantic.
+- **Cedar.** Six schema-validated policies. The principal comes from a signed server-side session, never from anything the browser claims, and every decision names the policy that made it. There is also a `forbid` across brands, which beats any future `permit`. *Cost:* another language, and no Python binding.
+- **DynamoDB.** A single table with twelve access patterns designed *first* and keys second, an overloaded GSI, an atomic ticket counter and TTL. *Cost:* every query is designed up front; anything ad hoc goes to OpenSearch.
 
-## How AWS's open-source stack shows up
+And one rule across all of it: **no fallbacks.** My first version ran on Flask with a keyword-search fallback, which meant the app worked even when the AWS pieces did not. I removed both. Now a dead OpenSearch or DynamoDB returns `503` naming the service. A fallback turns *broken* into *plausible*, and plausible is the thing you cannot debug.
 
-- **API Gateway + Lambda (SAM CLI).** The whole site, pages and every API route, is *one* Lambda behind API Gateway on SAM Local, using Lambda Powertools' API Gateway resolver.
-- **Strands Agents** with a local Ollama model. A fresh agent per call; hooks time each model call.
-- **OpenSearch.** Manual retrieval (BM25 with a synonym analyzer), the recurring-problem window (`now-90d`), and aggregations that answer "why do people need a person?".
-- **Cedar.** Six policies and a schema, and a session-derived principal. Agents can reply; only managers can resolve; nobody crosses brands. Every decision names its policy.
-- **DynamoDB Local** on Amazon Corretto, single-table design, several access patterns, an atomic ticket counter, TTL.
+## 4. The pivot I did not want, and the one I chose
 
-I was firm about one rule: **no fallbacks.** At one point the app ran on Flask with a keyword-search fallback. I ripped both out. Now if OpenSearch or DynamoDB is down, the API returns `503` naming the service. That one decision paid for itself almost immediately (see below).
+My plan was to compete on the **Ship It** track: deployed AWS services, Bedrock for the model. On the day the build window opened I sat down to start.
 
-## The bugs that taught me the most
+- The Bedrock playground failed until I noticed the console was set to US East while the models I wanted were available in Asia Pacific (Mumbai). Lesson: model availability is per region.
+- CloudShell would not start: *"Your account verification is in progress. This may take up to two days for new accounts."* I added `AWSCloudShellFullAccess` in case it was IAM. It was not; the block was on the account.
 
-1. **A silent OpenSearch fallback.** Documents were indexed with an absolute file path as a filter key. Inside the Lambda container the path was `/var/task/...`, so every search matched nothing and quietly fell back to keyword search. Nothing failed. I only noticed because each response reports which engine answered. Fix: key by file name. Then I deleted the fallback so it could never hide again.
-2. **A shared Strands `Agent` remembers everything.** I used one agent for all requests. Inspecting `agent.messages` showed customer B's prompt being answered with customer A's complaint in context. An `Agent` is a *conversation*, not a function. Fix: a fresh agent per self-contained call.
-3. **Strands structured output on a small local model** fails ("model failed to invoke the structured output tool"), and the deprecated fallback said "resolved" for *"Still blowing warm air"*, which is worse than failing. I kept plain text with a strict parser that defaults to "still broken".
-4. **SAM Local surprises.** `--static-dir` must be an absolute path (a relative one 404s silently). The static catch-all shadows a `/{proxy+}` route, so every route is declared explicitly. `sam build` copies the whole repo including `.venv`, so I stage a clean package first. And an environment variable from my shell (`DYNAMODB_ENDPOINT=localhost`) leaked into the Lambda, where `localhost` means the container.
-5. **Cedar has no Python binding** (the PyPI package is an empty placeholder), so I shell out to the real Rust CLI. It works and costs a process spawn per decision.
-6. **LocalStack needs an account token**, which contradicts "no account, no card". I used SAM Local and DynamoDB Local instead.
-7. **Malformed JSON gave a 502.** Fix: 400 for bad bodies, 401 before validation for unauthenticated calls, and one generic 500 handler that logs without leaking.
-8. **A regex edit deleted the phone animation from my own landing page.** I noticed only because the story section had cards and no phone. Restored, and I now check the page in a browser after every edit.
+In a four-day event, two days is half the window. My options were to wait, or to write Bedrock code I could not run and call it "swappable later". I chose neither. Code I cannot run is a claim, not a feature, and a reader would see it as a workaround dressed up as design. I dropped Ship It and committed to **Build It plus Best UI**.
 
-## Redesigning the demo, three times
+That forced the question I had been dodging: if I cannot lean on a big hosted model, where does a small one belong in a system? Section 2 is the answer. The constraint improved the design.
 
-The demo is where I changed my mind most. First it was scripted, and I didn't like that it was simulated. Then I built a **sandbox** where everything runs for real: load a fabricated order file, message as a customer, watch the agent work, reply as a person from the brand's inbox, see the analytics move. That's the honest demo, but it needs Docker, SAM and Ollama on your machine, so a judge can't click it.
+I made a second cut a day later. My first idea, **GroundTruth**, checked whether a candidate's repository backs their resume claims. I built a working prototype, then found the flaw I could not argue around: *a repository cannot prove who wrote it.* Its central promise was one the product could not keep. I archived it and built the problem I had actually lived.
 
-The fix was not to fake it. I wrote a recorder that drives the real stack through its real webhook and staff endpoints and stores every response. The deployed website then *replays* those recorded, real responses through the same UI. The landing page tells you it is a recording, and shows the command to run the real thing. A test fails the build if the deployed pages drift from the templates.
+## 5. Bugs that taught me something
 
-## What I would tell another builder
+1. **A silent OpenSearch fallback, visible only inside Lambda.** I filtered documents by absolute file path. In the Lambda container the path is `/var/task/...`, so every search matched nothing and quietly fell back to keyword matching. Nothing failed. I noticed only because every response reports which engine answered. Fix: key by file name. Then I deleted the fallback so it could never hide again.
+2. **A shared Strands `Agent` remembers everything.** Printing `agent.messages` showed customer B's prompt being answered with customer A's complaint in context. An `Agent` is a *conversation*, not a function. Fix: a fresh agent per self-contained call.
+3. **Structured output on a small model.** Strands' newer path is a forced tool call and fails on a local model; the deprecated method returned "resolved" for *"Still blowing warm air"*, which is worse than failing. I kept plain text and a strict parser that defaults to "still broken".
+4. **SAM Local surprises.** `--static-dir` must be an *absolute* path or it 404s silently. Its static catch-all shadows a `/{proxy+}` route, so every route is declared explicitly. `sam build` copies the whole repo including `.venv`, so I stage a clean package first. And a host `DYNAMODB_ENDPOINT=localhost` leaked into the Lambda, where `localhost` is the container, and it looked exactly like the database being down.
+5. **Cedar has no Python binding** (the PyPI package is an empty placeholder), so I call the real Rust CLI. It works and costs a process spawn per decision.
+6. **LocalStack now needs an auth token**, which contradicts "no account, no card", so I used SAM Local and DynamoDB Local instead.
+7. **Malformed JSON gave a 502.** I fuzzed the API, then fixed it properly: `400` for bad bodies, auth checked before validation, and one generic handler that logs the request id and returns a bare `500` with no stack trace.
+8. **My own regex deleted the phone animation from my landing page.** I caught it because I check the rendered page, not the diff, after every UI edit.
 
-- **A blocked door can be a design brief.** No verified AWS account pushed me to put the model where it belonged instead of where it was convenient.
-- **Remove your fallbacks.** They turn "broken" into "plausible", and plausible is what you can't debug.
-- **Don't let a model do arithmetic.** Give it numbers; ask it to phrase them.
-- **Record real behaviour rather than simulating it**, and say clearly that it's a recording.
-- **Be honest about limits.** Nothing is deployed to AWS. WhatsApp is simulated. Chat is polled. A code change needs a one-minute `sam build`. It's all written in the README.
+## 6. The demo, redesigned three times
 
-The code, the recorded demo and the runbook to run it yourself are in the repository.
+The demo taught me the most about honesty. First it was scripted, and I disliked that it was simulated. Then I built a **sandbox** where everything is real: load a fabricated order file, message as a customer, watch the agent work, reply as a person from the brand's inbox, see the analytics move. It was honest, but a judge cannot open it without Docker, SAM and Ollama.
+
+I refused to fake the difference. Instead I wrote a recorder that drives the real stack through its real webhook and staff endpoints and stores every response, and the deployed website *replays those recorded responses* through the same UI. Every page says it is a recording. A test fails the build if the deployed pages drift from the templates or leak a local URL. The site can show nothing the system did not do.
+
+## 7. How I worked with AI
+
+I used Claude Code as a pair-programmer for implementation, refactors and test scaffolding, and reviewed and directed everything it produced. The decisions in this post are mine: the missing-join framing, the phone-number-as-identity call, the deterministic-before-model rule, dropping Ship It, archiving GroundTruth, the per-brand dashboards (I corrected an early design that put every brand on one page), removing Flask and every fallback, and replacing a simulated demo with a recorded real one. That division worked because I knew what I wanted the system to guarantee. The tests and evals are how I checked that it did.
+
+## 8. What I would tell another builder
+
+- **Frame the problem as data before you frame it as conversation.** Mine was a missing join.
+- **Classify each decision by kind.** If it is not a language task, do not give it to a model.
+- **Delete your fallbacks.** They make failures look like successes.
+- **A blocked path is a design brief.** Losing Bedrock taught me where the model belonged.
+- **Record real behaviour instead of simulating it, and say so.**
+- **State your limits.** Nothing is deployed, WhatsApp is simulated, chat is polled, and it is all written down in the README.
+
+---
+
+*Numbers, for the record: 26 routes in one Lambda · 6 Cedar policies · 12 DynamoDB access patterns · 5 models compared · 41 routing phrasings correct · 8 end-to-end personas, 25 checks against the real model · 2 fictional brands. Everything is reproducible from the repository.*
