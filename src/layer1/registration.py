@@ -87,3 +87,16 @@ def lookup_by_phone(phone: str, registrations: list[Registration] | None = None)
     messages, and we already know what they bought."""
     registrations = registrations if registrations is not None else load_registrations()
     return [r for r in registrations if r.customer_phone == phone]
+
+
+def warranty_details(reg: Registration, today: date | None = None) -> dict:
+    """Everything a warranty answer needs, computed here (never by the model): purchase date, the
+    component warranty and the flat 1-year parts warranty, each with its end date, status and days left."""
+    today = today or date.today()
+    purchased = datetime.strptime(reg.purchase_date, "%Y-%m-%d").date()
+
+    def one(label: str, years: int) -> dict:
+        end = _add_years(purchased, years)
+        return {"label": label, "years": years, "ends": end.isoformat(), "active": today < end, "days_left": (end - today).days}
+
+    return {"purchased": purchased.isoformat(), "coverage": [one(reg.warranty_component, reg.warranty_component_years), one("other parts", 1)]}

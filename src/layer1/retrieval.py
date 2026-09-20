@@ -30,6 +30,22 @@ _GENERIC = set(
 )
 
 
+# Words a customer uses interchangeably with the manual's own words. ONE list, two consumers: the
+# OpenSearch analyzer (opensearch_retrieval.py) so BM25 finds "won't turn on" in a section titled
+# "won't start", and content_words() below so the "is this in the manual at all?" gate agrees.
+SYNONYM_GROUPS = [
+    ["leak", "leaks", "leaking", "leaked", "drip", "drips", "dripping", "dripped"],
+    ["smell", "smells", "smelly", "odor", "odour", "stink", "stinks", "musty"],
+    ["noise", "noisy", "sound", "rattle", "rattling", "bang", "bangs", "banging", "knocking"],
+    ["shake", "shaking", "wobble", "wobbling", "vibrate", "vibrating", "vibration", "jump", "jumping"],
+    ["start", "starts", "turn", "switch", "power"],
+    ["warm", "hot", "lukewarm"],
+    ["cool", "cold", "cooling", "cools"],
+    ["stuck", "locked", "jammed"],
+]
+_CANON = {w: g[0] for g in SYNONYM_GROUPS for w in g}
+
+
 def _stem(word: str) -> str:
     for suffix in ("ing", "ed", "es", "ly", "s"):
         if word.endswith(suffix) and len(word) - len(suffix) >= 3:
@@ -41,7 +57,7 @@ def content_words(text: str) -> set[str]:
     """Stemmed words that actually say something ("bangs" and "banging" both
     become "bang"; "when", "it", "machine" are dropped)."""
     return {
-        _stem(w)
+        _stem(_CANON.get(w, w))
         for w in re.findall(r"[a-z]+", text.lower())
         if len(w) > 2 and w not in _STOP and w not in _GENERIC
     }

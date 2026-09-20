@@ -59,13 +59,13 @@ class FileStore:
                 c = json.loads(path.read_text())
             except ValueError:
                 continue
-            if not (c.get("resolved") or c.get("ticket")) or not c.get("created_at"):
+            if not (c.get("resolved") or c.get("ticket") or c.get("answered")) or not c.get("created_at"):
                 continue
             yield {
                 "conversation_id": path.stem, "brand": brand_for(c["registration"]["product_id"]).lower(),
                 "serial_number": c["registration"]["serial_number"], "section_heading": c.get("section_heading", ""),
                 "source": "safety" if c.get("safety_flag") else c.get("source", ""),
-                "outcome": "resolved" if c.get("resolved") else "escalated",
+                "outcome": "resolved" if c.get("resolved") else "answered" if c.get("answered") else "escalated",
                 "reason_code": c.get("escalation_code", ""), "created_at": c["created_at"],
             }
 

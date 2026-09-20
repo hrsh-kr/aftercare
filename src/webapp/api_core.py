@@ -119,15 +119,15 @@ def reset_demo_data() -> dict:
 def _record(conv_id: str, conv: agent_mod.Conversation) -> None:
     """A finished conversation becomes a *case*: written to DynamoDB (the source of truth) and
     indexed in OpenSearch (recurrence and insights are queries over it). Failures are raised, not hidden."""
-    if not (conv.resolved or conv.ticket):
+    if not (conv.resolved or conv.ticket or conv.answered):
         return
     reg = conv.registration
     brand = brand_for(reg.product_id).lower()
     get_store().put_case(brand, {
         "conversation_id": conv_id, "brand": brand, "serial_number": reg.serial_number, "product_id": reg.product_id,
         "section_heading": conv.section_heading, "source": "safety" if conv.safety_flag else conv.source,
-        "outcome": "resolved" if conv.resolved else "escalated", "reason_code": conv.escalation_code,
-        "created_at": conv.created_at,
+        "outcome": "resolved" if conv.resolved else "answered" if conv.answered else "escalated",
+        "reason_code": conv.escalation_code, "created_at": conv.created_at,
     })
     case_index.record(conv_id, conv)
 
@@ -540,6 +540,9 @@ def _escalation_message(conv: agent_mod.Conversation) -> str:
             f"{stop}\n\nThis is a safety issue, so I won't try to troubleshoot it over chat. "
             f"I've raised ticket {tid} for an emergency technician visit -- free of charge whatever your warranty status."
         )
+    if code == "human_requested":
+        return (f"Of course. I've passed this to our service team as ticket {tid}, with your details attached. "
+                f"A person will reply to you here on WhatsApp.")
     if code == "recurring":
         when = conv.escalation_detail.split(" -- handled ", 1)[-1].split(" (")[0]
         return (
@@ -580,6 +583,8 @@ def _conversation_state(conv: agent_mod.Conversation) -> dict:
         "warranty": {"component": reg.warranty_component, "component_status": reg.warranty_component_status,
                      "parts_status": reg.warranty_parts_status},
     }
+    if conv.answered:
+        return {"status": "answered", "message": conv.answer, "meta": meta}
     if conv.resolved:
         return {"status": "resolved", "message": "Glad that fixed it! Let us know if anything else comes up.", "meta": meta}
     if conv.ticket is not None:

@@ -97,7 +97,8 @@ def record(conv_id: str, conv) -> None:
         "conversation_id": conv_id, "brand": brand, "serial_number": reg.serial_number,
         "product_id": reg.product_id, "section_heading": conv.section_heading,
         "source": "safety" if conv.safety_flag else conv.source,
-        "outcome": "resolved" if conv.resolved else "escalated", "reason_code": conv.escalation_code,
+        "outcome": "resolved" if conv.resolved else "answered" if getattr(conv, "answered", False) else "escalated",
+        "reason_code": conv.escalation_code,
         "origin": "live", "complaint": conv.complaint, "created_at": conv.created_at,
     })
     if conv.ticket:
@@ -142,7 +143,7 @@ def insights(brand: str) -> dict:
     outcome = {b["key"]: b["doc_count"] for b in a["outcome"]["buckets"]}
     return {
         "engine": "opensearch",
-        "resolved": outcome.get("resolved", 0), "escalated": outcome.get("escalated", 0),
+        "resolved": outcome.get("resolved", 0), "answered": outcome.get("answered", 0), "escalated": outcome.get("escalated", 0),
         "by_reason": [{"code": b["key"], "count": b["doc_count"]} for b in a["reason"]["buckets"] if b["key"]],
         "top_sections": [{"heading": b["key"], "count": b["doc_count"], "escalated": b["escalated"]["doc_count"]}
                          for b in a["sections"]["buckets"] if b["key"]],

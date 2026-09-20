@@ -49,11 +49,33 @@ If the smell persists after a filter clean, or if you're seeing indoor dripping 
 
 ### 4.3 Water dripping from the indoor unit
 
-Usually a blocked drain pipe (see 4.2, step 2). If clearing an accessible external section of the drain pipe doesn't stop it, or you can't safely access the pipe, escalate — this is not something to keep attempting indoors near electrical components.
+Usually a blocked drain pipe, or an indoor unit that isn't level:
+
+1. **Switch the AC off** and look at the drain pipe (the thin pipe from the indoor unit to the outside) for kinks, sags or a blocked end.
+2. **Clear the accessible end** of the pipe gently — remove any dirt or insects, and straighten any kinks. Never work inside the indoor unit yourself.
+3. **Check the indoor unit looks level** and that the filters are pushed fully home, then run it and watch for 15 minutes.
+
+If it still drips after the pipe is clear, or you can't safely reach it, escalate — this is not something to keep attempting indoors near electrical components.
 
 ### 4.4 Burning smell, sparking, unusual smell resembling gas, or visible smoke
 
 **Stop use immediately. Switch off power at the breaker, not just the remote. Do not attempt any troubleshooting yourself.** Contact support immediately for an emergency visit — this applies regardless of warranty status.
+
+### 4.5 Remote not working
+
+1. **Replace both batteries** with fresh ones, checking the plus and minus ends match the markings.
+2. **Point the remote at the indoor unit's receiver** from within about eight metres, with nothing blocking the line between them.
+3. **Reset the remote:** take the batteries out for one minute, put them back, and try the power button again.
+
+If the unit works from its own manual button but not from the remote, the remote may need replacing — escalate.
+
+### 4.6 Rattling or loud noise from the unit
+
+1. **Check the outdoor unit** for leaves, loose items or anything touching the casing, and clear them.
+2. **Check the filters are seated** — a loose filter behind the front flap can rattle. Switch the AC off, slide them out and push them fully back in.
+3. **Run the AC for 15 minutes** and listen again.
+
+If the noise continues, or you hear grinding or a metallic screech, switch the AC off and escalate — do not keep running it.
 
 ---
 

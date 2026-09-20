@@ -224,7 +224,7 @@ function renderInsights(ins) {
   const eng = document.getElementById("insights-engine");
   if (!box || !ins) return;
   eng.textContent = ins.engine === "opensearch" ? "Computed by OpenSearch aggregations" : "Computed from files (OpenSearch offline)";
-  const total = ins.resolved + ins.escalated;
+  const total = ins.resolved + (ins.answered || 0) + ins.escalated;
   if (!total) { box.innerHTML = '<p class="empty-state">No finished conversations yet. Run one in the live demo.</p>'; return; }
   const bar = (label, n, of, cls) =>
     `<div class="ins-row"><span class="ins-label">${escapeHtml(label)}</span>
@@ -234,8 +234,8 @@ function renderInsights(ins) {
   const sections = ins.top_sections.map((s) =>
     bar(s.heading, s.escalated, s.count, "ins-warn") .replace('<span class="ins-n">' + s.escalated + '</span>', `<span class="ins-n">${s.escalated} of ${s.count}</span>`)).join("");
   box.innerHTML = `
-    <div class="ins-card"><div class="ins-big">${Math.round(100 * ins.resolved / total)}%</div>
-      <div class="ins-cap">resolved by the agent, no ticket<br>(${ins.resolved} of ${total} conversations)</div></div>
+    <div class="ins-card"><div class="ins-big">${Math.round(100 * (ins.resolved + (ins.answered || 0)) / total)}%</div>
+      <div class="ins-cap">handled by the agent, no ticket<br>(${ins.resolved} fixed, ${ins.answered || 0} answered, of ${total} conversations)</div></div>
     <div class="ins-card"><h3>Why they escalated</h3>${reasons}</div>
     <div class="ins-card"><h3>Manual sections that send people to a person</h3>${sections}</div>`;
 }

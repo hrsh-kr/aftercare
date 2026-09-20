@@ -30,9 +30,11 @@ from src.layer3b.tickets import Ticket, next_ticket_id
 # sets this to http://host.docker.internal:11434 for exactly this reason.
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
+DEFAULT_MODEL = os.environ.get("AFTERCARE_MODEL", "gemma2:9b")   # chosen by scripts/eval_model.py: best phrasing of five local models
 SAFETY_KEYWORDS = ["burning smell", "burning", "burnt", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell",
                    "fumes", "melting", "short circuit", "electric"]
-COVERAGE_KEYWORDS = ["warranty", "covered", "coverage", "expire", "claim", "under warranty"]
+COVERAGE_KEYWORDS = ["warranty", "warrantee", "guarantee", "covered", "coverage", "expire", "claim", "under warranty"]
+_HUMAN = re.compile(r"\b(human|real person|representative|executive|customer care|call me|call back|(talk|speak|connect|transfer|escalate)\b.{0,25}\b(person|someone|agent|staff|team|manager))\b|\bnot (a )?bot\b", re.I)
 MAX_ATTEMPTS = 2
 RECURRENCE_DAYS = 90
 
@@ -45,6 +47,7 @@ ESCALATION_LABELS = {
     "no_steps": "Needs a person",
     "unmatched": "Not in the manual",
     "recurring": "Recurring issue",
+    "human_requested": "Asked for a person",
 }
 
 def diagnostic_overlap(complaint: str, heading: str, body: str) -> int:
@@ -73,6 +76,8 @@ class Conversation:
     turns: list[Turn] = field(default_factory=list)
     safety_flag: bool = False
     resolved: bool = False
+    answered: bool = False      # a direct answer (e.g. warranty status), no fault involved
+    answer: str = ""
     ticket: Ticket | None = None
     retrieval_method: str = ""  # "opensearch" or "keyword_fallback" -- see opensearch_retrieval.retrieve()
     escalation_code: str = ""   # one of ESCALATION_LABELS, set when a ticket is created
@@ -127,7 +132,7 @@ class StatelessAgent:
     after 2 calls), and the context grew without bound. Every prompt here is self-contained,
     so no call needs another's history."""
 
-    def __init__(self, model_id: str = "qwen2.5-coder:7b") -> None:
+    def __init__(self, model_id: str = DEFAULT_MODEL) -> None:
         self._model = OllamaModel(host=OLLAMA_HOST, model_id=model_id)
         self.model_ms: list[int] = []
 
@@ -145,7 +150,7 @@ class StatelessAgent:
         return out
 
 
-def _build_agent(model_id: str = "qwen2.5-coder:7b") -> StatelessAgent:
+def _build_agent(model_id: str = DEFAULT_MODEL) -> StatelessAgent:
     return StatelessAgent(model_id)
 
 
@@ -176,6 +181,8 @@ def _tidy(message: str, limit: int = 400) -> str:
     """Model output guard, applied before anything is stored: no emoji, no wrapping quotes,
     no runs of whitespace, bounded length. Customers see the same text the ticket records."""
     text = re.sub(r"\s+", " ", _EMOJI.sub("", message)).strip().strip('"').strip()
+    text = re.sub(r"^(hi|hello|hey|dear)( there| customer)?[,!.]?\s+", "", text, flags=re.I)
+    text = text[:1].upper() + text[1:]
     return text[:limit].rstrip()
 
 
@@ -184,20 +191,19 @@ def _is_coverage_question(complaint: str) -> bool:
     return any(kw in lower for kw in COVERAGE_KEYWORDS)
 
 
-PHRASE_STEP_PROMPT = """A customer's complaint: "{complaint}"
+PHRASE_STEP_PROMPT = """You are a WhatsApp support agent for a home-appliance brand. A customer wrote: "{complaint}"
 
-The one step to give them, taken directly from the manual: "{raw_step}"
+The one step to give them, taken directly from the product manual: "{raw_step}"
 
-Phrase this as one short, friendly message asking them to try it and report back. \
-Don't add anything the raw step doesn't say, don't add extra steps. \
-Answer with only the message, nothing else."""
+Write ONE short message (at most two sentences) asking them to try that step and tell you how it goes.
+Rules: do not start with a greeting or the customer's name; do not use emoji; do not add any advice or step that is not in the manual step above; do not mention section numbers; answer with only the message."""
 
 OUTCOME_PROMPT = """A customer was asked to try: "{step}"
 
 They replied: "{reply}"
 
-Did this resolve their issue? Answer with only one word: RESOLVED or STILL_BROKEN."""
-
+Did this resolve their issue? Answer STILL_BROKEN if the problem persists, is only partly better, came back, or they have not tried it yet or are asking a question. Answer RESOLVED only if they clearly say it is fixed.
+Answer with only one word: RESOLVED or STILL_BROKEN."""
 
 def _safety_instruction(product_id: str) -> tuple[str, str]:
     """The manual's own stop-use instruction (its burning/smoke section), shown
@@ -219,6 +225,36 @@ def _find_recurrence(history: list[PriorCase] | None, registration: Registration
     return max(matches, key=lambda c: c.when) if matches else None
 
 
+def _bullets(body: str, limit: int = 3) -> list[str]:
+    return [re.sub(r"^[-*\d.]+\s*", "", ln.strip()) for ln in body.splitlines() if re.match(r"^\s*(-|\*|\d+\.)\s", ln)][:limit]
+
+
+def _warranty_answer(registration: Registration, complaint: str) -> Conversation:
+    """A warranty question is answered, not troubleshot: dates and status are arithmetic on the
+    registered purchase (registration.warranty_details), and the coverage wording is quoted from the
+    brand's Terms section that OpenSearch finds for the question. No model involved."""
+    from src.layer1.registration import warranty_details
+    d = warranty_details(registration)
+    bought = datetime.strptime(d["purchased"], "%Y-%m-%d")
+    lines = [f"Your {registration.product_name} (serial {registration.serial_number}) was bought on {bought:%d %b %Y}."]
+    for w in d["coverage"]:
+        end = datetime.strptime(w["ends"], "%Y-%m-%d")
+        if w["active"]:
+            left = w["days_left"]
+            span = f"{left} days" if left < 60 else f"about {round(left / 30.4)} months" if left < 700 else f"about {round(left / 365, 1)} years"
+            lines.append(f"- {w['label'].capitalize()} ({w['years']} year{'s' if w['years'] > 1 else ''}): active until {end:%d %b %Y}, {span} left.")
+        else:
+            lines.append(f"- {w['label'].capitalize()} ({w['years']} year{'s' if w['years'] > 1 else ''}): expired on {end:%d %b %Y}.")
+    heading, body, method = opensearch_retrieval.retrieve(complaint, terms_for(registration.product_id))
+    quoted = _bullets(body)
+    if quoted:
+        lines.append(f"From the terms ({heading}): " + " ".join(f"{q.rstrip('.')}." for q in quoted))
+    lines.append("If something is wrong with it, just tell me what's happening.")
+    conv = Conversation(registration=registration, complaint=complaint, source="terms", section_heading=heading, section_body=body,
+                        retrieval_method=method, answered=True, answer="\n".join(lines))
+    return conv
+
+
 def start(registration: Registration, complaint: str, agent: Agent | None = None, history: list[PriorCase] | None = None) -> Conversation:
     agent = agent or _build_agent()
 
@@ -232,14 +268,31 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
         conv.ticket = _escalate(conv, "safety", "Safety-flagged complaint -- no troubleshooting attempted.")
         return conv
 
+    if _HUMAN.search(complaint):
+        conv = Conversation(registration=registration, complaint=complaint, source="manual", section_heading="", section_body="",
+                            retrieval_method="rule")
+        conv.ticket = _escalate(conv, "human_requested", "Customer asked to speak to a person.")
+        return conv
+
     if _is_coverage_question(complaint):
-        doc_path = terms_for(registration.product_id)
-        source = "terms"
-    else:
-        doc_path = manual_for(registration.product_id)
-        source = "manual"
+        return _warranty_answer(registration, complaint)
+
+    doc_path = manual_for(registration.product_id)
+    source = "manual"
 
     heading, body, retrieval_method = opensearch_retrieval.retrieve(complaint, doc_path)
+
+    # The manual itself can mark a section as a safety section (its "stop use immediately" one). If
+    # retrieval lands there ("water is leaking from the machine"), that is a safety case even when no
+    # keyword fired: send the manual's own warning, skip troubleshooting.
+    if any(k in heading.lower() for k in ("burning", "smoke", "spark")):
+        m = re.search(r"\*\*(.+?)\*\*", body, flags=re.DOTALL)
+        conv = Conversation(registration=registration, complaint=complaint, source="manual", section_heading=heading,
+                            section_body=(m.group(1) if m else body.splitlines()[0]).strip(), safety_flag=True,
+                            retrieval_method=retrieval_method)
+        conv.ticket = _escalate(conv, "safety", "The closest manual section is a safety section -- no troubleshooting attempted.")
+        return conv
+
     available_steps = _parse_numbered_steps(body)
     conv = Conversation(
         registration=registration, complaint=complaint, source=source,
@@ -279,6 +332,24 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
     return conv
 
 
+_NEG = re.compile(r"\b(still|not|isn'?t|doesn'?t|didn'?t|don'?t|no change|same|nope|never|worse|came back|comes back|back again|persist|any better|nothing|yet|worked (for|only)|but it|unfortunately|cannot|can'?t|won'?t|how (do|can|to)|what|where|why|which)\b|\?|^\s*no\b(?! more)|^\s*(ok|okay|sure)[, ]+(i'?ll|let me|will)|\b(i'?ll|let me|will) (try|check|do|test)", re.I)
+_POS = re.compile(r"\b(fixed|solved|resolved|works? (now|fine|great|perfectly)|working (now|fine|great|perfectly|properly)|all good|all fine|sorted|perfect|much better|gone|no more|stopped|quiet now|cooling (properly |well )?(now|again)|that (did it|helped|worked)|it (helped|worked)|thank(s| you)|great|awesome)\b", re.I)
+
+
+def classify_reply(step: str, reply: str, agent, rules: bool = True) -> str:
+    """'RESOLVED' or 'STILL_BROKEN'. Deterministic first: a clear negative always wins, a clear
+    positive with no negative resolves, and only the ambiguous middle goes to the model. Anything but
+    a clear yes is STILL_BROKEN: wrongly closing a conversation strands a customer with a broken
+    product, wrongly continuing costs one more message."""
+    if rules:
+        if _NEG.search(reply):
+            return "STILL_BROKEN"
+        if _POS.search(reply):
+            return "RESOLVED"
+    out = str(agent(OUTCOME_PROMPT.format(step=step, reply=reply))).strip().upper()
+    return "RESOLVED" if "RESOLVED" in out and "STILL" not in out else "STILL_BROKEN"
+
+
 def respond(conv: Conversation, customer_reply: str, agent: Agent | None = None) -> Conversation:
     """Feed the customer's reply to the most recent step. Mutates and
     returns the same Conversation -- decides resolved / next step /
@@ -291,8 +362,8 @@ def respond(conv: Conversation, customer_reply: str, agent: Agent | None = None)
     current = conv.turns[-1]
     current.customer_reply = customer_reply
 
-    outcome = str(agent(OUTCOME_PROMPT.format(step=current.step, reply=customer_reply))).strip().upper()
-    if "RESOLVED" in outcome and "STILL" not in outcome:
+    outcome = classify_reply(current.step, customer_reply, agent)
+    if outcome == "RESOLVED":
         current.outcome = "resolved"
         conv.resolved = True
         return conv

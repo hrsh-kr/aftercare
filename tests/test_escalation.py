@@ -34,7 +34,7 @@ class FakeAgent:
         self.calls += 1
         if prompt.startswith("A customer was asked to try"):
             return self.outcomes.pop(0)
-        return "STEP: " + prompt.split('taken directly from the manual: "')[1].split('"')[0]
+        return "STEP: " + prompt.split('taken directly from the product manual: "')[1].split('"')[0]
 
 
 def _setup():
@@ -150,8 +150,38 @@ def test_safety_keywords_and_negation():
 
 
 def test_model_output_is_tidied_before_storage():
-    assert A._tidy('"Hi, please level it \U0001F321\ufe0f\U0001F44D  now!"') == "Hi, please level it now!"
+    assert A._tidy('"Hi, please level it \U0001F321\ufe0f\U0001F44D  now!"') == "Please level it now!"
     assert len(A._tidy("x" * 900)) == 400
+
+
+def test_warranty_question_is_answered_from_dates_not_the_model():
+    class NoModel:
+        def __call__(self, prompt):
+            raise AssertionError("the model must not be consulted for a warranty answer")
+    conv = A.start(PRIYA_FC, "is my washing machine still under warranty?", agent=NoModel())
+    assert conv.answered and conv.ticket is None and not conv.turns
+    assert "Motor" in conv.answer and "5 Jun 2025" in conv.answer and "Other parts" in conv.answer
+    assert "expired on 05 Jun 2026" in conv.answer or "active until" in conv.answer
+
+
+def test_asking_for_a_person_escalates_immediately_with_its_own_reason():
+    conv = A.start(PRIYA_FC, "I want to talk to a real person", agent=FakeAgent())
+    assert conv.ticket and conv.escalation_code == "human_requested" and not conv.turns
+
+
+def test_retrieval_landing_on_a_safety_section_is_a_safety_case_without_a_keyword():
+    conv = A.start(PRIYA_FC, "water is leaking all over the floor from the machine", agent=FakeAgent())
+    assert conv.ticket and conv.escalation_code == "safety" and conv.safety_flag
+
+
+def test_reply_reading_defaults_to_still_broken_and_needs_no_model_for_clear_cases():
+    class NoModel:
+        def __call__(self, prompt):
+            raise AssertionError("clear replies are decided by rules")
+    for text, want in [("That fixed it, thanks!", "RESOLVED"), ("no change, same noise", "STILL_BROKEN"),
+                       ("it's better but still shakes", "STILL_BROKEN"), ("how do I remove the filter?", "STILL_BROKEN"),
+                       ("No more water leaking", "RESOLVED")]:
+        assert A.classify_reply("step", text, NoModel()) == want, text
 
 
 if __name__ == "__main__":

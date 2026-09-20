@@ -17,10 +17,10 @@ from opensearchpy import OpenSearch
 
 from src.layer1.catalog import MANUAL_BY_PREFIX, TERMS_BY_PREFIX
 from src.errors import DependencyUnavailable
-from src.layer1.retrieval import load_sections
+from src.layer1.retrieval import SYNONYM_GROUPS, load_sections
 
 OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST", "http://localhost:9200")
-INDEX_NAME = "aftercare-sections-v3"  # v2: english analyzer; v3: documents keyed by file name, not absolute path
+INDEX_NAME = "aftercare-sections-v4"  # v2: english analyzer; v3: keyed by file name; v4: shared synonym filter
 
 # Every document that might ever be retrieved from -- indexed once,
 # up front, rather than lazily per-brand, so a fresh index always has
@@ -48,9 +48,21 @@ def ensure_indexed(force: bool = False) -> None:
             return
         client.indices.delete(index=INDEX_NAME)
 
+    text = {"type": "text", "analyzer": "aftercare_english"}
     client.indices.create(
         index=INDEX_NAME,
-        body={"mappings": {"properties": {"doc": {"type": "keyword"}, "heading": {"type": "text", "analyzer": "english"}, "body": {"type": "text", "analyzer": "english"}}}},
+        body={
+            "settings": {"analysis": {
+                "filter": {
+                    "customer_synonyms": {"type": "synonym", "lenient": True, "synonyms": [", ".join(g) for g in SYNONYM_GROUPS]},
+                    "english_stop": {"type": "stop", "stopwords": "_english_"},
+                    "english_stemmer": {"type": "stemmer", "language": "english"},
+                },
+                # customers say "won't turn on", manuals say "won't start": one shared synonym list
+                "analyzer": {"aftercare_english": {"tokenizer": "standard", "filter": ["lowercase", "customer_synonyms", "english_stop", "english_stemmer"]}},
+            }},
+            "mappings": {"properties": {"doc": {"type": "keyword"}, "heading": text, "body": text}},
+        },
     )
     for doc_path in ALL_DOCS:
         for heading, body in load_sections(doc_path):
