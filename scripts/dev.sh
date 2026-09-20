@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 # The one way to run Aftercare: everything as AWS Lambda under SAM Local.
-#   OpenSearch + DynamoDB Local (containers) -> create tables/indices -> sam build -> sam local start-api
-# Needs Docker and Ollama running (the model). Open http://127.0.0.1:3000
+#   containers (OpenSearch, DynamoDB Local on Corretto) -> create tables/indices -> sam build -> sam local start-api
+# Then open http://127.0.0.1:3000  (landing, /sandbox, /demo, /dashboard).
+#   SKIP_BUILD=1 bash scripts/dev.sh     reuse the last `sam build` (static files in public/ are always live)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+fail() { echo "✗ $1" >&2; exit 1; }
+[ -x .venv/bin/python ] || fail "no .venv: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
+command -v sam >/dev/null    || fail "AWS SAM CLI not found: brew install aws-sam-cli"
+docker info >/dev/null 2>&1  || fail "Docker isn't running (SAM Local, OpenSearch and DynamoDB Local need it)"
+[ -x tools/cedar/cedar ] && [ -x tools/cedar-lambda/cedar ] || fail "Cedar CLI missing: bash scripts/install_cedar_cli.sh"
+command -v ollama >/dev/null || fail "Ollama not found (the local model): https://ollama.com"
+curl -s -m 3 localhost:11434/api/tags >/dev/null || fail "Ollama isn't running: start it with 'ollama serve' in another terminal"
+
 # the model: pull once, then keep it loaded so the first reply isn't a 10-second cold start
 MODEL="${AFTERCARE_MODEL:-gemma2:9b}"
-if command -v ollama >/dev/null; then
-  ollama list 2>/dev/null | grep -q "^${MODEL}" || ollama pull "${MODEL}"
-  curl -s -m 60 localhost:11434/api/generate -d "{\"model\":\"${MODEL}\",\"prompt\":\"\",\"keep_alive\":\"2h\"}" >/dev/null 2>&1 &
-fi
+ollama list 2>/dev/null | grep -q "^${MODEL}" || ollama pull "${MODEL}"
+curl -s -m 60 localhost:11434/api/generate -d "{\"model\":\"${MODEL}\",\"prompt\":\"\",\"keep_alive\":\"2h\"}" >/dev/null 2>&1 &
+
 bash scripts/start_opensearch.sh
 bash scripts/start_dynamodb.sh
 sleep 2

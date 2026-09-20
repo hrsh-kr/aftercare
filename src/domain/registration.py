@@ -4,7 +4,7 @@ looks a customer up by phone, computes warranty status.
 Warranty math lives here, not in the agent (Layer 2) and not
 duplicated in a test script -- moved here from
 scripts/test_agent_grounding.py once it became the real module,
-per DESIGN.md's honesty rule: the model must never compute this.
+honesty rule: the model must never compute this.
 """
 
 import csv
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
-from src.layer1.catalog import warranty_component_for
+from src.domain.catalog import warranty_component_for
 
 FIXTURES = Path(__file__).resolve().parent.parent.parent / "fixtures"
 SALES_DATA = FIXTURES / "sales_data.csv"
@@ -72,14 +72,6 @@ def load_registrations(path: Path = SALES_DATA) -> list[Registration]:
     the landing page's Step 0 table. The running app reads registrations from the registry, not from here."""
     with open(path) as f:
         return [registration_from_row(row) for row in csv.DictReader(f)]
-
-
-def lookup_by_phone(phone: str, registrations: list[Registration] | None = None) -> list[Registration]:
-    """All products a customer has registered, by phone number --
-    this is the moment Aftercare actually delivers on: the customer
-    messages, and we already know what they bought."""
-    registrations = registrations if registrations is not None else load_registrations()
-    return [r for r in registrations if r.customer_phone == phone]
 
 
 def warranty_details(reg: Registration, today: date | None = None) -> dict:

@@ -2,7 +2,7 @@
 wait for the customer's reply, offer a second step or escalate based
 on what actually happened. Capped at 2 self-service attempts.
 
-Per DESIGN.md's honesty rules: never guess on safety, never invent a
+Honesty rules: never guess on safety, never invent a
 fix the manual doesn't support, escalate rather than keep guessing.
 """
 
@@ -18,11 +18,11 @@ from strands.hooks import AfterModelCallEvent, BeforeModelCallEvent, HookProvide
 from strands.models.ollama import OllamaModel
 
 from src.errors import DependencyUnavailable
-from src.layer1 import opensearch_retrieval
-from src.layer1.catalog import BRAND_SLUGS, brand_for, manual_for, terms_for
-from src.layer1.registration import Registration
-from src.layer1.retrieval import content_words, load_sections
-from src.layer3b.tickets import Ticket, next_ticket_id
+from src.domain import opensearch_retrieval
+from src.domain.catalog import manual_for, terms_for
+from src.domain.registration import Registration
+from src.domain.retrieval import content_words, load_sections
+from src.records.tickets import Ticket, next_ticket_id
 
 # Overridable so a Lambda running inside SAM Local's Docker container can
 # reach the host machine's Ollama server -- "localhost" inside that
@@ -53,7 +53,7 @@ ESCALATION_LABELS = {
 def diagnostic_overlap(complaint: str, heading: str, body: str) -> int:
     """How many meaningful words the complaint shares with the section the
     search returned. 0 means the manual doesn't address this -- and the
-    honesty rule (DESIGN.md section 7) says escalate rather than guess."""
+    honesty rule says escalate rather than guess."""
     return len(content_words(complaint) & content_words(f"{heading} {body}"))
 
 
@@ -79,7 +79,7 @@ class Conversation:
     answered: bool = False      # a direct answer (e.g. warranty status), no fault involved
     answer: str = ""
     ticket: Ticket | None = None
-    retrieval_method: str = ""  # "opensearch" or "keyword_fallback" -- see opensearch_retrieval.retrieve()
+    retrieval_method: str = ""  # "opensearch" or "safety_rule" or "rule"
     escalation_code: str = ""   # one of ESCALATION_LABELS, set when a ticket is created
     escalation_detail: str = ""  # e.g. for "recurring": which earlier case matched
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -233,7 +233,7 @@ def _warranty_answer(registration: Registration, complaint: str) -> Conversation
     """A warranty question is answered, not troubleshot: dates and status are arithmetic on the
     registered purchase (registration.warranty_details), and the coverage wording is quoted from the
     brand's Terms section that OpenSearch finds for the question. No model involved."""
-    from src.layer1.registration import warranty_details
+    from src.domain.registration import warranty_details
     d = warranty_details(registration)
     bought = datetime.strptime(d["purchased"], "%Y-%m-%d")
     lines = [f"Your {registration.product_name} (serial {registration.serial_number}) was bought on {bought:%d %b %Y}."]

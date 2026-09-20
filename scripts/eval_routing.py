@@ -11,8 +11,8 @@ os.environ["AFTERCARE_STORE"] = "file"
 import tempfile
 from pathlib import Path
 
-from src.layer1.registration import load_registrations
-from src.layer2 import agent as A
+from src.domain.registration import load_registrations
+from src.agent import agent as A
 from src.storage import get_store
 
 get_store().ticket_dir = Path(tempfile.mkdtemp())

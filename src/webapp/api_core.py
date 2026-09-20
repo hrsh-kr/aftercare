@@ -1,39 +1,12 @@
-"""Route-agnostic core logic, shared by two adapters: the Flask dev
-server (app.py, what the live demo runs) and the SAM Local Lambda
-handlers (../lambda_handlers.py, proof the same logic is serverless-
-ready). One real implementation -- an adapter translates its own
-request/response shape into calls here and back, nothing
-product-specific lives in either adapter.
+"""Business logic behind every route (src/lambda_app.py is the only adapter).
 
-Conversation state is saved to data/conversations/<id>.json, same
-pattern as Ticket's file storage -- not an in-memory dict. That started
-as one, until running the two adapters side by side (Phase 7.5) showed
-why it can't be: start_conversation() and respond_conversation() are
-two *separate* Lambda functions under SAM Local, each its own process
-with its own memory, so an in-memory dict never actually shared state
-between them -- not a cold-start edge case, every single call. Flask
-gets the same fix for free, and gains "survives a dev-server restart"
-as a side effect.
+Route-agnostic and framework-free: lambda_app.py translates an API Gateway event into calls here and back; pages.py
+renders the HTML. State lives behind src/storage (DynamoDB); manual search, recurrence and analytics are OpenSearch
+(src/records/case_index.py, src/domain/opensearch_retrieval.py); who-may-do-what is Cedar (src/authz). Nothing here
+falls back to anything: a missing service raises DependencyUnavailable, which the Lambda turns into a 503.
 
---- Audit fixes applied here (see IMPLEMENTATION.md Phase audit pass) ---
-
-1. list_customers() now accepts brand filter -- the demo is brand-scoped,
-   so the picker must show only that brand's customers, not everyone.
-
-2. lookup() now accepts brand -- scopes returned products to that brand
-   only. In a real deployment, the brand is known from which WhatsApp
-   Business number the message arrived on; in the demo, it's the brand
-   the user chose at entry. This removes the regs[0].brand guessing.
-
-3. start_conversation() now requires product_id -- the customer picks
-   which product they want support for (or the QR deep-link encodes it).
-   Using regs[0] was always wrong: if a customer has two products and
-   asks about the second one, it would service the first. Silent and
-   wrong.
-
-4. dashboard_data() now includes the full registrations list -- needed
-   for the QR code section (each product gets a QR linking back to the
-   WhatsApp support line with the serial pre-filled).
+The WhatsApp channel (greeting, product picker, hand-over, replies) is src/channel/bot.py, which calls back into
+start_conversation / respond_conversation here so there is one implementation of "run the agent".
 """
 
 import json
@@ -42,20 +15,20 @@ import sys
 import time
 import uuid
 from dataclasses import asdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.authz import cedar_authz, session
 from src.authz.cedar_authz import CedarUnavailable
-from src.layer1.catalog import BRAND_SLUGS, brand_for
-from src.layer1.registration import Registration, registration_from_row
-from src.layer2 import agent as agent_mod
-from src.layer3b import case_index
+from src.domain.catalog import BRAND_SLUGS, brand_for
+from src.domain.registration import Registration, registration_from_row
+from src.agent import agent as agent_mod
+from src.records import case_index
 from src.storage import get_store
 from src.webapp import observability as obs
-from src.layer3b.tickets import Ticket
+from src.records.tickets import Ticket
 
 _agent = None  # built lazily, once, on first use -- avoids paying Ollama startup cost at import time
 def get_agent():
@@ -352,8 +325,6 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
     # WhatsApp Business number. For the demo, we use a placeholder that
     # encodes the intent: customer scans, WhatsApp opens pre-addressed
     # to that brand's support line with the serial pre-filled.
-    brand_display = BRAND_SLUGS.get(brand, brand)
-    whatsapp_demo_base = f"https://wa.me/message/{brand}"  # placeholder -- real number goes here
 
     return {
         "brand": brand,
@@ -407,7 +378,7 @@ def health() -> dict:
     import hashlib
     import urllib.request
 
-    from src.layer1 import opensearch_retrieval as osr
+    from src.domain import opensearch_retrieval as osr
 
     def probe(fn):
         t0 = time.perf_counter()
@@ -564,11 +535,11 @@ def _ticket_access(token: str | None, ticket_id: str, action: str, what: str):
 
 
 def update_ticket_status(ticket_id: str, status: str, token: str | None) -> tuple[dict, int]:
-    if status not in TICKET_STATUSES:
-        return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
     principal, row, d, err = _ticket_access(token, ticket_id, "updateTicketStatus", "change ticket")
     if err:
         return err
+    if status not in TICKET_STATUSES:
+        return {"error": f"status must be one of {TICKET_STATUSES}"}, 400
     ticket = Ticket(**row)
     ticket.status = status
     ticket.save()
@@ -580,12 +551,12 @@ def update_ticket_status(ticket_id: str, status: str, token: str | None) -> tupl
 
 def ticket_reply(ticket_id: str, text: str, token: str | None) -> tuple[dict, int]:
     """A person answers the customer, on WhatsApp, from the brand's inbox."""
-    text = (text or "").strip()
-    if not text:
-        return {"error": "Write a message first."}, 400
     principal, row, d, err = _ticket_access(token, ticket_id, "replyToCustomer", "reply on ticket")
     if err:
         return err
+    text = (text or "").strip()
+    if not text:
+        return {"error": "Write a message first."}, 400
     from src.channel import bot
     msg = bot.staff_reply(row, text[:1000], principal.name)
     if row.get("status") == "new":

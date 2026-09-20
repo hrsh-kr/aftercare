@@ -10,7 +10,7 @@ const LINES = {
 /* the same demo sign-ins the dashboard's login page shows */
 const STAFF = {
   aquaspin:  { manager: ["meera.nair", "aqua-manager"], agent: ["dev.patel", "aqua-agent"] },
-  arcticair: { manager: ["sara.thomas", "arctic-manager"], agent: ["ben.dsouza", "arctic-agent"] },
+  arcticair: { manager: ["sara.thomas", "arctic-manager"] },   // one account keeps the demo simple; the Cedar manager/agent contrast is shown on AquaSpin
 };
 const CHIPS = {
   aquaspin: [
@@ -242,6 +242,7 @@ function renderTrace(replies) {
 
 /* ── 3b · staff: sign-in (real, Cedar-decided), inbox, reply ── */
 async function ensureStaff(force) {
+  if (!STAFF[S.brand][S.role]) S.role = "manager";        // ArcticAir has only a manager account
   const want = STAFF[S.brand][S.role][0];
   if (!force && S.signedAs === want) return true;
   const [u, p] = STAFF[S.brand][S.role];
@@ -250,9 +251,11 @@ async function ensureStaff(force) {
   S.signedAs = u;
   const who = $("sb-who"); who.textContent = "";
   who.append("Signed in as ", strong(`${data.principal.name} (${data.principal.role})`), " · Cedar decides what this person may do.");
-  const sw = el("button", null, S.role === "manager" ? "Switch to an agent" : "Switch to the manager"); sw.type = "button";
-  sw.addEventListener("click", () => { S.role = S.role === "manager" ? "agent" : "manager"; ensureStaff(true).then(loadInbox); });
-  who.appendChild(sw);
+  if (STAFF[S.brand].agent) {
+    const sw = el("button", null, S.role === "manager" ? "Switch to an agent" : "Switch to the manager"); sw.type = "button";
+    sw.addEventListener("click", () => { S.role = S.role === "manager" ? "agent" : "manager"; ensureStaff(true).then(loadInbox); });
+    who.appendChild(sw);
+  }
   return true;
 }
 function renderInbox(chats) {

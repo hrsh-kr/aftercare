@@ -64,7 +64,7 @@ def registry_and_chat_contract(store, label):
     assert store.registrations_for_phone("+911")[0]["purchase_price"] == 100 and isinstance(store.registrations_for_phone("+911")[0]["purchase_price"], int), label
     assert store.delete_registrations("sandbox") == 2 and [r["serial_number"] for r in store.registrations("aquaspin")] == ["WM-FL-2"], label
     # chat log: ordered, resumable from a cursor, isolated per brand line + phone
-    c1 = store.put_chat_message("aquaspin", "+911", {"sender": "customer", "kind": "text", "text": "hi", "meta": {"ms": 5}})
+    store.put_chat_message("aquaspin", "+911", {"sender": "customer", "kind": "text", "text": "hi", "meta": {"ms": 5}})
     store.put_chat_message("aquaspin", "+911", {"sender": "aftercare", "kind": "text", "text": "hello"})
     store.put_chat_message("arcticair", "+911", {"sender": "customer", "kind": "text", "text": "other line"})
     msgs = store.chat_messages("aquaspin", "+911")

@@ -123,7 +123,7 @@ class DynamoStore:
 
     @_guard
     def put_registration(self, row: dict) -> None:
-        from src.layer1.catalog import brand_for
+        from src.domain.catalog import brand_for
         brand = brand_for(row["product_id"]).lower()
         self._table.put_item(Item={**row, "PK": f"BRAND#{brand}", "SK": f"REG#{row['serial_number']}",
                                    "GSI1PK": f"PHONE#{row['customer_phone']}", "GSI1SK": f"REG#{row['serial_number']}"})

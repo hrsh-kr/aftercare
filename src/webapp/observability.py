@@ -4,7 +4,7 @@
   a phone number or a complaint's text: the customer's words are personal data.
 - Metrics: CloudWatch Embedded Metric Format, printed to stdout. In Lambda, CloudWatch turns
   those lines into metrics with no API call and no agent. Locally they are just JSON lines,
-  visible in `sam local` output. Off in the Flask dev server unless AFTERCARE_EMF=1.
+  visible in `sam local` output. Set AFTERCARE_EMF=1 to force them on outside Lambda.
 """
 
 import os

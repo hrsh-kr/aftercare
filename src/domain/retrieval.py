@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 # Words that carry no diagnostic signal. Shared by the keyword fallback here
-# and by the agent's "can we diagnose this at all?" gate (layer2/agent.py), so
+# and by the agent's "can we diagnose this at all?" gate (agent/agent.py), so
 # both judge a complaint the same way.
 _STOP = set(
     "a an the and or but if then so of to in on at for from by with without into onto out up down over under "

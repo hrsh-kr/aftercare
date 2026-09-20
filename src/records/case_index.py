@@ -20,8 +20,8 @@ from pathlib import Path
 import functools
 
 from src.errors import DependencyUnavailable
-from src.layer1.catalog import brand_for
-from src.layer1.opensearch_retrieval import _get_client
+from src.domain.catalog import brand_for
+from src.domain.opensearch_retrieval import _get_client
 
 CASES = "aftercare-cases-v1"
 TICKETS = "aftercare-tickets-v1"

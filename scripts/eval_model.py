@@ -11,7 +11,7 @@ import re
 import sys
 import time
 
-from src.layer2 import agent as A
+from src.agent import agent as A
 
 # (raw step from a manual, words at least one of which must survive in the message)
 PHRASING = [

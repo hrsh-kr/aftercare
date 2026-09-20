@@ -1,15 +1,15 @@
-"""Run the five demo scenarios against any Aftercare API (Flask :5001 or sam local :3000)
+"""Run the five demo scenarios against any Aftercare API (sam local, http://127.0.0.1:3000)
 and check each ends as its card promises. Uses the real model, so it takes a minute.
 
     .venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000
-Clear old runs first (Flask: POST /api/demo/reset; SAM: restart DynamoDB Local) or the
+Clear old runs first (POST /api/demo/reset) or the
 'fixed' scenario will look like a recurring issue."""
 import sys
 import uuid
 
 import requests
 
-API = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5001").rstrip("/")
+API = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:3000").rstrip("/")
 # (name, phone, product, complaint, replies, expected final status, expected reason code)
 SCENARIOS = [
     ("fixed", "+919876543210", "WM-FC-700", "My washing machine bangs loudly when it spins", ["That fixed it, thank you!"], "resolved", None),

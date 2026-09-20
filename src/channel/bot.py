@@ -16,9 +16,9 @@ Conversation state per chat is one small record:
 import re
 from datetime import datetime
 
-from src.layer1.catalog import BRAND_SLUGS, brand_for
-from src.layer1.registration import Registration, registration_from_row, warranty_details
-from src.layer2 import agent as agent_mod
+from src.domain.catalog import BRAND_SLUGS, brand_for
+from src.domain.registration import Registration, warranty_details
+from src.agent import agent as agent_mod
 from src.storage import get_store
 from src.webapp import api_core as core
 
@@ -212,11 +212,11 @@ def parse_webhook(payload: dict) -> list[tuple[str, str, dict]]:
             if not brand:
                 continue
             for m in value.get("messages", []):
-                phone = "+" + re.sub(r"\D", "", m.get("from", ""))
+                phone = "+" + re.sub(r"\D", "", str(m.get("from", "")))
                 if m.get("type") == "text":
-                    out.append((brand, phone, {"type": "text", "text": m["text"]["body"]}))
+                    out.append((brand, phone, {"type": "text", "text": str((m.get("text") or {}).get("body", ""))[:1000]}))
                 elif m.get("type") == "interactive":
-                    br = m["interactive"].get("button_reply", {})
+                    br = (m.get("interactive") or {}).get("button_reply", {})
                     out.append((brand, phone, {"type": "button", "id": br.get("id", ""), "title": br.get("title", "")}))
     return out
 

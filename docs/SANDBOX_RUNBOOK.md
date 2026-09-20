@@ -49,8 +49,8 @@ registration message.
 | 7 | **Sanjay Iyer** · ArcticAir | chip *There's a burning smell coming from my AC* | The manual's own "Stop use immediately", a safety ticket, no troubleshooting. | Safety is a rule, never left to the model. |
 | 8 | **Meera Pillai** · AquaSpin | chip *I want to talk to a person* | Hand-over "Asked for a person". Open **Inbox** (red badge), click the chat, type a reply, **Send**: it appears on the phone as a person's message. Click **Resolve ticket** (as the manager); the customer is told. | A person takes over, in the same chat. |
 
-**Cedar moment (20 s).** In *Inbox*, click **Switch to an agent**, then **Resolve ticket**: refused, naming the
-policy. Switch back to the manager and it works. Then open *Analytics*: handled-without-a-person %, why people
+**Cedar moment (20 s).** On the **AquaSpin** line, in *Inbox*, click **Switch to an agent**, then **Resolve ticket**: refused, naming the
+policy. (ArcticAir has a single manager account; the manager/agent contrast is shown on AquaSpin.) Switch back to the manager and it works. Then open *Analytics*: handled-without-a-person %, why people
 escalated, which manual sections send them to a person (OpenSearch aggregations). **Open the full dashboard**
 signs you in already: a blue header, complaints with a red/yellow/green status, a products table and an AI analytics bar at the bottom. Click a row to read the chat and reply; click the dots to change status.
 

@@ -7,7 +7,7 @@ HEADER = "customer_name,customer_phone,product_id,product_name,serial_number,pur
 
 
 def test_fixture_file_is_clean_and_sorted_by_brand():
-    from src.layer1.registration import SALES_DATA
+    from src.domain.registration import SALES_DATA
     out, status = core.ingest_preview(SALES_DATA.read_text())
     assert status == 200 and out["issues"] == [] and out["rejected"] == 0, out
     assert {b["brand"]: b["products"] for b in out["brands"]} == {"AquaSpin": 3, "ArcticAir": 2}

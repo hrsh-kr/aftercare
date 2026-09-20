@@ -7,8 +7,8 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.layer1.catalog import BRAND_SLUGS, brand_for
-from src.layer1.registration import load_registrations
+from src.domain.catalog import BRAND_SLUGS, brand_for
+from src.domain.registration import load_registrations
 from src.webapp import api_core as core
 
 _env = Environment(

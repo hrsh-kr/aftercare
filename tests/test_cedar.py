@@ -8,8 +8,7 @@ os.environ["AFTERCARE_STORE"] = "file"   # unit-test double; the app itself runs
 from pathlib import Path
 
 from src.authz import cedar_authz, session
-from src.layer3b import tickets
-from src.webapp import api_core as core
+from src.records import tickets
 from tests.lambda_client import Client
 
 MANAGER = {"id": "m", "brand": "aquaspin", "role": "manager"}

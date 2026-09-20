@@ -7,7 +7,7 @@ reads from, filtered to that brand via product_id.
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
-from src.layer1.catalog import brand_for
+from src.domain.catalog import brand_for
 from src.storage import get_store
 
 @dataclass

@@ -62,8 +62,3 @@ def get_store() -> Store:
         else:
             raise RuntimeError(f"AFTERCARE_STORE must be 'file' or 'dynamodb', not {kind!r}")
     return _store
-
-
-def reset_store_for_tests() -> None:
-    global _store
-    _store = None

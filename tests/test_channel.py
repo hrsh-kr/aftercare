@@ -8,10 +8,10 @@ from pathlib import Path
 os.environ["AFTERCARE_STORE"] = "file"
 
 from src.channel import bot
-from src.layer1 import opensearch_retrieval
-from src.layer1.registration import FIXTURES
-from src.layer1.retrieval import keyword_retrieve, load_sections
-from src.layer3b import case_index
+from src.domain import opensearch_retrieval
+from src.domain.registration import FIXTURES
+from src.domain.retrieval import keyword_retrieve, load_sections
+from src.records import case_index
 from src.storage import get_store
 from src.webapp import api_core as core
 

@@ -9,6 +9,7 @@ server: `sam local start-api` is the only way this app runs locally, and it is t
 import json
 
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver, Response, content_types
+from aws_lambda_powertools.event_handler.exceptions import BadRequestError
 
 from src import pages
 from src.authz import session
@@ -39,7 +40,32 @@ def _token() -> str | None:
 
 
 def _body() -> dict:
-    return app.current_event.json_body or {}
+    """The JSON request body as a dict; anything else is a 400, not a crash."""
+    try:
+        body = app.current_event.json_body
+    except ValueError as exc:
+        raise BadRequestError("Request body is not valid JSON.") from exc
+    if body is None:
+        return {}
+    if not isinstance(body, dict):
+        raise BadRequestError("Request body must be a JSON object.")
+    return body
+
+
+def _text(value) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+@app.exception_handler(BadRequestError)
+def _bad_request(exc: BadRequestError):
+    return _json({"error": exc.msg}, 400)
+
+
+@app.exception_handler(Exception)
+def _unexpected(exc: Exception):
+    """Never leak a stack trace to the client; the log (with the request id) has it."""
+    logger.exception("unhandled_error")
+    return _json({"error": "Something went wrong on our side."}, 500)
 
 
 @app.exception_handler(DependencyUnavailable)
@@ -88,21 +114,21 @@ def customers():
 @app.post("/api/lookup")
 def lookup():
     b = _body()
-    return _json(core.lookup(b.get("phone", "").strip(), brand=b.get("brand", "").strip().lower()))
+    return _json(core.lookup(_text(b.get("phone")), brand=_text(b.get("brand")).lower()))
 
 
 @app.post("/api/start")
 def start():
     b = _body()
-    if not b.get("product_id", "").strip():
+    if not _text(b.get("product_id")):
         return _json({"error": "product_id is required"}, 400)
     key = app.current_event.get_header_value("Idempotency-Key", default_value="", case_sensitive=False) or None
     if key:
         from src.webapp import idempotency
         idempotency._config.register_lambda_context(app.lambda_context)
     try:
-        data, status = core.start_conversation(b.get("phone", "").strip(), b.get("complaint", "").strip(),
-                                               b["product_id"].strip(), idempotency_key=key)
+        data, status = core.start_conversation(_text(b.get("phone")), _text(b.get("complaint")),
+                                               _text(b.get("product_id")), idempotency_key=key)
     except Exception as exc:
         if type(exc).__name__ == "IdempotencyValidationError":
             return _json({"error": "That Idempotency-Key was already used with a different request."}, 422)
@@ -113,14 +139,14 @@ def start():
 @app.post("/api/respond")
 def respond():
     b = _body()
-    data, status = core.respond_conversation(b.get("conversation_id"), b.get("reply", "").strip())
+    data, status = core.respond_conversation(_text(b.get("conversation_id")), _text(b.get("reply")))
     return _json(data, status)
 
 
 @app.post("/api/login")
 def login():
     b = _body()
-    data, status = core.login(b.get("username", ""), b.get("passcode", ""))
+    data, status = core.login(_text(b.get("username")), b.get("passcode") if isinstance(b.get("passcode"), str) else "")
     token = data.pop("token", None)
     headers = {"Set-Cookie": f"{session.COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={session.MAX_AGE}"} if token else {}
     return _json(data, status, headers)
@@ -145,7 +171,7 @@ def dashboard_data(brand: str):
 
 @app.post("/api/tickets/<ticket_id>/status")
 def ticket_status(ticket_id: str):
-    data, status = core.update_ticket_status(ticket_id, _body().get("status", ""), _token())
+    data, status = core.update_ticket_status(ticket_id, _text(_body().get("status")), _token())
     return _json(data, status)
 
 
@@ -157,7 +183,7 @@ def ingest():
 
 @app.get("/api/sample-csv")
 def sample_csv():
-    from src.layer1.registration import SALES_DATA
+    from src.domain.registration import SALES_DATA
     return Response(status_code=200, content_type="text/csv", body=SALES_DATA.read_text())
 
 
@@ -198,7 +224,7 @@ def ticket_thread(ticket_id: str):
 
 @app.post("/api/tickets/<ticket_id>/reply")
 def ticket_reply(ticket_id: str):
-    data, status = core.ticket_reply(ticket_id, _body().get("text", ""), _token())
+    data, status = core.ticket_reply(ticket_id, _text(_body().get("text")), _token())
     return _json(data, status)
 
 
@@ -220,7 +246,7 @@ def sandbox_samples():
 
 @app.get("/api/sandbox/samples/<name>")
 def sandbox_sample(name: str):
-    from src.layer1.registration import FIXTURES
+    from src.domain.registration import FIXTURES
     if name not in _SAMPLES:
         return _json({"error": "Unknown sample."}, 404)
     return Response(status_code=200, content_type="text/csv", body=(FIXTURES / "sandbox" / name).read_text())

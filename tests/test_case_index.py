@@ -2,12 +2,10 @@
 Needs the local OpenSearch container; skips (exit 0, says so) if it isn't up.
 Run: .venv/bin/python -m tests.test_case_index"""
 import sys
-import tempfile
-from pathlib import Path
 from types import SimpleNamespace
 
-from src.layer1.registration import load_registrations
-from src.layer3b import case_index, tickets
+from src.domain.registration import load_registrations
+from src.records import case_index
 
 
 def _conv(reg, resolved, code="", section="4.1 Drum wobbling or banging noise during spin", days_ago=0):

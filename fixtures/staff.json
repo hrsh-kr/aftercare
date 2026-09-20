@@ -22,13 +22,5 @@
     "role": "manager",
     "salt": "b9f15fda0b066c1f13d89d90f4359f0b",
     "hash": "04501d7275959d717afdd25a4332eb7be19cac67464726a3a21ce953948af346"
-  },
-  {
-    "username": "ben.dsouza",
-    "name": "Ben D'Souza",
-    "brand": "arcticair",
-    "role": "agent",
-    "salt": "96df5221d3197726d875929cbef30125",
-    "hash": "c283270c60bba1329ece0266165d9ebc7feb3aacbf12d065a5d66e02035ce171"
   }
 ]

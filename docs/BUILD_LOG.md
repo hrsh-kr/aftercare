@@ -1,10 +1,10 @@
-# Aftercare — Implementation Checklist
+# Build log
 
-**Purpose of this file:** if this session ends and a different model or person picks this up cold, they should be able to read this one file and know exactly what's done, what's next, and how to verify it — without needing the conversation history. Update the checkboxes as you go, in this file, immediately after finishing each task, not in a batch at the end.
-
-**New session? Start with `CONTEXT.md` (current state, hackathon rules, audit) and `TARGET.md` (what to do next) — the phases below are history; Phase 7.12 at the bottom corrects parts of Phases 7.10–7.11, and Phases 7.13–7.14 record the one-page landing, Step 0 flow and Apple-style redesign (the theme toggle from 7.13 was dropped in 7.14) (the work order is A flow → B visuals → C technical, see `TARGET.md`).**
-
-**Read first, in this order:** `README.md` (30 seconds) → `PITCH.md` (why) → `DESIGN.md` (what, layer by layer, what we're NOT building) → `TECHNICAL.md` (how — data model, the agent loop, API sketch) → `SKILL.md` (how we design/write/code, and the build order this checklist follows). This file is the only one that changes constantly; those five are stable unless something real changes.
+> **Historical.** The chronological record of how Aftercare was built, phase by phase, including approaches later
+> replaced (a Flask server, keyword and file fallbacks, a scripted demo, a `layer1/layer2/layer3b` layout, a
+> checklist that pointed at documents since deleted). Names, paths and counts in early phases are from their time.
+> References to `CONTEXT.md`, `TARGET.md` and `PLAN.md` are to internal working notes that are not part of this repository.
+> **The current design is in [`ARCHITECTURE.md`](ARCHITECTURE.md).**
 
 ---
 
@@ -48,7 +48,7 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 **Fix:** moved warranty status to plain Python date arithmetic (`compute_warranty_status()` in the script). The model's only job now is phrasing an answer from numbers it's handed, never computing them. Run 2, same 4 customers, all four correct.
 
-**Decision, going into Layer 1:** the registration/warranty lookup (`src/layer1/registration.py`, Phase 2 below) must compute status in Python from the start — this isn't a detail to get right later, it's now a validated requirement.
+**Decision, going into Layer 1:** the registration/warranty lookup (`src/domain/registration.py`, Phase 2 below) must compute status in Python from the start — this isn't a detail to get right later, it's now a validated requirement.
 
 **Reworked once, for realism (see decision log):** the ceiling fan fixture was dropped — its troubleshooting steps (check blade screws, check down-rod seating) require a ladder and a screwdriver, not something a customer does over chat. Rebuilt around washing machine (drum noise, foul smell) and AC (not cooling, foul smell), researched against real common-fault patterns — both are genuinely hands-only fixable. Re-ran the full test suite against the new fixtures and the new one-step-at-a-time prompt design (see Layer 2's updated spec in `DESIGN.md`/`TECHNICAL.md`): all 5 cases correct on the first run — washing machine drum noise and AC cooling both correctly retrieved from the right manual (not confused with each other despite both mentioning "filter"), each gave exactly one doable step and asked for a reply rather than dumping the whole section, warranty math correct across two different component-warranty lengths (2yr motor, 5yr compressor). No further fixes needed before Phase 2.
 
@@ -56,17 +56,17 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ## Phase 2 — Layer 1: registration + lookup (done)
 
-- [x] `src/layer1/registration.py`: loads `fixtures/sales_data.csv` into memory as `Registration` records (kept simple — a list, not the JSON-file-per-record pattern from the first build, since this is one small CSV, not per-candidate reports; revisit if it needs to grow)
+- [x] `src/domain/registration.py`: loads `fixtures/sales_data.csv` into memory as `Registration` records (kept simple — a list, not the JSON-file-per-record pattern from the first build, since this is one small CSV, not per-candidate reports; revisit if it needs to grow)
 - [x] `lookup_by_phone()`: returns all registered products for a phone number, `[]` for an unknown one — no fabrication, matches the honesty rule
 - [x] `compute_warranty_status()` **moved here from the test script** and made canonical — the test script now imports it instead of keeping its own copy, so the date math can't drift out of sync between the two
 - [x] Verified: loaded all 4 registrations, looked up a known phone (correct product + serial returned) and an unknown one (empty list, not an error or a guess), warranty status for all 4 matches Phase 1's recorded output exactly
 
 ## Phase 3 — Layer 2: the support agent (the flagship) (done)
 
-- [x] `src/layer2/agent.py`: the multi-turn loop — `start()` + `respond()`, a real `Conversation` state machine
+- [x] `src/agent/agent.py`: the multi-turn loop — `start()` + `respond()`, a real `Conversation` state machine
 - [x] Safety check runs before any model call
 - [x] Source routing: coverage question → the matching brand's terms file (`terms_aquaspin.md` / `terms_arcticair.md`), troubleshooting → the matching manual, both by `product_id` prefix (`WM-` / `AC-`), not by guessing from complaint text
-- [x] Escalation logic + `src/layer3b/tickets.py` (built now, not deferred to Phase 4 — escalation needs somewhere real to write to)
+- [x] Escalation logic + `src/records/tickets.py` (built now, not deferred to Phase 4 — escalation needs somewhere real to write to)
 - [x] `scripts/test_agent_multiturn.py`: 4 paths tested through the real agent, not just direct model calls
 
 **A second real bug found and fixed, same lesson as Phase 1's warranty math, in a new place:** the first version asked the model to judge "does a further self-service step exist" in free text. It didn't follow the requested format at all (returned its own made-up labels, "NO_FURTHER_STEPS" / "ELEVATE_TO_TECHNICIAN"), and its judgment was also wrong — it said there was no further step for the AC cooling case when the manual clearly has a second one (check the outdoor unit). Root cause: this is a structural fact the document already states outright (the manuals write troubleshooting as explicit numbered lists), not something to ask a model to infer.
@@ -77,17 +77,17 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 
 ## Phase 4 — Basic ticket view (smallest complete story) (done)
 
-- [x] `src/layer3b/tickets.py` — built during Phase 3, since escalation needed somewhere real to write to. `Ticket.load_all()` already retrieves everything needed for a view.
+- [x] `src/records/tickets.py` — built during Phase 3, since escalation needed somewhere real to write to. `Ticket.load_all()` already retrieves everything needed for a view.
 - [x] `scripts/view_tickets.py` — plain CLI view, every ticket with full context (customer, product, issue, exactly what was already tried, safety flag)
 - [x] **Milestone reached: basic working prototype, confirmed end to end.** Registration lookup (Phase 2) → multi-turn agent conversation, real grounding, real escalation logic (Phase 3) → ticket, viewable with full context (Phase 4). Ran the whole chain for real, not simulated at any layer except the WhatsApp channel itself.
 
 ## Phase 5 — Customer-facing chat UI (done)
 
-- [x] `src/webapp/app.py` (Flask) + `templates/index.html` + `static/style.css` + `static/chat.js` — simulated chat UI, real logic underneath (calls straight into `src/layer1` and `src/layer2`, nothing mocked at this layer)
+- [x] `src/webapp/app.py` (Flask) + `templates/index.html` + `static/style.css` + `static/chat.js` — simulated chat UI, real logic underneath (calls straight into `src/domain` and `src/agent`, nothing mocked at this layer)
 - [x] Applied `SKILL.md`'s product-screen rules: one accent color, restrained type/spacing, motion only for new messages arriving
 - [x] Registration lookup screen, the complaint conversation, resolution/escalation states — all three visually distinct (white = waiting on agent, green = customer, amber = escalated to a ticket)
 - [x] **Fixed a real product-logic inconsistency, caught after Phase 5's first pass:** the lookup screen asked the customer to type their own phone number, which makes no sense for a WhatsApp simulation — a real integration already knows the sender from the incoming message, nothing is ever typed. Replaced the phone-number text field with an explicit "pick who you're simulating" selector (`/api/customers`, honestly labeled as a demo stand-in, not pretending to be the real mechanism).
-- [x] **Naming correction:** "Windmere" (the earlier parent-brand name) was never a name the user gave — it was invented mid-build and got flagged as such. Removed entirely, everywhere (fixtures, code, templates, docs). AC line is "ArcticAir," washing-machine line is "AquaSpin" — now two fully independent brands, not one parent with two product lines. Each has its own manual, its own terms file (`terms_arcticair.md` / `terms_aquaspin.md`, split out of the old combined `terms_windmere.md`), and its own chat header, set dynamically per customer (`brand_for()` in `src/layer2/agent.py`, returned by `/api/lookup`, applied client-side in `chat.js`). The dashboard is no longer branded to one company — it's Aftercare's own cross-brand ops view (`Aftercare — Ops Dashboard`), which fits the actual pitch better: Aftercare is the platform, brands are its clients. Fixture files renamed accordingly (`manual_arcticair.md`, `manual_aquaspin.md`, `sales_data.csv`); confirmed both brands render correctly (distinct header text, correct manual/terms retrieval) through a live test.
+- [x] **Naming correction:** "Windmere" (the earlier parent-brand name) was never a name the user gave — it was invented mid-build and got flagged as such. Removed entirely, everywhere (fixtures, code, templates, docs). AC line is "ArcticAir," washing-machine line is "AquaSpin" — now two fully independent brands, not one parent with two product lines. Each has its own manual, its own terms file (`terms_arcticair.md` / `terms_aquaspin.md`, split out of the old combined `terms_windmere.md`), and its own chat header, set dynamically per customer (`brand_for()` in `src/agent/agent.py`, returned by `/api/lookup`, applied client-side in `chat.js`). The dashboard is no longer branded to one company — it's Aftercare's own cross-brand ops view (`Aftercare — Ops Dashboard`), which fits the actual pitch better: Aftercare is the platform, brands are its clients. Fixture files renamed accordingly (`manual_arcticair.md`, `manual_aquaspin.md`, `sales_data.csv`); confirmed both brands render correctly (distinct header text, correct manual/terms retrieval) through a live test.
 - [x] `.claude/launch.json` added so the dev server runs via the Browser pane tool properly
 
 **Tested live in the browser, not just described:** ran the full Priya (washing machine) conversation through the real UI — lookup → complaint → step 1 (level check) → "still broken" → step 2 (load balance, genuinely different) → "fixed it" → resolved, composer correctly disabled. Separately ran Sameer's safety-flagged AC complaint through the real UI — immediate ticket (TBB-0003), correct amber styling, no troubleshooting attempted.
@@ -117,8 +117,8 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] **Cedar CLI, the real thing, not the PyPI package.** `pip install cedar-policy` resolves to an empty 0.0.1 placeholder with no actual bindings — checked by importing it and inspecting `dir()`, confirmed empty. Used the real open-source Cedar CLI instead: prebuilt binary from `cedar-policy/cedar`'s GitHub releases (v4.13.0), downloaded via `scripts/install_cedar_cli.sh` to `tools/cedar/cedar` (gitignored — a 15MB platform binary, not vendored).
 - [x] `policies/dashboard.cedar` — one real policy: `permit(principal, action == Action::"viewDashboard", resource) when { principal.brand == resource.brand };`. Generic across brands, not one hardcoded permit per brand.
 - [x] `src/authz/cedar_authz.py` — shells out to the real Cedar CLI (`subprocess`), builds entities for both brands, returns the actual ALLOW/DENY decision. Fails closed (raises `CedarUnavailable`, which the route turns into a 503) if the binary is missing, rather than silently granting access — same honesty rule as the rest of the system.
-- [x] `src/layer3b/tickets.py`: added `product_id` to `Ticket` (was missing — tickets had no way to know which brand they belonged to) so dashboards can filter by brand.
-- [x] `src/layer2/agent.py`: added `BRAND_BY_PREFIX`, `BRAND_SLUGS`, `brand_for()`, `TERMS_BY_PREFIX` (replacing the old single `TERMS_PATH`) — coverage questions now route to the correct brand's terms file.
+- [x] `src/records/tickets.py`: added `product_id` to `Ticket` (was missing — tickets had no way to know which brand they belonged to) so dashboards can filter by brand.
+- [x] `src/agent/agent.py`: added `BRAND_BY_PREFIX`, `BRAND_SLUGS`, `brand_for()`, `TERMS_BY_PREFIX` (replacing the old single `TERMS_PATH`) — coverage questions now route to the correct brand's terms file.
 - [x] Backend (`src/webapp/app.py`): `/dashboard` is now a brand-staff login picker (mirrors the customer picker's honesty pattern — a real system would already know who's logged in). `/dashboard/<brand>` renders that brand's dashboard. `/api/dashboard/<brand>` reads the claimed `X-Staff-Brand` session header, asks Cedar whether that principal may view this brand's resource, and only then filters registrations/tickets to that brand. A 403 with a plain-language reason on denial, not a silent empty result.
 - [x] Frontend: `dashboard_login.html` (new), `dashboard.html` rebuilt with a real "access denied" state, `dashboard.js` rewritten to send the staff-brand header and handle both the allow and deny paths honestly.
 
@@ -159,9 +159,9 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 ## Phase 7.6 — OpenSearch-backed retrieval (done)
 
 - [x] Local single-node OpenSearch container (`scripts/start_opensearch.sh` — security plugin disabled, local dev only, mirrors the Ollama/Cedar setup-script pattern)
-- [x] `src/layer1/opensearch_retrieval.py` — indexes every manual/terms section (all brands, once per process) into a single `aftercare-sections` index, `{path, heading, body}`. Retrieval is a `bool` query: `filter` on the exact source path (same document boundary `keyword_retrieve()` always respected — never cross-brand), `must` a `multi_match` (`heading^2`, `body`) for real BM25 ranking instead of hand-scored word overlap.
+- [x] `src/domain/opensearch_retrieval.py` — indexes every manual/terms section (all brands, once per process) into a single `aftercare-sections` index, `{path, heading, body}`. Retrieval is a `bool` query: `filter` on the exact source path (same document boundary `keyword_retrieve()` always respected — never cross-brand), `must` a `multi_match` (`heading^2`, `body`) for real BM25 ranking instead of hand-scored word overlap.
 - [x] `retrieve(query, doc_path)` tries OpenSearch first, falls back to the original `keyword_retrieve()` if unreachable — and returns which one actually answered (`"opensearch"` / `"keyword_fallback"`) rather than pretending OpenSearch always ran. `Conversation` gained a `retrieval_method` field to carry this honestly through the rest of the system.
-- [x] `src/layer2/agent.py`'s `start()` now calls `opensearch_retrieval.retrieve()` instead of `load_sections()` + `keyword_retrieve()` directly
+- [x] `src/agent/agent.py`'s `start()` now calls `opensearch_retrieval.retrieve()` instead of `load_sections()` + `keyword_retrieve()` directly
 
 **Verified live, both paths:** ran the same three cases Phase 1 validated (washing machine drum noise, washing machine foul smell, AC not cooling) directly against `opensearch_retrieval.retrieve()` — all three correctly retrieved the right section, `method == "opensearch"` confirmed each time, not a silent fallback. Then pointed `OPENSEARCH_HOST` at a nonexistent port and re-ran the drum-noise case — correctly fell back, `method == "keyword_fallback"`, same correct section returned. Then re-ran the full Phase 3 multi-turn test suite (`scripts/test_agent_multiturn.py`) against the real OpenSearch-backed path end to end — all 4 paths still correct (resolved-on-step-1, resolved-on-step-2, escalate-after-2-attempts, safety-immediate-escalation). No regression from the Phase 1-validated behavior; the scoring mechanism changed, the grounding claim didn't.
 
@@ -176,7 +176,7 @@ Run 1 — warranty status: **wrong on 2 of 4 customers.** The model was asked to
 - [x] **Cedar's allow/deny check was a substring match on stdout** (`"ALLOW" in result.stdout`) rather than the CLI's actual exit code (confirmed empirically: 0 = allow, non-zero = deny or error). Fragile in theory — an error message containing the word "ALLOW" would've misread as a grant. Switched to `result.returncode == 0`.
 - [x] **`compute_warranty_status()` silently misclassified unknown product prefixes** as AC/compressor (`if product_id.startswith("WM-"): ... else: compressor, 5`) instead of failing the way every other prefix lookup in the codebase does. Not a live bug today (only two prefixes exist), but inconsistent with the fail-closed pattern used everywhere else. Fixed via the new catalog module below.
 
-**Simplification — one real source of truth for brand/product routing:** `MANUAL_BY_PREFIX`/`TERMS_BY_PREFIX`/`BRAND_BY_PREFIX` were defined once in `agent.py`; `cedar_authz.py` had its own separate hardcoded `KNOWN_BRANDS` list; `opensearch_retrieval.py` had its own separate hardcoded `ALL_DOCS` list. Three copies of the same underlying fact, exactly the kind of thing that quietly drifts when a brand gets added or renamed. Consolidated into `src/layer1/catalog.py` — `agent.py`, `cedar_authz.py`, `opensearch_retrieval.py`, and `registration.py` all import from it now. A third brand is a one-file change.
+**Simplification — one real source of truth for brand/product routing:** `MANUAL_BY_PREFIX`/`TERMS_BY_PREFIX`/`BRAND_BY_PREFIX` were defined once in `agent.py`; `cedar_authz.py` had its own separate hardcoded `KNOWN_BRANDS` list; `opensearch_retrieval.py` had its own separate hardcoded `ALL_DOCS` list. Three copies of the same underlying fact, exactly the kind of thing that quietly drifts when a brand gets added or renamed. Consolidated into `src/domain/catalog.py` — `agent.py`, `cedar_authz.py`, `opensearch_retrieval.py`, and `registration.py` all import from it now. A third brand is a one-file change.
 
 **Smaller consistency fixes:** `scripts/test_agent_multiturn.py` was missing the `sys.path` setup `test_agent_grounding.py` has, so it silently required an undocumented `PYTHONPATH=.` to run directly — added the same setup, now runs the same way as the other test script. Removed `src/authz/__init__.py` (no other `src/` subpackage has one — Python's implicit namespace packages make it unnecessary; kept for consistency, not because it was broken). Reordered `agent.py`'s imports (an `os.environ.get()` call had been sitting between two import statements). Fixed a couple of stale docstrings (`tickets.py` referencing "Phase 6" after the dashboard became per-brand in Phase 6.5; `retrieval.py` describing itself as what `agent.py` calls directly, when it's now `opensearch_retrieval.py`'s fallback).
 
@@ -257,7 +257,7 @@ Dashboard: "Registered products — QR codes go on warranty cards at point of sa
 
 **Files changed in this pass:**
 - `fixtures/sales_data.csv` — added Priya's FL-900 product row
-- `src/layer1/catalog.py` — added `WM-FL-` prefix
+- `src/domain/catalog.py` — added `WM-FL-` prefix
 - `src/webapp/api_core.py` — brand filter + product_id required + registrations in dashboard
 - `src/webapp/app.py` — routes pass brand and product_id
 - `src/webapp/templates/index.html` — three-step entry: brand → customer → product

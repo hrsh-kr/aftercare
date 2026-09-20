@@ -3,7 +3,7 @@ full context - the smallest complete version of the brand side of
 the story. Run after scripts/test_agent_multiturn.py has created some.
 """
 
-from src.layer3b.tickets import Ticket
+from src.records.tickets import Ticket
 
 
 def main() -> None:

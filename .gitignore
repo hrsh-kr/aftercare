@@ -2,13 +2,10 @@
 __pycache__/
 *.pyc
 .env
-GroundTruth/
 tools/cedar/cedar
 tools/cedar-lambda/cedar
 .aws-sam/
-data/tickets/
-data/conversations/
-data/_backup_*/
-framework.txt
-data/
 lambda_pkg/
+data/
+.claude/
+framework.txt

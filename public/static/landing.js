@@ -280,7 +280,7 @@ tickStory();
     const h = await (await fetch("/api/health")).json();
     const c = h.components;
     set("runtime", h.runtime === "lambda", h.runtime === "lambda" ? "● this page was served by a Lambda" : "○ not running in Lambda");
-    set("ollama", c.ollama.ok, c.ollama.ok ? `● live · ${c.ollama.ms} ms · ${c.ollama.models.includes("qwen2.5-coder:7b") ? "qwen2.5-coder:7b" : c.ollama.models[0]}` : "○ offline: start ollama");
+    set("ollama", c.ollama.ok, c.ollama.ok ? `● live · ${c.ollama.ms} ms · ${c.ollama.models.includes("gemma2:9b") ? "gemma2:9b" : c.ollama.models[0]}` : "○ offline: start ollama");
     set("opensearch", c.opensearch.ok, c.opensearch.ok ? `● live · v${c.opensearch.version} · ${c.opensearch.documents} sections indexed` : "○ OpenSearch unreachable");
     set("cedar", c.cedar.ok, c.cedar.ok ? `● live · policies validated · ${c.cedar.policy_sha}` : "○ Cedar CLI missing");
     set("storage", c.dynamodb.ok, c.dynamodb.ok ? `● live · DynamoDB Local · table ${c.dynamodb.table}` : "○ DynamoDB unreachable");

@@ -5,9 +5,9 @@ this used to be defined three different ways in three different files
 .py's ALL_DOCS), found during a full audit and consolidated here so a
 third brand only ever needs to be added in one place.
 
-Layering: this lives in layer1 (no dependency on the agent) so both
-layer1 modules (opensearch_retrieval.py) and layer2 (agent.py) can
-import it without a cycle -- agent.py already depends on layer1, never
+Layering: this lives in domain/ (no dependency on the agent) so both
+domain modules (opensearch_retrieval.py) and the agent (agent/agent.py)
+can import it without a cycle -- the agent depends on domain, never
 the other way around.
 """
 

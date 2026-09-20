@@ -8,7 +8,7 @@
 # IMPLEMENTATION.md) -- this is the actual authorization engine.
 #
 # Fetches two binaries:
-#   tools/cedar/cedar         -- host-native, used by the Flask dev server
+#   tools/cedar/cedar         -- host-native, used by the tests and `cedar validate`
 #   tools/cedar-lambda/cedar  -- linux/aarch64, bundled into the SAM Local
 #                                 Lambda package so `cedar authorize` can
 #                                 actually run inside that container (a

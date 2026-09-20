@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from src.layer1.catalog import brand_for
+from src.domain.catalog import brand_for
 
 _ROOT = Path(os.environ.get("AFTERCARE_DATA_DIR", str(Path(__file__).resolve().parent.parent.parent / "data")))
 
