@@ -123,14 +123,14 @@ def test_each_model_call_gets_a_fresh_agent():
         def __init__(self, **kw): made.append(self); self.kw = kw
         def __call__(self, prompt): return "ok"
 
-    real = agent_mod.Agent
-    agent_mod.Agent = Spy
+    real = A.Agent
+    A.Agent = Spy
     try:
-        sa = agent_mod.StatelessAgent.__new__(agent_mod.StatelessAgent)
+        sa = A.StatelessAgent.__new__(A.StatelessAgent)
         sa._model, sa.model_ms = object(), []
         sa("one"); sa("two")
     finally:
-        agent_mod.Agent = real
+        A.Agent = real
     assert len(made) == 2 and made[0] is not made[1]
     assert made[0].kw["hooks"], "latency hook is attached"
 
