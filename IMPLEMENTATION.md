@@ -348,3 +348,8 @@ Plan and cut lines: `PLAN.md`. Access patterns: `docs/DYNAMODB_DESIGN.md`. Frict
 - **Product truth (F):** real CSV check (`POST /api/ingest`), safety negation ("no burning smell") biased toward escalating, model-output guard, "Under the hood" chapter with live chips, component tags in the demo trace.
 
 **Known gaps:** the sales-file check doesn't yet write the registry; `sam build` copies the whole repo into each function; recurrence still matches on manual section, not on the wording of the complaint; the shared latency sink in `StatelessAgent` is not safe under concurrent requests; Ship it (a real account) is out of scope.
+
+### 7.16 addendum: a regression, and the responsive story layout
+- **Regression (mine):** the cleanup that removed Step 0's old "What runs behind it" block used a lazy regex that also deleted the customer-story section header and the pinned phone column, so the landing showed only cards (the phone animation had vanished). Caught by the user, restored, and the story is now "Steps 1-6". Lesson: after any structural edit, check the rendered page (element counts, geometry) rather than trusting the diff; template edits by regex need a balance check.
+- **Layout:** phone on the left, cards on the right; two-column down to 700px; below that the phone is pinned compactly at the top and the cards scroll beneath it (phone and cards share one grid cell so `position: sticky` can travel the whole story; a sticky grid item is confined to its own grid area).
+- **Docs sweep:** FLOW, USER_GUIDE, TECHNICAL, DESIGN, README brought in line (real `/demo`, cookie sessions, `aftercare.cedar`, storage interface, six escalation codes).

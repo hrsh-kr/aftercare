@@ -7,7 +7,7 @@ The how. Read `DESIGN.md` first for the what and why.
 | Tool | Used for |
 |---|---|
 | **Strands Agents SDK** | Orchestrates the support agent (Layer 2) against a local model via Ollama |
-| **Cedar** | Authorizes brand dashboard access — each brand's staff can only ever see their own tickets, enforced by a real Cedar policy evaluation, not an `if` statement (`policies/dashboard.cedar`, `src/authz/cedar_authz.py`) |
+| **Cedar** | Authorizes brand dashboard access — each brand's staff can only ever see their own tickets, enforced by a real Cedar policy evaluation, not an `if` statement (`policies/aftercare.cedar` + schema, `src/authz/cedar_authz.py`; principal from a signed server-side session, `src/authz/session.py`) |
 | **AWS SAM Local** | Runs the core API as local Lambda functions behind an emulated API Gateway, proving the same logic is serverless-ready without deploying anywhere |
 | **OpenSearch** | Backs the manual/terms retrieval with real BM25 search instead of a naive keyword-overlap function, run as a local single-node container |
 
@@ -57,7 +57,7 @@ field-for-field; this is the short version:**
   (`data/conversations/`), not a per-message row. Holds the full turn
   history, the retrieved section, which retrieval method actually
   answered, and an optional final `Ticket`.
-- **Ticket** — one JSON file per ticket (`data/tickets/`), created
+- **Ticket** — one item per ticket behind `src/storage` (JSON under `data/tickets/` for the file store; a DynamoDB single-table item under SAM), created
   only on escalation, carrying `product_id` so a brand's dashboard can
   filter to its own tickets only.
 
@@ -95,37 +95,17 @@ GET  /api/customers?brand=<slug>            -> [ { phone, name }, ... ]   (brand
 POST /api/lookup        { phone, brand }    -> { found, customer_name, brand, brand_slug, products[] (with warranty status) }
 POST /api/start         { phone, product_id, complaint } -> { conversation_id, status, message, ticket_id? }   (400 without product_id)
 POST /api/respond       { conversation_id, reply } -> { status, message, ticket_id? }
-GET  /api/dashboard/{brand}   [X-Staff-Brand header] -> { tickets[], warranty_counts, product_feedback[], registered_count, registrations[] }
+GET  /api/dashboard/{brand}?q=   [session cookie] -> { tickets[], warranty_counts, product_feedback[], registered_count, registrations[] }
                               -- 403 if Cedar denies the staff_brand/brand pair, 503 if Cedar's unreachable
 ```
 
-Known weakness: the staff identity in `X-Staff-Brand` is asserted by the client
-(planned fix: server-signed session — `TARGET.md` A1). Planned: a Meta-shaped
-`/webhook/whatsapp` so the simulated channel enters through the same door a real
-WhatsApp number would (`TARGET.md` A3).
-
-Full request-by-request behavior in `FLOW.md` §2.
-
-## 6. Build order
-
-1. **Before anything else:** the de-risking test — feed the agent a real complaint against a real (authored-for-this-demo) product manual, check it grounds the suggestion correctly and escalates when it should. Test both retrieval approaches here.
-2. Layer 1: registration store + phone-number lookup + warranty math.
-3. Layer 2: the full agent loop, wired to the local model via Strands.
-4. A basic ticket view for the brand (the smallest complete, demoable story).
-5. The customer-facing chat UI, styled like the real conversation it stands in for.
-6. The brand dashboard's product-feedback aggregation, and UI polish generally — this build is also competing for Best UI, so this step is not optional if time allows.
-
-## 7. Real vs. mocked, honestly
-
-**Fully real:** the registration data (we author it, but it's structured and real once entered), the agent's retrieval-and-grounding logic, the escalation decision, the full conversation log.
-
-**Authored for the demo, not fetched from anywhere:** each product's manual, its brand's terms & conditions, and the sales records — realistic, not real, written for the two fully-onboarded brands in this demo, since there's no public API for any of these the way GitHub gave us commits.
+Also: `POST /api/login|logout`, `GET /api/me`, `POST /api/tickets/{id}/status` (managers, Cedar), `POST /api/ingest` (CSV check), `GET /api/health` (live probes), `POST /api/demo/reset`. `POST /api/start` accepts `Idempotency-Key` (Powertools + DynamoDB). Dashboard responses include `authz` (principal + deciding policies) and `insights` (OpenSearch aggregations). Planned, not built: a Meta-shaped `/webhook/whatsapp`.
 
 **Simulated, and said so in the video:** the WhatsApp channel itself — a styled web chat UI stands in for it. The logic behind it is real.
 
 ## 8. Demo script
 
-> *Note (2026-09-20):* this script assumes the demo runs the real agent. The routed `/demo` page is currently a scripted animation, so recording this script today would show illustrative data. Fix first (`TARGET.md` P0.1); revised 3-minute script in `TARGET.md` §6.
+> *Note:* `/demo` now runs the real agent, so this script can be recorded as written. The tighter 3-minute shot list is `docs/VIDEO_SCRIPT.md`.
 
 1. Open on the real, felt moment: re-explaining your product to support from scratch, every single time.
 2. **The before:** a real screenshot of a well-known appliance brand's actual support page — logo blacked out, since we're not naming them — showing the genuine broken or maze-like experience (a form that doesn't submit, a phone tree that goes nowhere). This is the contrast the whole pitch rests on, so it comes first, not last.

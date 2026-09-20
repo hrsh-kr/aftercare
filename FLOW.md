@@ -6,26 +6,15 @@ are the plan and the pitch context; this is what's actually running.
 Written during a full audit pass — see `IMPLEMENTATION.md`'s Phase 7.9
 entry for what that audit found and fixed.
 
-> **Status banner (2026-09-20).** §1, §3–§9 (agent loop, catalog, AWS stack,
-> data, real-vs-simulated, running it) match the code. **§2's customer-side
-> walkthrough describes the earlier two-pane `/` page and is partly stale**:
-> the UI has since been rebuilt. Current reality:
+> **Status (2026-09-20, after the AWS-depth pass).** Current routes and API:
 >
 > | Route | What it is |
 > |---|---|
-> | `/` | one-page story in five chapters: hero (phone) → problem → **Step 0** (upload CSV → auto-sorted into brands → WhatsApp line connected; rows/chips/counts are real fixture data) → customer story (pinned phone) → "Now see it run". No theme toggle. `/brand` and `/customer` were removed (archived). |
-> | `/demo` | **scripted animation, no API calls** (illustrative data) |
-> | `/dashboard`, `/dashboard/<brand>` | real, Cedar-gated |
-> | *(unrouted)* `index.html` + `chat.js` | the real-backend chat UI: brand router → scenario cards → product picker → mirrored panes |
+> | `/` | one-page story: hero -> problem -> **Step 0** (real CSV check via `POST /api/ingest`) -> customer story (pinned phone left, six step cards right; step 5 is the non-safety human handoff) -> **Under the hood** (live component status from `/api/health`) -> "Now see it run" |
+> | `/demo` | **real client of `/api/*`**: five fixture-tied scenarios, a trace of what Aftercare did (tagged by component), the ticket the brand receives. `?api=http://127.0.0.1:3000` runs the same page against SAM Local Lambdas |
+> | `/dashboard`, `/dashboard/<brand>` | staff sign-in (server-side signed cookie), Cedar-gated, insights from OpenSearch aggregations, ticket status controls |
 >
-> API changes since §2 was written: `GET /api/customers?brand=<slug>` filters to
-> one brand; `POST /api/lookup` takes `{phone, brand}` and returns only that
-> brand's products (with warranty status); **`POST /api/start` now requires
-> `product_id`** (400 without it — the old "first registration wins" behavior was
-> a silent wrong-product bug); `/api/dashboard/<brand>` also returns
-> `registrations[]` (used for QR codes). The dashboard's principal is still
-> asserted by the client (`X-Staff-Brand`) — see `CONTEXT.md` §5–6.
-> `CONTEXT.md` + `TARGET.md` carry the current picture and the plan.
+> API: `POST /api/lookup|start|respond` (start takes an optional `Idempotency-Key`); `POST /api/login|logout`, `GET /api/me`; `GET /api/dashboard/<brand>?q=` (cookie auth); `POST /api/tickets/<id>/status` (managers only, Cedar); `POST /api/ingest`; `GET /api/health`; `POST /api/demo/reset`. Responses carry a `meta` block (source, section, retrieval method, attempt, escalation code/label/detail, model timings, storage). Six escalation reason codes: safety, attempts_exhausted, no_more_steps, no_steps, unmatched, recurring. Storage is behind `src/storage` (file or DynamoDB single table). See `IMPLEMENTATION.md` Phases 7.15-7.16, `PLAN.md`, `docs/DYNAMODB_DESIGN.md`. **The customer-side walkthrough below still describes the retired two-pane page.**
 
 ---
 
@@ -95,23 +84,9 @@ shows on the customer's pane while the real Ollama call is in flight.
 
 ### Brand staff side (`/dashboard`, `/dashboard/<brand>`)
 
-1. **`/dashboard` →** a brand picker (`dashboard_login.html`). Picking
-   a brand writes `sessionStorage.staffBrand` and navigates to
-   `/dashboard/<brand>`. Same honesty pattern as the customer picker:
-   a real deployment already knows which brand's staff account is
-   logged in; this simulates that with a click.
-2. **`/dashboard/<brand>` →** renders the shell (`dashboard.html`),
-   then `dashboard.js` calls `GET /api/dashboard/<brand>` with an
-   `X-Staff-Brand` header set to whatever `sessionStorage` holds.
-3. **The backend asks Cedar**, not an `if`: is `Staff::"<staff_brand>"`
-   permitted `Action::"viewDashboard"` on `Brand::"<brand>"`? The
-   policy (`policies/dashboard.cedar`) is one line: permit when
-   `principal.brand == resource.brand`. If `staff_brand` and `brand`
-   disagree — e.g. someone edits the URL from `/dashboard/arcticair`
-   to `/dashboard/aquaspin` without logging in as AquaSpin — Cedar
-   denies it, a real 403, and the page shows an actual "Access denied"
-   panel, not a redesigned-away edge case. (`api_core.dashboard_data()`,
-   `src/authz/cedar_authz.py`)
+1. **`/dashboard` ->** a staff sign-in (`dashboard_login.html`): choose an account, enter its passcode. `POST /api/login` checks a PBKDF2 hash (`fixtures/staff.json`) and sets a signed, expiring, HttpOnly cookie (`src/authz/session.py`). The old `sessionStorage` / `X-Staff-Brand` mechanism, where the browser asserted its own identity, is gone.
+2. **`/dashboard/<brand>` ->** renders the shell, then `dashboard.js` calls `GET /api/dashboard/<brand>`; identity is the cookie.
+3. **The backend asks Cedar**: may `Staff::"<username>"` (attrs brand and role, taken from the cookie) do `Action::"viewDashboard"` on `Brand::"<brand>"`? Policies are in `policies/aftercare.cedar` (each has an `@id`), checked against `policies/aftercare.cedarschema`: same-brand permits, managers-only `updateTicketStatus`, `viewPhoneUnmasked` for safety tickets only, and a `forbid` across brands. A denial is a real 403 that names the deciding policy. (`api_core.dashboard_data()`, `src/authz/cedar_authz.py`)
 4. **On success**, registrations and tickets are filtered to that one
    brand (by `product_id` prefix) and returned: stat counts, the open
    ticket list, and a product-feedback bar chart.
@@ -194,14 +169,11 @@ Orchestrates a local `qwen2.5-coder:7b` model via Ollama
 (`http://localhost:11434`, overridable with `OLLAMA_HOST`). Two calls
 per conversation turn: phrase-a-step, classify-the-reply.
 
-**Cedar** — `policies/dashboard.cedar` (the policy) +
-`src/authz/cedar_authz.py` (the evaluator). Shells out to the real
-Cedar CLI binary (`tools/cedar/cedar`, fetched by
-`scripts/install_cedar_cli.sh` — **not** the `cedar-policy` PyPI
-package, which is an empty 0.0.1 placeholder with no actual bindings,
-confirmed by importing it and finding nothing there). Decides ALLOW by
-the CLI's exit code (0 = allow), fails closed — `CedarUnavailable` if
-the binary is missing or the call errors, never a silent grant.
+**Cedar** — `policies/aftercare.cedar` + `aftercare.cedarschema` (policies, schema) and
+`src/authz/cedar_authz.py` (the evaluator). Shells out to the real Cedar CLI
+(`tools/cedar/cedar`, from `scripts/install_cedar_cli.sh`; the `cedar-policy` PyPI
+package is an empty placeholder). Exit code 0 = allow, 2 = deny, anything else = error =
+deny; `--verbose` yields the deciding policy ids, shown in the UI.
 
 **AWS SAM Local** — `template.yaml` + `src/lambda_handlers.py`. Wraps
 `src/webapp/api_core.py` (the same logic Flask calls) as real Lambda

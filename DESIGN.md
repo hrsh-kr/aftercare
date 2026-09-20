@@ -70,7 +70,7 @@ A chat interface, styled like the WhatsApp conversation it's standing in for (se
 
 ## 6. Layer 3b — Brand view
 
-Aftercare is a service provider, not a single company — each brand gets its own dashboard, and one brand's staff can never see another's. That boundary is enforced by a real Cedar policy evaluation (`policies/dashboard.cedar`), not an `if` in a route handler — a brand's dashboard request is a genuine authorization decision, principal (which brand's staff is logged in, simulated with a picker) against resource (which brand's data is being asked for).
+Aftercare is a service provider, not a single company — each brand gets its own dashboard, and one brand's staff can never see another's. That boundary is enforced by a real Cedar policy evaluation (`policies/aftercare.cedar`), not an `if` in a route handler — a brand's dashboard request is a genuine authorization decision, principal (which staff member the server says is signed in, from a signed session cookie) against resource (which brand's data is being asked for).
 
 **Ticket dashboard.** Every escalated complaint for *that brand only*: product, customer, full history, what the agent already tried, current status.
 

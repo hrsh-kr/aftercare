@@ -58,7 +58,7 @@ One commit per phase minimum, imperative and specific ("Recurrence as an OpenSea
 Add likes as they come (Strands hooks, SAM `template.yaml` as a real deploy artifact, Cedar's readable policies, etc.).
 
 ## 6. Deliverables checklist (from submission.txt)
-- [ ] Repo public, README (problem, architecture diagram, run steps for Flask and SAM, honest stack table)
+- [x] (README done; repo still to be made public by the user) Repo public, README (problem, architecture diagram, run steps for Flask and SAM, honest stack table)
 - [ ] Video ≤3:00: 0:00 problem (20s) · 0:20 landing story incl. human handoff (35s) · 0:55 live demo, 2 scenarios + recurring (60s) · 1:55 architecture + AWS: OpenSearch, Cedar deny, SAM (45s) · 2:40 learning + Ship-it path (20s)
 - [ ] "What does your project do", "How did you use AWS" (Build it / Ship it), contributions, likes, dislikes: drafted from this file, docs and the log
 - [ ] Project title, track (submit to both; only one can win), deployed link left blank
@@ -70,3 +70,7 @@ Must (A, B, C, D, G, H). Then F visuals items 1–3. E only as structured output
 
 ## 8. Risks
 Docker instability (SAM and OpenSearch), qwen tool-calling, DynamoDB Local + SAM networking (`host.docker.internal`), time. Each has a fallback in its phase.
+
+## 9. Status log (updated as work lands)
+- 2026-09-20: phases A-F done and committed; G (tests + README + docs sweep) done; H drafted (`docs/VIDEO_SCRIPT.md`, `SUBMISSION_ANSWERS.md`). Story-layout regression fixed.
+- Open: video recording, user's details on the form, revoke the leaked GitHub token, make repo public, decide on tracked `archive/groundtruth/`.

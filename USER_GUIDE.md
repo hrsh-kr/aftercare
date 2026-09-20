@@ -4,12 +4,7 @@ How to install it, run it, and click through it. For how it works inside, see
 `FLOW.md`; for where the project stands and what's next, see `CONTEXT.md` and
 `TARGET.md`.
 
-> **Read this first — what is real and what isn't (2026-09-20).**
-> The **agent, retrieval, Cedar authorization, tickets and dashboards are real.**
-> The **`/demo` page is currently a scripted animation with illustrative data** — it
-> does not call the agent. To talk to the *real* agent today, use the API directly
-> (§5) or the dashboard's real data (§4). Rewiring `/demo` to the real backend is the
-> first item in `TARGET.md`. WhatsApp itself is simulated everywhere.
+> **What is real (2026-09-20).** The agent, manual search (OpenSearch), Cedar, tickets, storage and dashboards are real, and **`/demo` runs the real agent** (Ollama must be running). WhatsApp itself is simulated. Dashboard sign-ins: `meera.nair` / `aqua-manager`, `dev.patel` / `aqua-agent` (AquaSpin); `sara.thomas` / `arctic-manager`, `ben.dsouza` / `arctic-agent` (ArcticAir). Managers can change ticket status; agents are refused by Cedar. To run the same page on Lambda: `bash scripts/start_dynamodb.sh`, `sam build --use-container && sam local start-api --warm-containers LAZY`, then open `/demo?api=http://127.0.0.1:3000`.
 
 ---
 
@@ -43,8 +38,8 @@ ollama serve                          # skip if already running: curl -s localho
 
 | URL | What you'll see | Real? |
 |---|---|---|
-| `/` | the whole story in one scroll: problem → **Step 0** (a brand or store uploads a sales CSV → it's sorted into the right brand → the WhatsApp line is connected; rows and counts come from `fixtures/sales_data.csv`) → the customer's five steps (a pinned phone that stays level with each step) → "Live demo" | data-driven (Step 0) + illustrative story |
-| `/demo` | phone + brand inbox + analytics, pre-written scenarios | **scripted** |
+| `/` | the whole story in one scroll: problem → **Step 0** (a brand or store uploads a sales CSV → it's sorted into the right brand → the WhatsApp line is connected; rows and counts come from `fixtures/sales_data.csv`) → the customer's six steps (a pinned phone, left, level with each card, right; step 5 is the human handoff), then **Under the hood** with live status chips → "Live demo" | data-driven (Step 0) + illustrative story |
+| `/demo` | five scenarios you play as the customer, a trace of what Aftercare did, the ticket the brand receives | **real agent** |
 | `/dashboard` | pick which brand's staff you are (simulated login) | real Cedar underneath |
 | `/dashboard/aquaspin`, `/dashboard/arcticair` | that brand's tickets, registered products + QR codes, warranty ring | **real data** |
 
@@ -89,7 +84,7 @@ full thread.
 ## 6. Reset to a clean state (e.g. before recording)
 
 ```bash
-rm -f data/tickets/*.json data/conversations/*.json
+curl -X POST localhost:5001/api/demo/reset   # or the 'Reset demo data' link on /demo
 ```
 Generated files only; fixtures are untouched.
 
