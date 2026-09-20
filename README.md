@@ -1,61 +1,82 @@
 # Aftercare
 
-The support line that already knows what you bought. A product is registered once, quietly, at the point of sale — no app, no form. When a customer messages about a problem, months or years later, the conversation already knows their product, its warranty status, and history. It reads their complaint, grounds a real fix in that exact product's manual, and only escalates to the brand's team when it genuinely can't help — never a guess.
+**The support line that already knows what you bought.**
 
-Built for **First Commit** (WeMakeDevs × AWS, Bharat Builds Tour). **Build It track** (open-source AWS stack, no account/card/bill), also competing for **Best UI**.
+Aftercare is after-sales support over WhatsApp for brands that sell physical products. A sale is registered once, at the point of sale. Months later, when something breaks, the customer sends one message. The agent already knows who they are, which product, and its warranty status. It gives one real step from *that product's own manual*, follows up on the reply, and hands over to a person, with everything already attached, when it should.
 
----
+Built for **First Commit** (WeMakeDevs × AWS): **Build It** track (open-source AWS stack, no account, no card, no bill), also entered for **Best UI**.
 
-## Status (2026-09-20)
+## The problem
 
-Backend is built and verified: the agent loop, warranty math, OpenSearch retrieval with fallback, Cedar-gated per-brand dashboards, and a SAM Local Lambda adapter.
+Warranty and service is where a brand's promise gets tested, and it is still a phone tree, a hunt for a model number, and explaining the same thing three times to a company that already holds your purchase record. Brands pay for that in call-centre cost and in customers who don't come back. India's WhatsApp-first buyers are the obvious place to fix it.
 
-**The story is one page now:** the landing (`/`) runs hero → problem → **Step 0** (a brand *or a store* uploads its sales CSV → Aftercare sorts it into brands → connects the WhatsApp line, on the open-source AWS stack) → the customer's side in five steps → **Live demo** (`/demo`), which hands off to the brand dashboard. The old separate brand and customer pages are archived in `archive/business-pages/`.
+## What it does
 
-**Known gap, stated plainly:** the routed `/demo` page is currently a *scripted animation* with illustrative data — it does not call the real agent. The real-backend chat UI exists but is not routed. Making the demo real is Phase C in `TARGET.md` (order: A flow ✅ → B visuals/implementation → C technical + inconsistencies).
+1. **Onboarding:** a brand, or a store selling many brands, uploads its sales CSV. Aftercare files every sale under the brand that owns the product code and reports what it can't place (unknown codes, bad dates, duplicate serials) instead of guessing.
+2. **The customer's message:** identified by phone number, product picked if they own several, warranty read from the record.
+3. **One real step, from the manual.** A second one if needed. Fixed means no ticket.
+4. **A person takes over, and says why.** Six reasons, each decided by code, not by the model: a safety issue, two steps tried and still broken, the manual has nothing more, the problem is not in the manual, the same problem is back within 90 days, or a question that needs a human.
+5. **The brand's dashboard:** its own tickets, private to it, with *why customers reach a person* (OpenSearch aggregations) and which manual sections send them there.
 
-**New session? Read `CONTEXT.md` first, then `TARGET.md`.**
+**The principle behind all of it: deterministic before model.** A 7B local model phrases a step well and judges a safety call badly. So every decision that matters is a rule, a query or a policy. The model only words the step and reads the reply.
 
-## The docs
+## How the AWS open-source stack is used
 
-| Doc | Answers |
-|---|---|
-| [`CONTEXT.md`](CONTEXT.md) | **Start here.** Who/what/why, hackathon rules, current state, audit findings, working agreements |
-| [`TARGET.md`](TARGET.md) | **What to do next** — prioritized plan to be shortlisted (Build It + Best UI), with simplify/add/subtract notes |
-| [`PITCH.md`](PITCH.md) | Why does this matter, why now |
-| [`DESIGN.md`](DESIGN.md) | What we're building, and what we're not |
-| [`TECHNICAL.md`](TECHNICAL.md) | How it's built, in AWS terms |
-| [`FLOW.md`](FLOW.md) | How the backend actually works — request-by-request, file-by-file |
-| [`USER_GUIDE.md`](USER_GUIDE.md) | Install, run, and click through it yourself |
-| [`SKILL.md`](SKILL.md) | How we design, write, and code |
-| [`IMPLEMENTATION.md`](IMPLEMENTATION.md) | Phase-by-phase record and decisions |
-| `source/aftercare/` | The original product spec — reference only |
-| `archive/groundtruth/` | Our first, abandoned hackathon idea — not maintained |
+| Tool | What it does here | Where |
+|---|---|---|
+| **Strands Agents** | Words one manual step and classifies the reply, on a local Ollama model. A fresh agent per call (a shared one leaked context between customers); `HookProvider` times every model call for the demo's trace. | `src/layer2/agent.py` |
+| **OpenSearch** | Manual retrieval (BM25, English analyzer); recurrence as a serial + `now-90d` range query; brand insights as `terms` aggregations; ticket text search. Falls back honestly and says which engine answered. | `src/layer1/opensearch_retrieval.py`, `src/layer3b/case_index.py` |
+| **Cedar** | Schema-checked policies (`cedar validate` in tests) for `viewDashboard`, `viewTicket`, `updateTicketStatus` (managers only), `viewPhoneUnmasked` (safety tickets only) and a `forbid` across brands. The principal comes from a signed server-side session, and every decision names the policy that made it. | `policies/`, `src/authz/` |
+| **SAM CLI (SAM Local)** | The same handlers run as Lambdas behind API Gateway. `template.yaml` declares the functions and both tables. All five demo scenarios pass through it. | `template.yaml`, `src/lambda_handlers.py` |
+| **DynamoDB Local** | Single-table design with an overloaded GSI and an atomic ticket counter. Not in the Build It table; it is AWS's own downloadable emulator, so we say so. | `src/storage/`, `docs/DYNAMODB_DESIGN.md` |
+| **Lambda Powertools** | Structured JSON logs (never a phone number or complaint text), CloudWatch EMF metrics, `Idempotency-Key` on `POST /api/start`. | `src/webapp/observability.py`, `src/webapp/idempotency.py` |
 
-## In one sentence
+**Ship it:** not used. There is no AWS account behind this, and nothing here is deployed. `template.yaml` is written to deploy with `sam deploy`. Where each piece goes in production: Ollama → Bedrock, OpenSearch container → OpenSearch Serverless, Cedar CLI → Amazon Verified Permissions, DynamoDB Local → DynamoDB, SAM Local → API Gateway + Lambda, Powertools → CloudWatch.
 
-One engine registers products and looks them up by phone number. One agent reads a complaint, grounds a real fix in that product's actual manual, and escalates honestly when it can't help. Aftercare is the shared backend; each brand (ArcticAir, AquaSpin) gets its own WhatsApp line and its own Cedar-authorized dashboard, never seeing the other's data.
+**Real vs simulated.** Real: the agent, manual search, escalation rules, tickets, Cedar policies, DynamoDB, Lambda handlers. Simulated: WhatsApp itself, the QR sticker, the customer's typing. The sales-file check is real but a preview; the registry is still `fixtures/sales_data.csv`.
 
-## Stack
+## Architecture
 
-| Tool | Role |
-|---|---|
-| Strands Agents SDK + Ollama | the support agent (local model) |
-| Cedar | per-brand dashboard authorization (real CLI, fail-closed) |
-| AWS SAM Local | the same core API as real Lambda functions |
-| OpenSearch | BM25 retrieval over manuals/terms (falls back to keyword overlap if down) |
+```
+Browser ─▶ Flask dev server ─┐          (same handlers, either way)
+        └▶ API Gateway ─▶ Lambda (SAM Local) ─┘
+                              │   Powertools: logs, EMF, idempotency
+                          api_core  (pure logic)
+      ┌───────────────┬───────┴───────┬─────────────────┐
+  Strands Agent    OpenSearch        Cedar           Storage
+  Ollama qwen2.5   manual, cases,    schema + 5      file  | DynamoDB
+  hooks: latency   tickets, aggs     policies        (one interface)
+```
 
-No AWS account, no card, no bill. PartyRock is not used (needs a personal sign-in). Exact wiring in `FLOW.md` §5, honest caveats in `CONTEXT.md` §5.
+Agent loop: safety keywords (with negation) → coverage vs troubleshooting → retrieve one section from that product's manual → **regex-parse the numbered steps** → gate: *not in the manual?* → gate: *seen this before?* → model words step 1 → customer replies → model reads the reply → step 2 or hand over. Two tries, then a person.
 
-## Quick start
+## Run it
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-ollama pull qwen2.5-coder:7b
-./scripts/install_cedar_cli.sh
-./scripts/start_opensearch.sh          # optional (needs Docker)
-ollama serve &                         # if not already running
-.venv/bin/python src/webapp/app.py     # http://localhost:5001
+bash scripts/install_cedar_cli.sh       # the real Cedar CLI (the PyPI package is an empty placeholder)
+ollama pull qwen2.5-coder:7b && ollama serve   # local model
+bash scripts/start_opensearch.sh        # optional: without it, a keyword fallback answers, and says so
+.venv/bin/python src/webapp/app.py      # http://localhost:5001  (landing, /demo, /dashboard)
 ```
 
-Full walkthrough: `USER_GUIDE.md`.
+Dashboard sign-ins (demo passcodes, also shown on the login page): `meera.nair` / `aqua-manager`, `dev.patel` / `aqua-agent` (AquaSpin), `sara.thomas` / `arctic-manager`, `ben.dsouza` / `arctic-agent` (ArcticAir). Managers can change ticket status; agents are refused by Cedar. Use "Try ArcticAir's dashboard" while signed in as AquaSpin staff to see the cross-brand refusal.
+
+**Run the same thing as Lambdas** (Docker required):
+
+```bash
+bash scripts/start_dynamodb.sh
+sam build --use-container && sam local start-api --warm-containers LAZY   # http://127.0.0.1:3000
+# open http://localhost:5001/demo?api=http://127.0.0.1:3000 : the same page, served by Lambda + DynamoDB Local
+.venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000           # five scenarios, five endings
+```
+
+**Tests:** `tests/run_all.sh` (escalation logic with a stub model, Cedar matrix + `cedar validate`, CSV ingest, OpenSearch cases, one contract run against both storage backends; OpenSearch and DynamoDB tests skip themselves if those aren't running).
+
+## What we learned, honestly
+
+See [`docs/AWS_FEEDBACK_LOG.md`](docs/AWS_FEEDBACK_LOG.md): a shared Strands `Agent` silently remembers every prompt (cross-customer context bleed); Strands' structured output needs a tool-calling model and fails on a local 7B; an OpenSearch filter keyed on an absolute path made every Lambda query silently fall back; Powertools idempotency ignores a changed body unless told to validate it.
+
+## Docs
+
+[`DESIGN.md`](DESIGN.md) what we build and don't · [`TECHNICAL.md`](TECHNICAL.md) how, in AWS terms · [`FLOW.md`](FLOW.md) request by request · [`docs/DYNAMODB_DESIGN.md`](docs/DYNAMODB_DESIGN.md) access patterns and keys · [`IMPLEMENTATION.md`](IMPLEMENTATION.md) the build log · [`USER_GUIDE.md`](USER_GUIDE.md) click-through · [`PITCH.md`](PITCH.md) why it matters.

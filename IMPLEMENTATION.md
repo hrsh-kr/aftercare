@@ -333,3 +333,18 @@ A read-through of the folder as it stands on disk, done so a fresh session can p
 **Tests.** `tests/test_escalation.py` (8, stub model, no Ollama): `.venv/bin/python -m tests.test_escalation`. All five demo scenarios also run end to end against qwen2.5-coder:7b.
 
 **Known gaps.** Coverage questions with no numbered steps still escalate as `no_steps`. FL-900 has no manual of its own (it reuses the FC manual). `lambda_handlers.py` gets the new fields through `api_core` but has no reset route. Recurrence matches on heading, so a different complaint that lands on the same section counts as the same problem.
+
+## Phase 7.16 — AWS depth: OpenSearch cases, Cedar sessions, DynamoDB, Powertools, SAM proof (done, 2026-09-20)
+
+Plan and cut lines: `PLAN.md`. Access patterns: `docs/DYNAMODB_DESIGN.md`. Frictions and likes: `docs/AWS_FEEDBACK_LOG.md`.
+
+- **Health (A):** `GET /api/health` probes Ollama, OpenSearch and Cedar (`cedar validate`) on every call; also a Lambda.
+- **OpenSearch (B):** two more indices. Recurrence is a filter on serial + source + `range now-90d`. Insights are `terms` aggregations (outcome, reason, section). Ticket text search. Fallbacks answer from the storage backend and report the engine. Bug found later, only under Lambda: index documents were keyed by absolute path, so nothing matched in the container; keyed by file name now (`aftercare-sections-v3`).
+- **Cedar (C):** the old header-asserted principal is gone. Staff sign in (`fixtures/staff.json`, PBKDF2), the server issues a signed HttpOnly cookie, the principal is built from it. Schema + five `@id`-tagged policies; actions `viewDashboard`, `viewTicket`, `updateTicketStatus` (managers), `viewPhoneUnmasked` (safety tickets), `forbid` across brands. Decisions name the policy. Dashboard: ticket status buttons (agents refused live), masked phones, cross-brand try-link.
+- **Storage (D):** `src/storage` interface with a file store and a DynamoDB single-table store; atomic ticket counter replaces `len(files)+1`. `tests/test_store_contract.py` runs the same assertions on both.
+- **Powertools (D):** Logger (no phones/complaint text), EMF metrics, `Idempotency-Key` on `POST /api/start` (retry returns the same conversation; a changed body gets 422).
+- **SAM (D):** template declares both tables, CORS, auth/ingest/health/reset Lambdas. All five scenarios pass through `sam local` on DynamoDB Local with OpenSearch retrieval (`scripts/run_scenarios.py`). `/demo?api=http://127.0.0.1:3000` runs the same page against it.
+- **Strands (E):** found and fixed cross-customer context bleed (a shared Agent replays every prompt). `StatelessAgent` + latency `HookProvider`. `structured_output` tried and rejected on the 7B model.
+- **Product truth (F):** real CSV check (`POST /api/ingest`), safety negation ("no burning smell") biased toward escalating, model-output guard, "Under the hood" chapter with live chips, component tags in the demo trace.
+
+**Known gaps:** the sales-file check doesn't yet write the registry; `sam build` copies the whole repo into each function; recurrence still matches on manual section, not on the wording of the complaint; the shared latency sink in `StatelessAgent` is not safe under concurrent requests; Ship it (a real account) is out of scope.
