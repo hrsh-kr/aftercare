@@ -48,8 +48,10 @@ function select(id) {
 function ready() {
   const nextStep = cur.steps[idx];
   const input = $("pb-input"), send = $("pb-send");
-  send.classList.toggle("glow", idx === 0); input.classList.toggle("glow", idx === 0);
-  if (!nextStep) { input.value = ""; input.placeholder = "End of this run. Pick another person, or restart."; send.disabled = true; input.disabled = true; send.classList.remove("glow"); input.classList.remove("glow"); return; }
+  const cue = !!nextStep && !busy;                     // the glow and rings say "press Send" whenever a next message is waiting
+  send.classList.toggle("glow", cue); input.classList.toggle("glow", cue);
+  $("pb-over").hidden = !!nextStep || thread.length === 0 || idx === 0;
+  if (!nextStep) { input.value = ""; input.placeholder = "Example run over"; send.disabled = true; input.disabled = true; return; }
   input.disabled = false; send.disabled = busy;
   if (nextStep.who === "customer") { input.value = nextStep.text; send.textContent = "Send"; input.placeholder = "Message"; }
   else { input.value = ""; input.placeholder = nextStep.who === "staff" ? `${nextStep.actor}: replies from the brand's inbox` : `${nextStep.actor}: ${nextStep.action}`; send.textContent = nextStep.who === "staff" ? "Play reply" : "Play action"; }
@@ -74,7 +76,7 @@ function render(typing) {
 
 async function step() {
   const s = cur.steps[idx]; if (!s || busy) return;
-  const my = run; busy = true; $("pb-send").disabled = true; $("pb-send").classList.remove("glow"); $("pb-input").classList.remove("glow");
+  const my = run; busy = true; $("pb-send").disabled = true; $("pb-send").classList.remove("glow"); $("pb-input").classList.remove("glow"); $("pb-over").hidden = true;
   if (s.who === "customer") {
     if (s.button) { const b = [...thread].reverse().find((m) => m.kind === "buttons"); if (b) b.chosen = s.text; }
     thread.push({ sender: "customer", kind: "text", text: s.text }); render(true);

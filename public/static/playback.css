@@ -1,7 +1,7 @@
 /* playback.css — the recorded-run player (static site). Reuses sandbox.css for the phone, bubbles and trace. */
 .pb-banner{max-width:1360px;margin:0 auto 18px;padding:12px 20px;border-radius:16px;background:rgba(90,160,255,.12);border:1px solid rgba(90,160,255,.35);color:#bcd8ff;font-size:14.5px;line-height:1.5;}
 .pb-banner a{color:#8ec0ff;}
-.pb-people{display:flex;flex-direction:column;gap:10px;}
+.pb-people{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow-y:auto;padding-right:6px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3a3a3d transparent;}
 .pb-person{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;background:var(--card);border:1.5px solid transparent;border-radius:18px;padding:14px 16px;transition:background .2s ease,border-color .2s ease;}
 .pb-person:hover{background:#232326;}
 .pb-person.on{border-color:#5aa0ff;background:#232326;}
@@ -30,8 +30,16 @@
 /* the recorded dashboard, framed */
 .pb-dash{padding-top:18px;}
 .pb-dash-tabs{margin-bottom:14px;}
-.pb-frame{display:block;width:100%;height:820px;border:1px solid var(--line-dark);border-radius:22px;background:#f5f5f7;}
+.pb-frame{display:block;width:100%;max-width:920px;height:560px;border:1px solid var(--line-dark);border-radius:22px;background:#f5f5f7;}
 .pb-run{padding-bottom:20px;}
 .pb-run pre{background:#111;border:1px solid var(--line-dark);border-radius:14px;padding:16px 18px;overflow-x:auto;font:13.5px/1.6 ui-monospace,Menlo,monospace;color:#e8e8ed;margin:12px 0 16px;}
 .pb-run code{font-family:ui-monospace,Menlo,monospace;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;font-size:13.5px;}
-@media(max-width:760px){.pb-frame{height:720px;}}
+@media(max-width:760px){.pb-frame{height:520px;}.pb-people{max-height:420px;}}
+
+/* the "press this" cue: a pulsing glow on the box, and concentric rings radiating from the Send button */
+.pb-next button{position:relative;}
+.pb-next button.glow::before,.pb-next button.glow::after{content:"";position:absolute;inset:0;border-radius:999px;border:2px solid rgba(10,124,255,.75);pointer-events:none;animation:pb-ring 2s ease-out infinite;}
+.pb-next button.glow::after{animation-delay:1s;}
+@keyframes pb-ring{0%{transform:scale(1);opacity:.85;}100%{transform:scale(1.55,1.9);opacity:0;}}
+.pb-over{margin:2px 4px;padding:9px 14px;border-radius:14px;background:rgba(52,199,89,.14);color:#6fe08c;font-size:13.5px;font-weight:600;}
+@media(prefers-reduced-motion:reduce){.pb-next button.glow::before,.pb-next button.glow::after{animation:none;opacity:.6;transform:scale(1.15,1.3);}}

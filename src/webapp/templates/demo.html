@@ -30,29 +30,17 @@
 
   <div class="pb-banner">This is a <b>recording</b> made on <b id="pb-when">…</b> from the running stack (<span id="pb-model">…</span> on Ollama, OpenSearch, DynamoDB Local, Cedar, one Lambda on SAM Local). The customers, orders and manuals are fabricated; only WhatsApp's network is simulated. <a href="#run">Run the real thing yourself</a> to try any message you like.</div>
 
-  <!-- 1 · the brand's dashboard -->
-  <section class="sb-wrap pb-dash" aria-labelledby="h-dash">
-    <p class="sb-step">1</p>
-    <h2 class="sb-h2" id="h-dash">What the brand sees</h2>
-    <p class="sb-p">The dashboard after those conversations: every complaint with a red / yellow / green status, the chat behind it and a reply box, the registered products, and an AI analytics bar at the bottom. Cedar decides who may do what: the second tab is a real refusal, when AquaSpin's manager tries to open ArcticAir's dashboard.</p>
-    <div class="sb-tabs pb-dash-tabs" role="tablist">
-      <button class="sb-tab on" data-src="/dashboard-snapshot-aquaspin.html" role="tab">AquaSpin dashboard</button>
-      <button class="sb-tab" data-src="/dashboard-snapshot-arcticair.html" role="tab">Try ArcticAir's (refused)</button>
-    </div>
-    <iframe class="pb-frame" id="pb-frame" src="/dashboard-snapshot-aquaspin.html" title="Recorded brand dashboard" loading="lazy"></iframe>
-  </section>
-
   <!-- 2 · the conversations -->
   <main class="sb-wrap sb-grid" id="try">
     <section class="sb-col" aria-labelledby="h-who">
-      <p class="sb-step">2</p>
+      <p class="sb-step">1</p>
       <h2 class="sb-h2" id="h-who">Try a customer</h2>
       <p class="sb-p">Fabricated customers from a fabricated order file, each one a different ending.</p>
-      <div class="pb-people" id="pb-people"></div>
+      <div class="pb-people" id="pb-people" tabindex="0" aria-label="Customers (scrolls on its own)"></div>
     </section>
 
     <section class="sb-col sb-col-phone" aria-labelledby="h-phone">
-      <p class="sb-step">3</p>
+      <p class="sb-step">2</p>
       <h2 class="sb-h2" id="h-phone">Their WhatsApp</h2>
       <div class="l-phone-frame sb-phone">
         <div class="l-ph-header">
@@ -64,19 +52,32 @@
       </div>
       <div class="pb-controls">
         <div class="pb-next"><input id="pb-input" type="text" readonly aria-label="Next message"><button id="pb-send" type="button">Send</button></div>
+        <p class="pb-over" id="pb-over" role="status" hidden>Example run over. Pick another customer, or restart this one.</p>
         <div class="pb-tools"><label><input type="checkbox" id="pb-auto"> Autoplay</label><button class="sb-textbtn" id="pb-restart" type="button">Restart this customer</button></div>
       </div>
     </section>
 
     <section class="sb-col" aria-labelledby="h-brand">
-      <p class="sb-step">4</p>
+      <p class="sb-step">3</p>
       <h2 class="sb-h2" id="h-brand">What Aftercare did</h2>
       <ol class="d-trace" id="pb-trace"></ol>
       <div class="pb-inbox-card" id="pb-inbox" hidden></div>
     </section>
   </main>
 
-  <!-- 3 · run it yourself -->
+  <!-- 4 · the brand's dashboard -->
+  <section class="sb-wrap pb-dash" aria-labelledby="h-dash">
+    <p class="sb-step">4</p>
+    <h2 class="sb-h2" id="h-dash">What the brand sees</h2>
+    <p class="sb-p">The dashboard after conversations like these: every complaint with a red / yellow / green status, the chat behind it and a reply box, the registered products, and an AI analytics bar at the bottom. Cedar decides who may do what: the second tab is a real refusal, when AquaSpin's manager tries to open ArcticAir's dashboard.</p>
+    <div class="sb-tabs pb-dash-tabs" role="tablist">
+      <button class="sb-tab on" data-src="/dashboard-snapshot-aquaspin.html" role="tab">AquaSpin dashboard</button>
+      <button class="sb-tab" data-src="/dashboard-snapshot-arcticair.html" role="tab">Try ArcticAir's (refused)</button>
+    </div>
+    <iframe class="pb-frame" id="pb-frame" src="/dashboard-snapshot-aquaspin.html" title="Recorded brand dashboard" loading="lazy"></iframe>
+  </section>
+
+  <!-- 5 · run it yourself -->
   <section class="sb-wrap pb-run" id="run" aria-labelledby="h-run">
     <h2 class="sb-h2" id="h-run">Run it yourself, and say anything</h2>
     <p class="sb-p">The recording can only replay what was recorded. The real thing is one Lambda behind API Gateway on SAM Local, with OpenSearch, DynamoDB Local, Cedar and a local model, so it runs on your machine: load an order file, message as any customer and type whatever you like.</p>
