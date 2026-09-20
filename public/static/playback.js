@@ -27,6 +27,11 @@ function init() {
     b.addEventListener("click", () => select(p.id));
     box.appendChild(b);
   });
+  const list = box, hint = $("pb-scrollhint");
+  const syncHint = () => { hint.hidden = list.scrollTop + list.clientHeight >= list.scrollHeight - 12; };
+  list.addEventListener("scroll", syncHint, { passive: true }); window.addEventListener("resize", syncHint);
+  hint.addEventListener("click", () => list.scrollBy({ top: list.clientHeight * 0.8, behavior: REDUCED ? "auto" : "smooth" }));
+  syncHint();
   $("pb-send").addEventListener("click", step);
   $("pb-restart").addEventListener("click", () => select(cur.id));
   select(rec.personas[0].id);
@@ -51,6 +56,8 @@ function ready() {
   const cue = !!nextStep && !busy;                     // the glow and rings say "press Send" whenever a next message is waiting
   send.classList.toggle("glow", cue); input.classList.toggle("glow", cue);
   $("pb-over").hidden = !!nextStep || thread.length === 0 || idx === 0;
+  const typed = $("pb-typed"); typed.hidden = !cue;
+  if (cue) typed.querySelector("b").textContent = nextStep.who === "customer" ? "Just press Send" : "Just press Play";
   if (!nextStep) { input.value = ""; input.placeholder = "Example run over"; send.disabled = true; input.disabled = true; return; }
   input.disabled = false; send.disabled = busy;
   if (nextStep.who === "customer") { input.value = nextStep.text; send.textContent = "Send"; input.placeholder = "Message"; }
