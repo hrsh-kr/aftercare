@@ -19,7 +19,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src import pages  # noqa: E402  (renders the real templates; needs no running services)
+from src import (
+    pages,
+)
 
 PUBLIC = ROOT / "public"
 SHIM = '<script src="/static/replay-shim.js"></script>\n  '
@@ -37,7 +39,7 @@ def landing() -> str:
 def snapshot(brand: str) -> str:
     """The dashboard UI over recorded data: no sign-in, no navigation out of the frame, a one-line note."""
     h = pages.dashboard(brand)
-    h = re.sub(r'\s*<nav class="db-nav".*?</nav>', "", h, flags=re.S)
+    h = re.sub(r'\s*<nav class="db-nav".*?</nav>', "", h, flags=re.DOTALL)
     h = h.replace('<script src="/static/dashboard.js"></script>', SHIM + '<script src="/static/dashboard.js"></script>')
     note = f'{NOTE_CSS}<div class="static-note">Recorded snapshot: read-only. Every value was captured from the running dashboard.</div>'
     return h.replace('<body class="db">', '<body class="db">\n' + note, 1)

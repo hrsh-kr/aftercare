@@ -10,6 +10,7 @@ from datetime import datetime
 from src.domain.catalog import brand_for
 from src.storage import get_store
 
+
 @dataclass
 class Ticket:
     ticket_id: str

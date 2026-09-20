@@ -8,20 +8,24 @@ fix the manual doesn't support, escalate rather than keep guessing.
 
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-import time
-
 from strands import Agent
-from strands.hooks import AfterModelCallEvent, BeforeModelCallEvent, HookProvider, HookRegistry
+from strands.hooks import (
+    AfterModelCallEvent,
+    BeforeModelCallEvent,
+    HookProvider,
+    HookRegistry,
+)
 from strands.models.ollama import OllamaModel
 
-from src.errors import DependencyUnavailable
 from src.domain import opensearch_retrieval
 from src.domain.catalog import manual_for, terms_for
 from src.domain.registration import Registration
 from src.domain.retrieval import content_words, load_sections
+from src.errors import DependencyUnavailable
 from src.records.tickets import Ticket, next_ticket_id
 
 # Overridable so a Lambda running inside SAM Local's Docker container can
@@ -34,7 +38,7 @@ DEFAULT_MODEL = os.environ.get("AFTERCARE_MODEL", "gemma2:9b")   # chosen by scr
 SAFETY_KEYWORDS = ["burning smell", "burning", "burnt", "spark", "sparking", "smoke", "exposed wire", "shock", "gas smell",
                    "fumes", "melting", "short circuit", "electric"]
 COVERAGE_KEYWORDS = ["warranty", "warrantee", "guarantee", "covered", "coverage", "expire", "claim", "under warranty"]
-_HUMAN = re.compile(r"\b(human|real person|representative|executive|customer care|call me|call back|(talk|speak|connect|transfer|escalate)\b.{0,25}\b(person|someone|agent|staff|team|manager))\b|\bnot (a )?bot\b", re.I)
+_HUMAN = re.compile(r"\b(human|real person|representative|executive|customer care|call me|call back|(talk|speak|connect|transfer|escalate)\b.{0,25}\b(person|someone|agent|staff|team|manager))\b|\bnot (a )?bot\b", re.IGNORECASE)
 MAX_ATTEMPTS = 2
 RECURRENCE_DAYS = 90
 
@@ -181,7 +185,7 @@ def _tidy(message: str, limit: int = 400) -> str:
     """Model output guard, applied before anything is stored: no emoji, no wrapping quotes,
     no runs of whitespace, bounded length. Customers see the same text the ticket records."""
     text = re.sub(r"\s+", " ", _EMOJI.sub("", message)).strip().strip('"').strip()
-    text = re.sub(r"^(hi|hello|hey|dear)( there| customer)?[,!.]?\s+", "", text, flags=re.I)
+    text = re.sub(r"^(hi|hello|hey|dear)( there| customer)?[,!.]?\s+", "", text, flags=re.IGNORECASE)
     text = text[:1].upper() + text[1:]
     return text[:limit].rstrip()
 
@@ -332,8 +336,8 @@ def start(registration: Registration, complaint: str, agent: Agent | None = None
     return conv
 
 
-_NEG = re.compile(r"\b(still|not|isn'?t|doesn'?t|didn'?t|don'?t|no change|same|nope|never|worse|came back|comes back|back again|persist|any better|nothing|yet|worked (for|only)|but it|unfortunately|cannot|can'?t|won'?t|how (do|can|to)|what|where|why|which)\b|\?|^\s*no\b(?! more)|^\s*(ok|okay|sure)[, ]+(i'?ll|let me|will)|\b(i'?ll|let me|will) (try|check|do|test)", re.I)
-_POS = re.compile(r"\b(fixed|solved|resolved|works? (now|fine|great|perfectly)|working (now|fine|great|perfectly|properly)|all good|all fine|sorted|perfect|much better|gone|no more|stopped|quiet now|cooling (properly |well )?(now|again)|that (did it|helped|worked)|it (helped|worked)|thank(s| you)|great|awesome)\b", re.I)
+_NEG = re.compile(r"\b(still|not|isn'?t|doesn'?t|didn'?t|don'?t|no change|same|nope|never|worse|came back|comes back|back again|persist|any better|nothing|yet|worked (for|only)|but it|unfortunately|cannot|can'?t|won'?t|how (do|can|to)|what|where|why|which)\b|\?|^\s*no\b(?! more)|^\s*(ok|okay|sure)[, ]+(i'?ll|let me|will)|\b(i'?ll|let me|will) (try|check|do|test)", re.IGNORECASE)
+_POS = re.compile(r"\b(fixed|solved|resolved|works? (now|fine|great|perfectly)|working (now|fine|great|perfectly|properly)|all good|all fine|sorted|perfect|much better|gone|no more|stopped|quiet now|cooling (properly |well )?(now|again)|that (did it|helped|worked)|it (helped|worked)|thank(s| you)|great|awesome)\b", re.IGNORECASE)
 
 
 def classify_reply(step: str, reply: str, agent, rules: bool = True) -> str:

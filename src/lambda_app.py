@@ -8,7 +8,11 @@ server: `sam local start-api` is the only way this app runs locally, and it is t
 
 import json
 
-from aws_lambda_powertools.event_handler import APIGatewayRestResolver, Response, content_types
+from aws_lambda_powertools.event_handler import (
+    APIGatewayRestResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.event_handler.exceptions import BadRequestError
 
 from src import pages

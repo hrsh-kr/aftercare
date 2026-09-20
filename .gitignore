@@ -10,3 +10,12 @@ data/
 .claude/
 framework.txt
 commit.py
+
+# private working files (not part of the submission)
+CONTEXT.md
+TARGET.md
+submission.txt
+SUBMISSION_ANSWERS.md
+archive/
+site_src/
+.DS_Store

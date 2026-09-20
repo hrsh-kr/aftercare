@@ -16,8 +16,8 @@ from pathlib import Path
 from opensearchpy import OpenSearch
 
 from src.domain.catalog import MANUAL_BY_PREFIX, TERMS_BY_PREFIX
-from src.errors import DependencyUnavailable
 from src.domain.retrieval import SYNONYM_GROUPS, load_sections
+from src.errors import DependencyUnavailable
 
 OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST", "http://localhost:9200")
 INDEX_NAME = "aftercare-sections-v4"  # v2: english analyzer; v3: keyed by file name; v4: shared synonym filter

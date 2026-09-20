@@ -10,6 +10,10 @@ purchase date, and hands over to a person, with everything attached, when it sho
 Built for **First Commit** (WeMakeDevs × AWS) on the **Build It** track: the open-source AWS stack, running locally,
 no AWS account, no card, no bill. Also entered for **Best UI**.
 
+> **Why Build It?** I planned to compete on Ship It. My new AWS account's verification hadn't finished (CloudShell would not
+> start, "up to two days"), so I chose to build on the open-source stack properly rather than fake a deployment. The full
+> story, with the bugs, is in [`docs/BLOG.md`](docs/BLOG.md).
+
 > **Design principle: deterministic before model.** A small local model only *words one manual step* and *reads an
 > ambiguous reply*. Safety, "not in the manual", "seen this before", attempt counting, warranty maths and who-may-do-what
 > are rules, queries and policies. That is what makes it testable and honest. ([Architecture](docs/ARCHITECTURE.md))
@@ -30,7 +34,7 @@ the analytics update. The click-by-click script, with expected results for eight
 
 | Page | What it is |
 |---|---|
-| `/` | The story: problem, onboarding by order file, the customer's six steps, "under the hood" with the status of each component |
+| `/` | The story: problem, onboarding by order file, the customer's six steps, then a one-screen **architecture** blueprint (each AWS tool: what it does, why, the trade-off) |
 | `/sandbox` | **The real thing, local only.** Load an order file, message as any customer, type anything, reply as a person from the inbox, see analytics update. Only WhatsApp's network is simulated |
 | `/demo` | **Live demo (recorded).** The same flow as the sandbox, replayed from real responses captured while running the tool: the order-file check, eight customers' WhatsApp conversations (click what they'd say), what Aftercare did, the brand's inbox where a person replies, analytics, and the dashboard |
 | `/dashboard` | The real brand dashboard (local): complaints with red/yellow/green status, chat + reply, products, an AI analytics bar |
@@ -95,5 +99,5 @@ needs a ~1 minute `sam build`. More in [ARCHITECTURE §11](docs/ARCHITECTURE.md)
 
 ## Docs
 
-[Architecture](docs/ARCHITECTURE.md) · [Sandbox runbook](docs/SANDBOX_RUNBOOK.md) · [DynamoDB design](docs/DYNAMODB_DESIGN.md) ·
+[The story (blog)](docs/BLOG.md) · [Architecture](docs/ARCHITECTURE.md) · [Sandbox runbook](docs/SANDBOX_RUNBOOK.md) · [DynamoDB design](docs/DYNAMODB_DESIGN.md) ·
 [AWS feedback log](docs/AWS_FEEDBACK_LOG.md) (what worked, what didn't, per service) · [Pitch](docs/PITCH.md) · [Build log](docs/BUILD_LOG.md) · [Video script](docs/VIDEO_SCRIPT.md)

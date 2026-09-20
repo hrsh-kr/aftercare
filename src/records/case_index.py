@@ -13,15 +13,14 @@ Runtime functions raise DependencyUnavailable if OpenSearch is unreachable or th
 are missing (scripts/bootstrap_local.py creates them). There is no fallback path.
 """
 
+import functools
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import functools
-
-from src.errors import DependencyUnavailable
 from src.domain.catalog import brand_for
 from src.domain.opensearch_retrieval import _get_client
+from src.errors import DependencyUnavailable
 
 CASES = "aftercare-cases-v1"
 TICKETS = "aftercare-tickets-v1"

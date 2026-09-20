@@ -1,0 +1,6 @@
+line-length = 140
+extend-exclude = ["archive", "lambda_pkg", "site_src"]
+
+[lint]
+select = ["E9", "F", "B"]
+ignore = ["B008"]

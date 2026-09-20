@@ -15,10 +15,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.agent import agent as A
 from src.domain import opensearch_retrieval
 from src.domain.registration import load_registrations
 from src.domain.retrieval import keyword_retrieve, load_sections
-from src.agent import agent as A
 
 
 class FakeAgent:

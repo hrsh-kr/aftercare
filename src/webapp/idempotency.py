@@ -10,7 +10,11 @@ different content is rejected, not silently answered.
 import os
 
 import boto3
-from aws_lambda_powertools.utilities.idempotency import DynamoDBPersistenceLayer, IdempotencyConfig, idempotent_function
+from aws_lambda_powertools.utilities.idempotency import (
+    DynamoDBPersistenceLayer,
+    IdempotencyConfig,
+    idempotent_function,
+)
 
 from src.storage import dynamodb_store
 

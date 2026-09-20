@@ -20,15 +20,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+from src.agent import agent as agent_mod
 from src.authz import cedar_authz, session
 from src.authz.cedar_authz import CedarUnavailable
 from src.domain.catalog import BRAND_SLUGS, brand_for
 from src.domain.registration import Registration, mask_phone, registration_from_row
-from src.agent import agent as agent_mod
 from src.records import case_index
+from src.records.tickets import Ticket
 from src.storage import get_store
 from src.webapp import observability as obs
-from src.records.tickets import Ticket
 
 _agent = None  # built lazily, once, on first use -- avoids paying Ollama startup cost at import time
 def get_agent():
@@ -334,7 +334,7 @@ def health() -> dict:
 
     def dynamodb():
         store = get_store()
-        return {"backend": store.name, "table": getattr(store, "_table").table_name, "items": getattr(store, "_table").item_count}
+        return {"backend": store.name, "table": store._table.table_name, "items": store._table.item_count}
 
     return {
         "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "local",

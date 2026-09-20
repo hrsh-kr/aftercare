@@ -17,16 +17,10 @@ from pathlib import Path
 # and by the agent's "can we diagnose this at all?" gate (agent/agent.py), so
 # both judge a complaint the same way.
 _STOP = set(
-    "a an the and or but if then so of to in on at for from by with without into onto out up down over under "
-    "it its this that these those my me our your we you i is are was were be been being am do does did done "
-    "has have had not no nor can cant cannot could would should will wont just very too also as than there here "
-    "what which who whom how when where why all any some each every more most other such only own same again "
-    "still anymore now already even ever keeps keep got get gets getting im ive isn doesn don didn won couldn "
-    "wouldn shouldn hasn haven aren wasn weren ain please help need want like really quite".split()
+    ["a", "an", "the", "and", "or", "but", "if", "then", "so", "of", "to", "in", "on", "at", "for", "from", "by", "with", "without", "into", "onto", "out", "up", "down", "over", "under", "it", "its", "this", "that", "these", "those", "my", "me", "our", "your", "we", "you", "i", "is", "are", "was", "were", "be", "been", "being", "am", "do", "does", "did", "done", "has", "have", "had", "not", "no", "nor", "can", "cant", "cannot", "could", "would", "should", "will", "wont", "just", "very", "too", "also", "as", "than", "there", "here", "what", "which", "who", "whom", "how", "when", "where", "why", "all", "any", "some", "each", "every", "more", "most", "other", "such", "only", "own", "same", "again", "still", "anymore", "now", "already", "even", "ever", "keeps", "keep", "got", "get", "gets", "getting", "im", "ive", "isn", "doesn", "don", "didn", "won", "couldn", "wouldn", "shouldn", "hasn", "haven", "aren", "wasn", "weren", "ain", "please", "help", "need", "want", "like", "really", "quite"]
 )
 _GENERIC = set(
-    "machine washing washer wash ac air conditioner conditioning unit product appliance working work issue "
-    "problem broken stopped stop something thing".split()
+    ["machine", "washing", "washer", "wash", "ac", "air", "conditioner", "conditioning", "unit", "product", "appliance", "working", "work", "issue", "problem", "broken", "stopped", "stop", "something", "thing"]
 )
 
 

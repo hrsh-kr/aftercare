@@ -5,14 +5,14 @@
 - **LocalStack** (named in the Build It table under Serverless) now requires an account and token, which contradicts "no account, no card". We used SAM Local instead.
 - **SAM Local**: `/var/task` is read-only, only `/tmp` is writable; conversation state only survives between calls with `--warm-containers LAZY`; the Lambda container reaches the host's Ollama only via `host.docker.internal`. None of this is discoverable until a request fails.
 - **OpenSearch**: changing an analyzer means a new index (we moved `aftercare-sections` to `-v2` for the English analyzer). Silent fallback risk: if the client can't connect, an app that swallows the error looks fine but isn't using OpenSearch, so we report the engine on every response.
-- **Strands**: (to fill in during the agent phase: structured output and tool-calling with a 7B local model.)
+- **Strands**: see "Strands, as actually used" below (shared-agent state, structured output on small models).
 
 ## What worked well
 - **OpenSearch aggregations** replaced hand-written counting code: "why customers escalate" and "which manual sections send people to a person" are two `terms` aggregations. The `english` analyzer gave stemming ("bangs"/"banging") with no code.
 - **OpenSearch `range` on `now-90d`** made the recurrence window a one-line filter.
 - **Cedar** policies read like the requirement ("principal.brand == resource.brand"); fail-closed on any error was easy to build around.
 - **SAM**: one `template.yaml` describes the API and functions, and the same handlers run under Flask and `sam local`.
-- **Strands**: (to fill in.)
+- **Strands**: hooks for model latency (below).
 
 ## Added while building the serverless phase
 - **SAM Local + OpenSearch (a bug only Lambda revealed):** documents were indexed with the *absolute file path* as the filter key. Inside the Lambda container the path is `/var/task/...`, so every search matched nothing and silently fell back to keyword search. Nothing failed; the engine label on each response is the only reason we noticed. Key by file name.
@@ -42,3 +42,8 @@
 - **A message log in DynamoDB is a natural fit** (time-ordered sort key, TTL, poll with `SK > cursor`); it would be a WebSocket push in production (API Gateway WebSocket APIs are not runnable under SAM Local).
 - **Strands + a small local model**: rules-first reply reading beat every model we tried on ambiguity, which says more about where to put a 9B model in a system than about the model. The eval harness (`scripts/eval_model.py`) is the reusable part: five models, phrasing and reply-reading, in one command.
 - **Powertools' API Gateway resolver** made adding a dozen new routes a matter of decorators; the only sharp edge is that a route must also be declared in `template.yaml` (17 to 28 explicit events), or `sam local` won't send it.
+
+## Onboarding, before any code (why this project is Build It, not Ship It)
+- **New-account verification blocks CloudShell.** Opening CloudShell on a fresh account returned "Unable to create the environment. Your account verification is in progress. This may take up to two days for new accounts." Adding `AWSCloudShellFullAccess` to the user changed nothing, because the block is account-level, not IAM. With a four-day event, two days is half the build window. A line in the hackathon's onboarding ("verify your account before the event") would have saved a decision made under pressure.
+- **Bedrock model access is per region.** The Bedrock playground failed until the console region was switched from US East to Asia Pacific (Mumbai), where a different set of models is available. The error message did not say the model was unavailable in the region.
+- **Net effect:** both frictions pushed toward the open-source stack, which turned out to improve the design (the model is confined to two narrow jobs, everything else is code, policy and queries).

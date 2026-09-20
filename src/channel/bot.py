@@ -16,13 +16,13 @@ Conversation state per chat is one small record:
 import re
 from datetime import datetime
 
+from src.agent import agent as agent_mod
 from src.domain.catalog import BRAND_SLUGS, brand_for
 from src.domain.registration import Registration, warranty_details
-from src.agent import agent as agent_mod
 from src.storage import get_store
 from src.webapp import api_core as core
 
-GREETING = re.compile(r"^\W*(hi+|hello+|hey+|hola|namaste|good (morning|afternoon|evening))\W*$", re.I)
+GREETING = re.compile(r"^\W*(hi+|hello+|hey+|hola|namaste|good (morning|afternoon|evening))\W*$", re.IGNORECASE)
 _GENERIC = {"washing", "machine", "ac", "split", "air", "conditioner", "front", "the", "my", "a", "is", "of"}
 
 # Which WhatsApp Business number belongs to which brand (a real deployment reads this from Meta's

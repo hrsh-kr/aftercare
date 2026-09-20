@@ -90,6 +90,7 @@ def main() -> int:
     os.environ["DYNAMODB_ENDPOINT"] = "http://localhost:8000"
     try:
         import boto3
+
         import src.storage.dynamodb_store as d
         from scripts.bootstrap_local import tables_from_template
         d.ENDPOINT, d.TABLE = "http://localhost:8000", "AftercareContractTest"   # never the app's own table

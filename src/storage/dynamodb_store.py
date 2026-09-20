@@ -12,13 +12,12 @@ Endpoint: DYNAMODB_ENDPOINT points at DynamoDB Local (the AWS-provided emulator,
 Unset it and boto3 talks to real DynamoDB with normal credentials -- nothing else changes.
 """
 
+import functools
 import json
 import os
 import time
 import uuid
 from decimal import Decimal
-
-import functools
 
 import boto3
 from boto3.dynamodb.conditions import Key
