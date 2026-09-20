@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# DynamoDB Local: AWS's own downloadable DynamoDB, no account, no cloud. Note it is not in
-# the Build It table (see docs/AWS_FEEDBACK_LOG.md) -- the file store remains the default.
+# DynamoDB Local, run on Amazon Corretto (docker/dynamodb-local/Dockerfile): AWS's own local DynamoDB
+# on AWS's own OpenJDK build. No account, no cloud.
 set -euo pipefail
-if docker ps --format '{{.Names}}' | grep -q '^aftercare-dynamodb$'; then echo "already running"; exit 0; fi
-if docker ps -a --format '{{.Names}}' | grep -q '^aftercare-dynamodb$'; then docker start aftercare-dynamodb
-else docker run -d --name aftercare-dynamodb -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -inMemory; fi
-echo "DynamoDB Local at http://localhost:8000"
+cd "$(dirname "$0")/.."
+if docker ps --format '{{.Names}}' | grep -q '^aftercare-dynamodb$'; then echo "DynamoDB Local already running"; exit 0; fi
+docker rm -f aftercare-dynamodb >/dev/null 2>&1 || true
+docker image inspect aftercare-dynamodb-corretto >/dev/null 2>&1 || docker build -q -t aftercare-dynamodb-corretto docker/dynamodb-local
+docker run -d --name aftercare-dynamodb -p 8000:8000 aftercare-dynamodb-corretto >/dev/null
+echo "DynamoDB Local (Corretto) at http://localhost:8000"

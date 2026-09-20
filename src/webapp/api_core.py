@@ -97,72 +97,39 @@ def _load_conversation(conv_id: str) -> agent_mod.Conversation | None:
     )
 
 
-HISTORY_SEED = Path(__file__).resolve().parent.parent.parent / "fixtures" / "history_seed.json"
-
-
-def _history(serial: str = "") -> tuple[list[agent_mod.PriorCase], str]:
-    """Earlier cases the agent can recognise a recurring problem from. Returns (cases, engine).
-
-    OpenSearch answers it as a query (serial + time window, seeded with the history a
-    brand's ticketing system would already hold). If it is unreachable, the storage
-    backend answers the same question from its own access pattern (DynamoDB: a GSI query
-    on the serial; files: a scan), plus the seed file. Seed ages are relative, so the
-    demo scenario doesn't drift out of the window."""
-    try:
-        found = case_index.prior_cases(serial, agent_mod.RECURRENCE_DAYS)
-        return [agent_mod.PriorCase(serial_number=d["serial_number"], section_heading=d["section_heading"],
-                                    when=datetime.fromisoformat(d["created_at"]).replace(tzinfo=None),
-                                    outcome=d["outcome"]) for d in found], "opensearch"
-    except Exception:
-        pass
-    cutoff = (datetime.now() - timedelta(days=agent_mod.RECURRENCE_DAYS)).isoformat()
-    cases = [
-        agent_mod.PriorCase(serial_number=c["serial_number"], section_heading=c["section_heading"],
-                            when=datetime.fromisoformat(c["created_at"]), outcome=c["outcome"])
-        for c in get_store().cases_for_serial(serial, cutoff) if c.get("source") == "manual"
+def _history(serial: str) -> list[agent_mod.PriorCase]:
+    """Earlier cases for this serial inside the recurrence window, from an OpenSearch query
+    (serial + source + `range now-90d`). Seed history (what a brand's ticketing system would already
+    hold) is indexed by the bootstrap. Raises DependencyUnavailable if OpenSearch is down."""
+    return [
+        agent_mod.PriorCase(serial_number=d["serial_number"], section_heading=d["section_heading"],
+                            when=datetime.fromisoformat(d["created_at"]).replace(tzinfo=None), outcome=d["outcome"])
+        for d in case_index.prior_cases(serial, agent_mod.RECURRENCE_DAYS)
     ]
-    if HISTORY_SEED.exists():
-        for e in json.loads(HISTORY_SEED.read_text()):
-            if e["serial_number"] == serial:
-                cases.append(agent_mod.PriorCase(
-                    serial_number=serial, section_heading=e["section_heading"],
-                    when=datetime.now() - timedelta(days=e["days_ago"]), outcome=e["outcome"]))
-    return cases, get_store().name
 
 
 def reset_demo_data() -> dict:
     """Clear conversations and tickets so a demo run starts clean (otherwise the first run
     makes the second look like a recurring issue)."""
     n = get_store().clear()
-    try:
-        case_index.reset()
-    except Exception:
-        pass
+    case_index.reset()
     return {"cleared": n}
 
 
 def _record(conv_id: str, conv: agent_mod.Conversation) -> None:
-    """A finished conversation becomes a *case*: written to the storage backend (recurrence
-    fallback, insights fallback) and indexed in OpenSearch (recurrence and insights as
-    queries). Best effort: the conversation itself is already saved, so a failure here
-    never breaks a reply."""
+    """A finished conversation becomes a *case*: written to DynamoDB (the source of truth) and
+    indexed in OpenSearch (recurrence and insights are queries over it). Failures are raised, not hidden."""
     if not (conv.resolved or conv.ticket):
         return
     reg = conv.registration
     brand = brand_for(reg.product_id).lower()
-    try:
-        get_store().put_case(brand, {
-            "conversation_id": conv_id, "brand": brand, "serial_number": reg.serial_number, "product_id": reg.product_id,
-            "section_heading": conv.section_heading, "source": "safety" if conv.safety_flag else conv.source,
-            "outcome": "resolved" if conv.resolved else "escalated", "reason_code": conv.escalation_code,
-            "created_at": conv.created_at,
-        })
-    except Exception:
-        pass
-    try:
-        case_index.record(conv_id, conv)
-    except Exception:
-        pass
+    get_store().put_case(brand, {
+        "conversation_id": conv_id, "brand": brand, "serial_number": reg.serial_number, "product_id": reg.product_id,
+        "section_heading": conv.section_heading, "source": "safety" if conv.safety_flag else conv.source,
+        "outcome": "resolved" if conv.resolved else "escalated", "reason_code": conv.escalation_code,
+        "created_at": conv.created_at,
+    })
+    case_index.record(conv_id, conv)
 
 
 def list_customers(brand: str = "") -> list[dict]:
@@ -259,7 +226,7 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
                        # A real system would match on serial_number too for absolute precision.
 
     t0 = time.perf_counter()
-    history, history_engine = _history(reg.serial_number)
+    history = _history(reg.serial_number)
     conv = agent_mod.start(reg, complaint, agent=get_agent(), history=history)
     agent_ms = round((time.perf_counter() - t0) * 1000)
     conv_id = str(uuid.uuid4())
@@ -268,7 +235,7 @@ def _start_conversation(phone: str, complaint: str, product_id: str) -> tuple[di
     state = _conversation_state(conv)
     obs.conversation_outcome(state, brand_for(reg.product_id).lower(), agent_ms)
     state["meta"]["model_ms"] = _drain_model_ms()
-    state["meta"]["history_engine"] = history_engine
+    state["meta"]["history_engine"] = "opensearch"
     state["meta"]["storage"] = get_store().name
     return {"conversation_id": conv_id, **state}, 200
 
@@ -291,36 +258,10 @@ def respond_conversation(conversation_id: str, reply: str) -> tuple[dict, int]:
 
 
 def _insights(brand: str) -> dict:
-    try:
-        out = case_index.insights(brand)
-    except Exception:
-        out = _insights_from_store(brand)
+    out = case_index.insights(brand)
     for r in out["by_reason"]:
         r["label"] = agent_mod.ESCALATION_LABELS.get(r["code"], r["code"])
     return out
-
-
-def _insights_from_store(brand: str) -> dict:
-    """Same shape as case_index.insights(), computed by hand when OpenSearch is down."""
-    resolved = escalated = 0
-    reasons: dict[str, int] = {}
-    sections: dict[str, list[int]] = {}
-    for c in get_store().cases_for_brand(brand):
-        done = c["outcome"] == "resolved"
-        resolved += done
-        escalated += not done
-        if not done and c.get("reason_code"):
-            reasons[c["reason_code"]] = reasons.get(c["reason_code"], 0) + 1
-        if c.get("section_heading"):
-            row = sections.setdefault(c["section_heading"], [0, 0])
-            row[0] += 1
-            row[1] += (not done)
-    return {
-        "engine": get_store().name, "resolved": resolved, "escalated": escalated,
-        "by_reason": [{"code": k, "count": v} for k, v in sorted(reasons.items(), key=lambda kv: -kv[1])],
-        "top_sections": [{"heading": k, "count": v[0], "escalated": v[1]}
-                         for k, v in sorted(sections.items(), key=lambda kv: -kv[1][0])[:5]],
-    }
 
 
 def mask_phone(phone: str) -> str:
@@ -376,12 +317,8 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
     tickets = [Ticket(**d) for d in get_store().tickets(brand)]
 
     if q.strip():
-        try:
-            hits = set(case_index.search_tickets(brand, q.strip()))
-            tickets = [t for t in tickets if t.ticket_id in hits]
-        except Exception:
-            ql = q.strip().lower()
-            tickets = [t for t in tickets if ql in f"{t.customer_name} {t.product_name} {t.issue_summary}".lower()]
+        hits = set(case_index.search_tickets(brand, q.strip()))
+        tickets = [t for t in tickets if t.ticket_id in hits]
 
     # Phones are masked unless Cedar says this principal may see this ticket's number in full.
     phone_shown = {}
@@ -455,11 +392,9 @@ def dashboard_data(brand: str, token: str | None, q: str = "") -> tuple[dict, in
 
 
 def health() -> dict:
-    """Live probes, no cached answers: each component reports what it actually
-    did just now. The landing page's "under the hood" chips and the demo's
-    runtime pill read this, so a stopped container shows up as stopped."""
+    """Live probes, no cached answers: each backing service reports what it actually did just now.
+    The landing page's chips and the demo's runtime pill read this."""
     import hashlib
-    import time
     import urllib.request
 
     from src.layer1 import opensearch_retrieval as osr
@@ -480,21 +415,22 @@ def health() -> dict:
     def opensearch():
         c = osr._get_client()
         info = c.info()
-        docs = c.count(index=osr.INDEX_NAME)["count"] if c.indices.exists(index=osr.INDEX_NAME) else 0
-        return {"version": info["version"]["number"], "index": osr.INDEX_NAME, "documents": docs}
+        return {"version": info["version"]["number"], "index": osr.INDEX_NAME, "documents": c.count(index=osr.INDEX_NAME)["count"]}
 
     def cedar():
-        if not cedar_authz.CEDAR_BIN.exists():
-            raise RuntimeError("Cedar CLI missing")
-        ok, msg = cedar_authz.validate()
+        ok, _ = cedar_authz.validate()
         if not ok:
             raise RuntimeError("policies fail cedar validate")
         return {"policy_sha": hashlib.sha256(cedar_authz.POLICY_PATH.read_bytes()).hexdigest()[:8], "validated": True}
 
+    def dynamodb():
+        store = get_store()
+        return {"backend": store.name, "table": getattr(store, "_table").table_name, "items": getattr(store, "_table").item_count}
+
     return {
-        "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "flask",
+        "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "local",
         "storage": get_store().name,
-        "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar)},
+        "components": {"ollama": probe(ollama), "opensearch": probe(opensearch), "cedar": probe(cedar), "dynamodb": probe(dynamodb)},
     }
 
 

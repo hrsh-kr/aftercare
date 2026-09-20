@@ -14,7 +14,7 @@ from aws_lambda_powertools.utilities.idempotency import DynamoDBPersistenceLayer
 
 from src.storage import dynamodb_store
 
-TABLE = os.environ.get("AFTERCARE_IDEMPOTENCY_TABLE", "aftercare-idempotency")
+TABLE = os.environ.get("AFTERCARE_IDEMPOTENCY_TABLE", "IdempotencyTable")
 
 
 def _client():
@@ -24,15 +24,7 @@ def _client():
     return boto3.client("dynamodb", **kwargs)
 
 
-_client_ = _client()
-if dynamodb_store.ENDPOINT:  # local convenience; in an account template.yaml owns the table
-    try:
-        _client_.describe_table(TableName=TABLE)
-    except _client_.exceptions.ResourceNotFoundException:
-        _client_.create_table(TableName=TABLE, BillingMode="PAY_PER_REQUEST",
-                              AttributeDefinitions=[{"AttributeName": "id", "AttributeType": "S"}],
-                              KeySchema=[{"AttributeName": "id", "KeyType": "HASH"}])
-        _client_.get_waiter("table_exists").wait(TableName=TABLE)
+_client_ = _client()   # the table comes from template.yaml / scripts/bootstrap_local.py, never created here
 
 _persistence = DynamoDBPersistenceLayer(table_name=TABLE, boto3_client=_client_)
 _config = IdempotencyConfig(event_key_jmespath="key", payload_validation_jmespath="[phone, complaint, product_id]", expires_after_seconds=60)

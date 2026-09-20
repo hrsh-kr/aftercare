@@ -5,8 +5,11 @@ and retrieval is pinned to the keyword scorer, so these run anywhere.
     .venv/bin/python -m tests.test_escalation      # or: pytest tests/
 """
 
+import os
 import sys
 import tempfile
+
+os.environ["AFTERCARE_STORE"] = "file"   # unit-test double; the app itself runs on DynamoDB
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -37,7 +40,7 @@ class FakeAgent:
 def _setup():
     from src.storage import get_store
     get_store().ticket_dir = Path(tempfile.mkdtemp())
-    opensearch_retrieval.retrieve = lambda q, p: (*keyword_retrieve(q, load_sections(p)), "keyword_fallback")
+    opensearch_retrieval.retrieve = lambda q, p: (*keyword_retrieve(q, load_sections(p)), "test_double")
     return {(r.customer_name, r.product_id): r for r in load_registrations()}
 
 

@@ -1,13 +1,16 @@
 """Authorization: Cedar policy matrix + the server-side session.
 Uses the real Cedar CLI (tools/cedar/cedar). Run: .venv/bin/python -m tests.test_cedar"""
+import os
 import sys
 import tempfile
+
+os.environ["AFTERCARE_STORE"] = "file"   # unit-test double; the app itself runs on DynamoDB
 from pathlib import Path
 
 from src.authz import cedar_authz, session
 from src.layer3b import tickets
 from src.webapp import api_core as core
-from src.webapp.app import app
+from tests.lambda_client import Client
 
 MANAGER = {"id": "m", "brand": "aquaspin", "role": "manager"}
 AGENT = {"id": "a", "brand": "aquaspin", "role": "agent"}
@@ -52,7 +55,7 @@ def test_session_is_server_side():
 
 
 def test_http_forged_header_is_ignored_and_cross_brand_denied():
-    c = app.test_client()
+    c = Client()
     assert c.get("/api/dashboard/aquaspin", headers={"X-Staff-Brand": "aquaspin"}).status_code == 401
     assert c.post("/api/login", json={"username": "dev.patel", "passcode": "nope"}).status_code == 401
     r = c.post("/api/login", json={"username": "dev.patel", "passcode": "aqua-agent"})
@@ -70,7 +73,7 @@ def test_only_managers_change_ticket_status():
         t = tickets.Ticket(ticket_id="TBB-9999", customer_name="X", customer_phone="+919876543210", product_name="P",
                            serial_number="S", issue_summary="i", product_id="WM-FC-700", reason_code="unmatched")
         t.save()
-        agent, mgr = app.test_client(), app.test_client()
+        agent, mgr = Client(), Client()
         agent.post("/api/login", json={"username": "dev.patel", "passcode": "aqua-agent"})
         mgr.post("/api/login", json={"username": "meera.nair", "passcode": "aqua-manager"})
         r = agent.post("/api/tickets/TBB-9999/status", json={"status": "resolved"})

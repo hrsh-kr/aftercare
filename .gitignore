@@ -11,3 +11,4 @@ data/conversations/
 data/_backup_*/
 framework.txt
 data/
+lambda_pkg/

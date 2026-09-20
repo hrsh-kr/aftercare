@@ -1,4 +1,6 @@
 """CSV onboarding preview: brand sorting and honest row-level problems. No services needed."""
+import os
+os.environ["AFTERCARE_STORE"] = "file"
 from src.webapp import api_core as core
 
 HEADER = "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\n"

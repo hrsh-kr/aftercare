@@ -1,24 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Aftercare's core API as local Lambda functions behind API Gateway --
-  run entirely with `sam local start-api`, no AWS account, no deploy.
-  Proves the logic in src/webapp/api_core.py is serverless-ready. The
-  Flask app (src/webapp/app.py) is what the live demo actually runs;
-  this is the "it isn't just a Flask app" proof, same logic underneath.
+  Aftercare as one Lambda behind API Gateway: the pages and the API. Run locally with
+  `sam local start-api` (no AWS account, no deploy); there is no other web server. The same
+  template is what `sam deploy` would ship.
 
 Globals:
-  Api:
-    # The demo page is served by Flask on another port, so the browser needs CORS to call
-    # this API. Wide-open origin is fine for localhost, never for a real deployment.
-    Cors:
-      AllowOrigin: "'*'"
-      AllowHeaders: "'Content-Type,Idempotency-Key'"
-      AllowMethods: "'GET,POST,OPTIONS'"
   Function:
     Runtime: python3.12
     Architectures: [arm64]
-    Timeout: 30
+    Timeout: 120
     MemorySize: 512
     Environment:
       Variables:
@@ -27,10 +18,7 @@ Globals:
         OLLAMA_HOST: http://host.docker.internal:11434
         # The bundled linux/aarch64 Cedar CLI, not the host's macOS one
         # -- see cedar_authz.py's CEDAR_BIN.
-        CEDAR_BIN: /var/task/tools/cedar-lambda/cedar
-        # /var/task (the code mount) is read-only under real Lambda;
-        # only /tmp is writable. See tickets.py / api_core.py.
-        AFTERCARE_DATA_DIR: /tmp/aftercare-data
+        CEDAR_BIN: /var/task/tools/cedar/cedar
         # Lambdas have no disk worth keeping: state lives in DynamoDB. Locally that is
         # DynamoDB Local on the host; in an account, drop DYNAMODB_ENDPOINT and it is real.
         AFTERCARE_STORE: dynamodb
@@ -76,133 +64,67 @@ Resources:
         - {AttributeName: id, KeyType: HASH}
       TimeToLiveSpecification: {AttributeName: expiration, Enabled: true}
 
-  CustomersFunction:
+  # The whole web app: pages and API, one function behind API Gateway (see src/lambda_app.py).
+  # One function, explicit routes (not a catch-all proxy: sam local's static-file route would shadow a
+  # proxy). CodeUri is a staged folder (scripts/stage_lambda.sh) so the package holds only what runs.
+  WebFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.customers
+      CodeUri: lambda_pkg/
+      Handler: src.lambda_app.handler
+      Timeout: 120
       Events:
-        Api:
+        GetRoot:
           Type: Api
-          Properties:
-            Path: /api/customers
-            Method: get
-
-  LookupFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.lookup
-      Events:
-        Api:
+          Properties: {Path: "/", Method: get}
+        GetDemo:
           Type: Api
-          Properties:
-            Path: /api/lookup
-            Method: post
-
-  ConversationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.conversation
-      # One function, not two -- /api/start and /api/respond need to
-      # share a warm container's /tmp to carry a conversation across
-      # turns. See lambda_handlers.py's conversation() docstring.
-      Events:
-        Start:
+          Properties: {Path: "/demo", Method: get}
+        GetDashboard:
           Type: Api
-          Properties:
-            Path: /api/start
-            Method: post
-        Respond:
+          Properties: {Path: "/dashboard", Method: get}
+        GetDashboardBrand:
           Type: Api
-          Properties:
-            Path: /api/respond
-            Method: post
-
-  HealthFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.health
-      Events:
-        Api:
+          Properties: {Path: "/dashboard/{brand}", Method: get}
+        GetApiHealth:
           Type: Api
-          Properties:
-            Path: /api/health
-            Method: get
-
-  DashboardFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.dashboard
-      Events:
-        Api:
+          Properties: {Path: "/api/health", Method: get}
+        GetApiCustomers:
           Type: Api
-          Properties:
-            Path: /api/dashboard/{brand}
-            Method: get
-
-  LoginFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.login
-      Events:
-        Api:
+          Properties: {Path: "/api/customers", Method: get}
+        PostApiLookup:
           Type: Api
-          Properties:
-            Path: /api/login
-            Method: post
-
-  MeFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.me
-      Events:
-        Api:
+          Properties: {Path: "/api/lookup", Method: post}
+        PostApiStart:
           Type: Api
-          Properties:
-            Path: /api/me
-            Method: get
-
-  TicketStatusFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.ticket_status
-      Events:
-        Api:
+          Properties: {Path: "/api/start", Method: post}
+        PostApiRespond:
           Type: Api
-          Properties:
-            Path: /api/tickets/{ticket_id}/status
-            Method: post
-
-  DemoResetFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.demo_reset
-      Events:
-        Api:
+          Properties: {Path: "/api/respond", Method: post}
+        PostApiLogin:
           Type: Api
-          Properties:
-            Path: /api/demo/reset
-            Method: post
-
-  IngestFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: src.lambda_handlers.ingest
-      Events:
-        Api:
+          Properties: {Path: "/api/login", Method: post}
+        PostApiLogout:
           Type: Api
-          Properties:
-            Path: /api/ingest
-            Method: post
+          Properties: {Path: "/api/logout", Method: post}
+        GetApiMe:
+          Type: Api
+          Properties: {Path: "/api/me", Method: get}
+        GetApiDashboardBrand:
+          Type: Api
+          Properties: {Path: "/api/dashboard/{brand}", Method: get}
+        PostApiTicketsStatus:
+          Type: Api
+          Properties: {Path: "/api/tickets/{ticket_id}/status", Method: post}
+        PostApiIngest:
+          Type: Api
+          Properties: {Path: "/api/ingest", Method: post}
+        GetApiSampleCsv:
+          Type: Api
+          Properties: {Path: "/api/sample-csv", Method: get}
+        PostApiDemoReset:
+          Type: Api
+          Properties: {Path: "/api/demo/reset", Method: post}
 
 Outputs:
   ApiUrl:

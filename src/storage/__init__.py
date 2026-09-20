@@ -1,10 +1,10 @@
 """Storage behind one interface, two implementations.
 
-  file      JSON files under data/ -- zero setup, what the Flask dev server uses.
-  dynamodb  one DynamoDB table (DynamoDB Local via DYNAMODB_ENDPOINT, real DynamoDB
-            when it's unset) -- what the Lambdas use, because a Lambda has no disk to keep.
+  dynamodb  one DynamoDB table (DynamoDB Local via DYNAMODB_ENDPOINT, real DynamoDB when it's
+            unset). The only backend the app runs on.
+  file      JSON files. A test double for unit tests (AFTERCARE_STORE=file); never a runtime fallback.
 
-Chosen by AFTERCARE_STORE (default "file"). The rest of the code never knows which.
+Default is dynamodb. If it is unreachable the API answers 503; it does not switch to files.
 `Store` documents the access patterns the application actually needs; the DynamoDB
 key design that serves them is in docs/DYNAMODB_DESIGN.md.
 """
@@ -37,7 +37,7 @@ _store: Store | None = None
 def get_store() -> Store:
     global _store
     if _store is None:
-        kind = os.environ.get("AFTERCARE_STORE", "file").lower()
+        kind = os.environ.get("AFTERCARE_STORE", "dynamodb").lower()
         if kind == "dynamodb":
             from src.storage.dynamodb_store import DynamoStore
             _store = DynamoStore()

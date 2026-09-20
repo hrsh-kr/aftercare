@@ -7,6 +7,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
+os.environ.setdefault("AFTERCARE_STORE", "file")
 from src.storage.file_store import FileStore
 
 
@@ -60,8 +61,14 @@ def main() -> int:
     print("PASS  file store contract")
     os.environ["DYNAMODB_ENDPOINT"] = "http://localhost:8000"
     try:
+        import boto3
         import src.storage.dynamodb_store as d
-        d.ENDPOINT = "http://localhost:8000"
+        from scripts.bootstrap_local import tables_from_template
+        d.ENDPOINT, d.TABLE = "http://localhost:8000", "AftercareContractTest"   # never the app's own table
+        client = boto3.client("dynamodb", endpoint_url=d.ENDPOINT, region_name="ap-south-1", aws_access_key_id="x", aws_secret_access_key="x")
+        if d.TABLE not in client.list_tables()["TableNames"]:
+            props = tables_from_template()["AftercareTable"]
+            client.create_table(TableName=d.TABLE, **{k: props[k] for k in ("BillingMode", "AttributeDefinitions", "KeySchema", "GlobalSecondaryIndexes")})
         ds = d.DynamoStore()
         ds._table.load()
     except Exception as exc:

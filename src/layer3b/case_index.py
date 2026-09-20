@@ -9,14 +9,17 @@ Two indices:
   aftercare-cases-v1    one doc per finished conversation (resolved or escalated)
   aftercare-tickets-v1  one doc per ticket, text-searchable for the dashboard
 
-Every function raises if OpenSearch is unreachable; api_core catches that and
-falls back to the file-based path, and reports which engine answered.
+Runtime functions raise DependencyUnavailable if OpenSearch is unreachable or the indices
+are missing (scripts/bootstrap_local.py creates them). There is no fallback path.
 """
 
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import functools
+
+from src.errors import DependencyUnavailable
 from src.layer1.catalog import brand_for
 from src.layer1.opensearch_retrieval import _get_client
 
@@ -40,7 +43,20 @@ _MAPPINGS = {
 }
 
 
+def _guard(fn):
+    @functools.wraps(fn)
+    def wrapper(*a, **kw):
+        try:
+            return fn(*a, **kw)
+        except DependencyUnavailable:
+            raise
+        except Exception as exc:
+            raise DependencyUnavailable("OpenSearch", str(exc)[:160]) from exc
+    return wrapper
+
+
 def ensure() -> None:
+    """Create the indices and seed history. For bootstrap and reset only."""
     c = _get_client()
     for name, mapping in _MAPPINGS.items():
         if not c.indices.exists(index=name):
@@ -70,10 +86,10 @@ def reset() -> None:
     ensure()
 
 
+@_guard
 def record(conv_id: str, conv) -> None:
     """Index a finished conversation and its ticket. Idempotent: the doc id is the
     conversation / ticket id, so re-recording overwrites rather than duplicates."""
-    ensure()
     c = _get_client()
     reg = conv.registration
     brand = brand_for(reg.product_id).lower()
@@ -94,10 +110,10 @@ def record(conv_id: str, conv) -> None:
         })
 
 
+@_guard
 def prior_cases(serial: str, days: int) -> list[dict]:
     """Cases for one serial inside the window, manual-sourced only (a safety case or a
     warranty question is not 'the same problem')."""
-    ensure()
     r = _get_client().search(index=CASES, body={
         "size": 50, "sort": [{"created_at": "desc"}],
         "query": {"bool": {"filter": [
@@ -108,10 +124,10 @@ def prior_cases(serial: str, days: int) -> list[dict]:
     return [h["_source"] for h in r["hits"]["hits"]]
 
 
+@_guard
 def insights(brand: str) -> dict:
     """What a brand learns from its own cases: how conversations end, why they escalate,
     and which manual sections send people to a human. Live cases only (seeds excluded)."""
-    ensure()
     r = _get_client().search(index=CASES, body={
         "size": 0,
         "query": {"bool": {"filter": [{"term": {"brand": brand}}], "must_not": [{"term": {"origin": "seed"}}]}},
@@ -133,9 +149,9 @@ def insights(brand: str) -> dict:
     }
 
 
+@_guard
 def search_tickets(brand: str, q: str) -> list[str]:
     """Ticket ids for a brand matching free text (customer, product, issue)."""
-    ensure()
     r = _get_client().search(index=TICKETS, body={
         "size": 100, "query": {"bool": {"filter": [{"term": {"brand": brand}}],
                                         "must": [{"multi_match": {"query": q, "fields": ["issue_summary", "customer_name", "product_name"]}}]}},

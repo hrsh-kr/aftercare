@@ -16,7 +16,8 @@ from pathlib import Path
 from opensearchpy import OpenSearch
 
 from src.layer1.catalog import MANUAL_BY_PREFIX, TERMS_BY_PREFIX
-from src.layer1.retrieval import keyword_retrieve, load_sections
+from src.errors import DependencyUnavailable
+from src.layer1.retrieval import load_sections
 
 OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST", "http://localhost:9200")
 INDEX_NAME = "aftercare-sections-v3"  # v2: english analyzer; v3: documents keyed by file name, not absolute path
@@ -31,10 +32,6 @@ _client: OpenSearch | None = None
 _indexed = False
 
 
-class OpenSearchUnavailable(RuntimeError):
-    pass
-
-
 def _get_client() -> OpenSearch:
     global _client
     if _client is None:
@@ -43,17 +40,11 @@ def _get_client() -> OpenSearch:
 
 
 def ensure_indexed(force: bool = False) -> None:
-    """Index every fixture's sections once per process. A no-op on
-    later calls unless force=True -- cheap to call before every
-    retrieval rather than tracking indexing state some other way."""
-    global _indexed
-    if _indexed and not force:
-        return
-
+    """Create the sections index and load every manual/terms section. Called by
+    scripts/bootstrap_local.py (and the demo reset), never on a request path."""
     client = _get_client()
     if client.indices.exists(index=INDEX_NAME):
         if not force:
-            _indexed = True
             return
         client.indices.delete(index=INDEX_NAME)
 
@@ -65,47 +56,28 @@ def ensure_indexed(force: bool = False) -> None:
         for heading, body in load_sections(doc_path):
             client.index(index=INDEX_NAME, body={"doc": doc_path.name, "heading": heading, "body": body})
     client.indices.refresh(index=INDEX_NAME)
-    _indexed = True
-
-
-def opensearch_retrieve(query: str, doc_path: Path) -> tuple[str, str]:
-    """BM25 search scoped to one document's sections (a `term` filter
-    on the source file's name -- not its absolute path, which differs between the host
-    and a Lambda container and once made every Lambda query silently fall back; same document boundary keyword_retrieve()
-    respected). Raises OpenSearchUnavailable on any connection/query
-    failure -- the caller decides whether to fall back."""
-    try:
-        ensure_indexed()
-        resp = _get_client().search(
-            index=INDEX_NAME,
-            body={
-                "query": {
-                    "bool": {
-                        "filter": [{"term": {"doc": doc_path.name}}],
-                        "must": [{"multi_match": {"query": query, "fields": ["heading^2", "body"]}}],
-                    }
-                },
-                "size": 1,
-            },
-        )
-    except Exception as exc:  # opensearch-py raises several distinct exception types for "unreachable" -- treat them all the same way
-        raise OpenSearchUnavailable(str(exc)) from exc
-
-    hits = resp.get("hits", {}).get("hits", [])
-    if not hits:
-        raise OpenSearchUnavailable(f"no indexed sections matched for {doc_path}")
-    top = hits[0]["_source"]
-    return top["heading"], top["body"]
 
 
 def retrieve(query: str, doc_path: Path) -> tuple[str, str, str]:
-    """Try OpenSearch first; fall back to the original keyword-overlap
-    scorer if it's unreachable. Returns (heading, body, method) so
-    callers can honestly report which one actually answered."""
+    """BM25 search scoped to one document's sections (a `term` filter on the source file's
+    name -- not its absolute path, which differs between a laptop and a Lambda container).
+    Returns (heading, body, "opensearch"). No fallback: if OpenSearch is unreachable or the
+    index is missing, that is a DependencyUnavailable, not a quieter answer from something else."""
     try:
-        heading, body = opensearch_retrieve(query, doc_path)
-        return heading, body, "opensearch"
-    except OpenSearchUnavailable:
-        sections = load_sections(doc_path)
-        heading, body = keyword_retrieve(query, sections)
-        return heading, body, "keyword_fallback"
+        resp = _get_client().search(
+            index=INDEX_NAME,
+            body={
+                "query": {"bool": {
+                    "filter": [{"term": {"doc": doc_path.name}}],
+                    "must": [{"multi_match": {"query": query, "fields": ["heading^2", "body"]}}],
+                }},
+                "size": 1,
+            },
+        )
+    except Exception as exc:  # opensearch-py raises several distinct types for "unreachable"
+        raise DependencyUnavailable("OpenSearch", str(exc)[:160]) from exc
+    hits = resp.get("hits", {}).get("hits", [])
+    if not hits:
+        raise DependencyUnavailable("OpenSearch", f"no indexed sections matched {doc_path.name}; run scripts/bootstrap_local.py")
+    top = hits[0]["_source"]
+    return top["heading"], top["body"], "opensearch"

@@ -34,9 +34,7 @@ const SCENARIOS = [
     complaint: "There's a burning smell coming from my AC", replies: [] },
 ];
 
-/* Which backend answers: same origin (Flask) by default, or ?api=http://127.0.0.1:3000 to run
-   the identical page against the SAM Local Lambdas. */
-const API = (new URLSearchParams(location.search).get("api") || "").replace(/\/$/, "");
+const API = "";   // same origin: API Gateway serves both the page and /api/*
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -55,15 +53,20 @@ async function api(path, body, headers = {}) {
   const res = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
   let data = {};
   try { data = await res.json(); } catch (_) { /* non-JSON error page */ }
-  if (!res.ok) { const e = new Error(data.error || `HTTP ${res.status}`); e.status = res.status; throw e; }
+  if (!res.ok) { const e = new Error(data.error || `HTTP ${res.status}`); e.status = res.status; e.service = data.service; throw e; }
   return data;
 }
 function showError(err) {
   banner.hidden = false;
   banner.textContent = "";
-  banner.append("The agent didn't answer. It needs a local model server: start it with ");
-  banner.append(el("code", null, "ollama serve"));
-  banner.append(` (and pull qwen2.5-coder:7b once), then press Restart. (${err.message})`);
+  const hints = { Ollama: "ollama serve", OpenSearch: "bash scripts/start_opensearch.sh", DynamoDB: "bash scripts/start_dynamodb.sh" };
+  if (err.service) {
+    banner.append(`${err.service} isn't reachable, and there is no fallback. Start it with `);
+    banner.append(el("code", null, hints[err.service] || "bash scripts/dev.sh"));
+    banner.append(" (then bootstrap: scripts/bootstrap_local.py), and press Restart.");
+  } else {
+    banner.append(`Something went wrong: ${err.message}`);
+  }
 }
 
 /* ── chat helpers ── */
@@ -202,10 +205,10 @@ async function onReply(text, my) {
 async function present(r, my) {
   const m = r.meta || {};
   const esc = m.escalation;
-  const method = { opensearch: "OpenSearch BM25", keyword_fallback: "keyword search (OpenSearch offline)", safety_rule: "safety rule" }[m.retrieval_method] || m.retrieval_method;
+  const method = { opensearch: "OpenSearch BM25", safety_rule: "safety rule" }[m.retrieval_method] || m.retrieval_method;
 
   if (r.status === "waiting") {
-    if (m.attempt === 1) traceItem([strong("Searched the product manual"), sub(`${method} → ${m.section_heading}`)], "", m.retrieval_method === "opensearch" ? "OpenSearch" : "Keyword search");
+    if (m.attempt === 1) traceItem([strong("Searched the product manual"), sub(`${method} → ${m.section_heading}`)], "", "OpenSearch");
     const ms = (m.model_ms || []).reduce((a, b) => a + b, 0);
     traceItem([strong(`Step ${m.attempt} of ${m.max_attempts} offered`), sub("Worded by the model from one numbered step in that section")], "", ms ? `Strands · ${(ms / 1000).toFixed(1)} s` : "Strands");
     bubble("agent", r.message);
@@ -231,7 +234,7 @@ async function present(r, my) {
   } else if (code === "unmatched") {
     traceItem([strong("Nothing in the manual matches"), sub(esc.detail.replace(" -- ", " · "))], "t-handoff", "Rule");
   } else if (code === "recurring") {
-    traceItem([strong("Same product, same problem, seen before"), sub(esc.detail.replace(" -- ", " · "))], "t-handoff", m.history_engine === "opensearch" ? "OpenSearch" : "Case history");
+    traceItem([strong("Same product, same problem, seen before"), sub(esc.detail.replace(" -- ", " · "))], "t-handoff", "OpenSearch");
   } else if (code === "attempts_exhausted") {
     traceItem([strong("Customer says it's still broken"), sub("Both manual steps tried")], "t-handoff", "Rule");
   } else if (code === "no_more_steps") {
@@ -293,8 +296,8 @@ $("d-next").addEventListener("click", (e) => { e.preventDefault(); $("d-pick").s
     const h = await (await fetch(API + "/api/health")).json();
     const c = h.components;
     pill.textContent = "";
-    pill.append(document.createTextNode(`Running on ${h.runtime === "lambda" ? "AWS Lambda (SAM Local)" : "Flask"} · ${h.storage === "dynamodb" ? "DynamoDB Local" : "file store"}`));
-    [["OpenSearch", "opensearch"], ["Cedar", "cedar"], ["Ollama", "ollama"]].forEach(([label, k]) => {
+    pill.append(document.createTextNode("Served by AWS Lambda (SAM Local)"));
+    [["DynamoDB", "dynamodb"], ["OpenSearch", "opensearch"], ["Cedar", "cedar"], ["Ollama", "ollama"]].forEach(([label, k]) => {
       const dot = el("span", c[k] && c[k].ok ? "d-up" : "d-down", "●");
       pill.append(document.createTextNode(" · "), dot, document.createTextNode(" " + label));
     });

@@ -17,6 +17,7 @@ from strands import Agent
 from strands.hooks import AfterModelCallEvent, BeforeModelCallEvent, HookProvider, HookRegistry
 from strands.models.ollama import OllamaModel
 
+from src.errors import DependencyUnavailable
 from src.layer1 import opensearch_retrieval
 from src.layer1.catalog import BRAND_SLUGS, brand_for, manual_for, terms_for
 from src.layer1.registration import Registration
@@ -132,7 +133,12 @@ class StatelessAgent:
 
     def __call__(self, prompt: str):
         agent = Agent(model=self._model, callback_handler=None, hooks=[_LatencyHook(self.model_ms)])
-        return agent(prompt)
+        try:
+            return agent(prompt)
+        except Exception as exc:
+            if isinstance(exc, (ConnectionError, OSError)) or "connect" in str(exc).lower():
+                raise DependencyUnavailable("Ollama", str(exc)[:160]) from exc
+            raise
 
     def drain_model_ms(self) -> list[int]:
         out, self.model_ms = self.model_ms, []

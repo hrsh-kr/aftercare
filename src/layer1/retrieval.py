@@ -5,8 +5,8 @@ Keyword overlap, not embeddings -- validated in Phase 1
 (IMPLEMENTATION.md): grinding vs. clicking, lexically similar but
 different root causes, both retrieved correctly on the first try.
 `load_sections()` is still used directly (opensearch_retrieval.py
-indexes with it); `keyword_retrieve()` is now the fallback scorer for
-when OpenSearch isn't reachable, not the primary path -- see
+indexes with it); `keyword_retrieve()` is a test double only (unit tests
+stand it in for OpenSearch); the app has no fallback -- see
 opensearch_retrieval.py's retrieve().
 """
 
@@ -64,7 +64,7 @@ def load_sections(path: Path) -> list[tuple[str, str]]:
 
 
 def keyword_retrieve(query: str, sections: list[tuple[str, str]]) -> tuple[str, str]:
-    """Fallback retrieval: score sections by shared *content* words (stemmed,
+    """Test-double retrieval (not used at runtime): score sections by shared *content* words (stemmed,
     filler dropped), a heading match counting double. Ties keep manual order --
     not alphabetical, which is what the old raw-word scorer did by accident."""
     q = content_words(query)
