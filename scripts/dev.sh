@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The one way to run Aftercare: everything as AWS Lambda under SAM Local.
 #   containers (OpenSearch, DynamoDB Local on Corretto) -> create tables/indices -> sam build -> sam local start-api
-# Then open http://127.0.0.1:3000  (landing, /sandbox, /demo, /dashboard).
+# Then open http://127.0.0.1:3000  (landing, /demo, /sandbox, /dashboard).
 #   SKIP_BUILD=1 bash scripts/dev.sh     reuse the last `sam build` (static files in public/ are always live)
 set -euo pipefail
 cd "$(dirname "$0")/.."

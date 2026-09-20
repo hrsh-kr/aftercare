@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from src.authz import cedar_authz, session
 from src.authz.cedar_authz import CedarUnavailable
 from src.domain.catalog import BRAND_SLUGS, brand_for
-from src.domain.registration import Registration, registration_from_row
+from src.domain.registration import Registration, mask_phone, registration_from_row
 from src.agent import agent as agent_mod
 from src.records import case_index
 from src.storage import get_store
@@ -114,70 +114,6 @@ def regs_for_brand(brand: str) -> list[Registration]:
     return [registration_from_row(r) for r in get_store().registrations(brand)]
 
 
-def list_customers(brand: str = "") -> list[dict]:
-    """For the demo's 'simulate as' picker only. A real WhatsApp
-    integration never needs this -- the incoming message already
-    carries the sender's number, per WhatsApp's own webhook payload.
-
-    brand: if provided (e.g. 'arcticair'), return only customers who
-    have at least one product from that brand. The demo is brand-scoped --
-    ArcticAir's support line sees ArcticAir customers, not AquaSpin's.
-    Mixing them in one picker was a design flaw: the two brands are
-    independent, each with their own WhatsApp Business number."""
-    seen: dict[str, str] = {}
-    for r in [x for b in ((brand,) if brand else BRAND_SLUGS) for x in regs_for_brand(b.lower())]:
-        # Filter to brand if requested -- brand is the slug (lowercase)
-        if brand and brand_for(r.product_id).lower() != brand.lower():
-            continue
-        seen.setdefault(r.customer_phone, r.customer_name)
-    return [{"phone": phone, "name": name} for phone, name in seen.items()]
-
-
-def lookup(phone: str, brand: str = "") -> dict:
-    """Look up a customer by phone, scoped to a brand.
-
-    brand: the brand whose WhatsApp line the customer is messaging on.
-    A customer with both an AquaSpin and ArcticAir product messaging
-    AquaSpin's number should only see their AquaSpin products here --
-    the other brand is irrelevant to this conversation.
-
-    In a real deployment, brand comes from which number the message
-    arrived on -- it's never user-supplied or guessed. In the demo,
-    it comes from the brand the user picked at the entry screen."""
-    all_regs = regs_for_phone(phone)
-    if not all_regs:
-        return {"found": False}
-
-    # Scope to this brand's products only
-    if brand:
-        regs = [r for r in all_regs if brand_for(r.product_id).lower() == brand.lower()]
-    else:
-        regs = all_regs
-
-    if not regs:
-        return {"found": False}
-
-    # brand is the same for all filtered registrations -- safe to read from the first
-    derived_brand = brand_for(regs[0].product_id)
-    return {
-        "found": True,
-        "customer_name": regs[0].customer_name,
-        "brand": derived_brand,
-        "brand_slug": derived_brand.lower(),
-        "products": [
-            {
-                "product_id": r.product_id,
-                "product_name": r.product_name,
-                "serial_number": r.serial_number,
-                "purchase_date": r.purchase_date,
-                "warranty_component_status": r.warranty_component_status,
-                "warranty_parts_status": r.warranty_parts_status,
-            }
-            for r in regs
-        ],
-    }
-
-
 def start_conversation(phone: str, complaint: str, product_id: str, idempotency_key: str | None = None, serial: str | None = None) -> tuple[dict, int]:
     """Idempotent when the caller supplies a key (Idempotency-Key header) and the DynamoDB
     store is active: a retried request returns the same conversation instead of creating a
@@ -244,14 +180,6 @@ def _insights(brand: str) -> dict:
     for r in out["by_reason"]:
         r["label"] = agent_mod.ESCALATION_LABELS.get(r["code"], r["code"])
     return out
-
-
-def mask_phone(phone: str) -> str:
-    """+919876543210 -> '+91 98765 \u00b7\u00b7\u00b7\u00b7\u00b7'"""
-    digits = phone.lstrip("+")
-    if len(digits) == 12 and digits.startswith("91"):
-        return f"+91 {digits[2:7]} \u00b7\u00b7\u00b7\u00b7\u00b7"
-    return phone[:4] + " \u00b7\u00b7\u00b7\u00b7\u00b7"
 
 
 def _cedar_principal(p: session.Principal) -> dict:

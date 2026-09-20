@@ -25,7 +25,7 @@ a policy, which makes it testable without the model and honest about what it can
 ## 2. Runtime
 
 ```
-Browser ─▶ API Gateway (SAM Local) ─▶ ONE Lambda  (src/lambda_app.py: pages + 28 routes, Powertools resolver)
+Browser ─▶ API Gateway (SAM Local) ─▶ ONE Lambda  (src/lambda_app.py: pages + 26 routes, Powertools resolver)
                                           │  api_core.py (logic) · pages.py (Jinja) · channel/bot.py (WhatsApp)
         ┌──────────────┬──────────────────┼───────────────────┬────────────────────┐
    Strands Agent    OpenSearch          Cedar CLI          DynamoDB Local       Powertools
@@ -34,7 +34,7 @@ Browser ─▶ API Gateway (SAM Local) ─▶ ONE Lambda  (src/lambda_app.py: pa
                     aggregations
 ```
 
-- **One Lambda serves everything** (`template.yaml`: 28 explicit API Gateway events, two DynamoDB tables). There is no other web server and no fallback: if OpenSearch, DynamoDB or Ollama is unreachable the API answers `503 {"error", "service"}` naming it (`errors.py`, an exception handler in `lambda_app.py`). Explicit routes rather than a catch-all because `sam local`'s static-file route would shadow a `/{proxy+}`.
+- **One Lambda serves everything** (`template.yaml`: 26 explicit API Gateway events, two DynamoDB tables). There is no other web server and no fallback: if OpenSearch, DynamoDB or Ollama is unreachable the API answers `503 {"error", "service"}` naming it (`errors.py`, an exception handler in `lambda_app.py`). Explicit routes rather than a catch-all because `sam local`'s static-file route would shadow a `/{proxy+}`.
 - `scripts/dev.sh` is the only entry point: checks prerequisites → OpenSearch + DynamoDB Local containers → `scripts/bootstrap_local.py` (tables *read from* `template.yaml`, indices, seed history, baseline registry) → `scripts/stage_lambda.sh` (a clean `lambda_pkg/` as `CodeUri`) → `sam build --use-container` → `sam local start-api --warm-containers EAGER`.
 - Static files in `public/` are served by `sam local --static-dir` (in an account: S3 + CloudFront). Pages are rendered inside the Lambda.
 
@@ -86,7 +86,7 @@ Lambda Powertools: JSON logs that never contain a phone number or complaint text
 | Same storage behaviour on files and DynamoDB | `tests/test_store_contract.py` |
 | Recurrence window, brand scoping, aggregations | `tests/test_case_index.py` (OpenSearch) |
 | Order-file validation | `tests/test_ingest.py` |
-| Everything through the Lambda with the real model | `scripts/run_sandbox_scenarios.py` (8 personas, 25 checks), `scripts/run_scenarios.py` (the guided demo's 5) |
+| Everything through the Lambda with the real model | `scripts/run_sandbox_scenarios.py` (8 personas, 25 checks) |
 | Retrieval and intents | `scripts/eval_routing.py` (41) |
 | Model choice | `scripts/eval_model.py` |
 
@@ -105,9 +105,11 @@ Lambda Powertools: JSON logs that never contain a phone number or complaint text
 | Meta-shaped webhook | AWS End User Messaging Social / WhatsApp Cloud API |
 | Order file check on demand | S3 upload → event → the same `ingest_commit` |
 
-## 10. The static site (`site/`)
+## 10. The deployed site (Vercel) and the recording
 
-A static host can't run the stack, so `scripts/export_static_site.py` builds `site/` from the *same* Jinja templates and assets the Lambda serves plus `site_src/recording.json`, which `scripts/record_playback.py` captured from the running stack through the real webhook and staff endpoints (nothing hand-written except the persona blurbs). `public/static/replay-shim.js` answers the handful of `/api` calls those pages make from the recording; `playback.js` replays each persona; the real `dashboard.js` renders the recorded dashboard (read-only, including Cedar's real cross-brand refusal). Every surface says it is a recording, and the health chips say "recorded", never "live".
+A static host can't run the stack, so the deployed site is pre-rendered from the *same* Jinja templates the Lambda serves. `scripts/build_site.py` writes four pages into `public/` (the folder Vercel serves, per `vercel.json`): the landing page, the live-demo page, and two dashboard snapshots. Push to GitHub and Vercel redeploys; `tests/test_site_fresh.py` fails if a template changed without re-running the build, so the deployed pages cannot drift from the source.
+
+The live-demo page (`/demo`) replays `public/static/recording.json`, which `scripts/record_playback.py` captured from the running stack through the real Meta-shaped webhook and the staff endpoints (nothing hand-written except the persona blurbs): eight customers, each reply's trace, the tickets, the dashboard's API responses (including Cedar's real cross-brand refusal). The dashboard is the real `dashboard.js` over those recorded responses, framed read-only. `public/static/replay-shim.js` answers the few `/api` calls the landing page and dashboard make from the recording, so on the static site the status chips say "recorded", never "live". The real, free-form version (`/sandbox`, `/dashboard`) runs only locally.
 
 ## 11. Limits, stated plainly
 

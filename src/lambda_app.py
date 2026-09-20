@@ -106,17 +106,6 @@ def health():
     return _json(core.health())
 
 
-@app.get("/api/customers")
-def customers():
-    return _json(core.list_customers(brand=(app.current_event.get_query_string_value("brand", "") or "").strip().lower()))
-
-
-@app.post("/api/lookup")
-def lookup():
-    b = _body()
-    return _json(core.lookup(_text(b.get("phone")), brand=_text(b.get("brand")).lower()))
-
-
 @app.post("/api/start")
 def start():
     b = _body()

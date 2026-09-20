@@ -94,12 +94,6 @@ body{
 .l-pill:hover{transform:scale(1.035);filter:brightness(1.08);}
 .l-pill:focus-visible,.l-link:focus-visible{outline:2px solid #5aa0ff;outline-offset:3px;}
 .l-pill-sm{font-size:13px;padding:6px 15px;}
-.l-nav-cta{display:flex;align-items:center;gap:8px;}
-/* second call to action: a quiet glass pill beside the blue one */
-.l-pill-alt{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.26);color:#fff;}
-.l-pill-alt:hover{background:rgba(255,255,255,.2);filter:none;}
-.l-band-white .l-pill-alt,.l-nav.on-light .l-pill-alt{background:#f5f5f7;border-color:rgba(0,0,0,.14);color:#1d1d1f;}
-.l-band-white .l-pill-alt:hover,.l-nav.on-light .l-pill-alt:hover{background:#e8e8ed;}
 
 /* "this is where you act": a soft pulsing blue ring on the thing to press or fill in next */
 @keyframes glow-ring{

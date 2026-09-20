@@ -3,30 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ArcticAir — Aftercare Dashboard</title>
-  <meta name="description" content="ArcticAir support dashboard: complaints and their status, registered products, and analytics, powered by Aftercare.">
+  <title>AquaSpin — Aftercare Dashboard</title>
+  <meta name="description" content="AquaSpin support dashboard: complaints and their status, registered products, and analytics, powered by Aftercare.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 <body class="db">
-<style>.static-note{position:relative;z-index:300;background:#0a2a52;color:#cfe4ff;font:500 13px/1.4 Inter,system-ui,sans-serif;text-align:center;padding:8px 16px}.static-note a{color:#8ec0ff}body.db .static-note{border-radius:0 0 14px 14px}</style><div class="static-note">A static copy of the site. The demo here is a <b>recording</b> of the real run; to run it live, see <a href="/run">Run it yourself</a>.</div>
+<style>.static-note{background:#0a2a52;color:#cfe4ff;font:500 12.5px/1.4 Inter,system-ui,sans-serif;text-align:center;padding:6px 14px;border-radius:0 0 12px 12px}</style><div class="static-note">Recorded snapshot: read-only. Every value was captured from the running dashboard.</div>
 <div class="db-wrap">
 
   <header class="db-head">
     <div class="db-brand">
-      <span class="db-mark">Ar</span>
+      <span class="db-mark">Aq</span>
       <div>
-        <h1>ArcticAir support</h1>
+        <h1>AquaSpin support</h1>
         <p id="session-line">Checking sign-in…</p>
       </div>
     </div>
-    <nav class="db-nav" aria-label="Dashboard links">
-      <a href="/sandbox">Recorded run</a>
-      <a href="/dashboard">Switch account</a>
-      <a href="/dashboard/aquaspin" title="You should be refused. Cedar will say which rule refused you.">Try AquaSpin</a>
-    </nav>
   </header>
 
   <div id="denied-panel" class="db-card db-denied" hidden>
@@ -70,8 +65,8 @@
   </div>
 </footer>
 
-<script>window.__BRAND__ = "arcticair";</script>
+<script>window.__BRAND__ = "aquaspin";</script>
 <script src="/static/replay-shim.js"></script>
-<script src="/static/dashboard.js"></script>
+  <script src="/static/dashboard.js"></script>
 </body>
 </html>

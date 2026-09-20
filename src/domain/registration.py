@@ -85,3 +85,11 @@ def warranty_details(reg: Registration, today: date | None = None) -> dict:
         return {"label": label, "years": years, "ends": end.isoformat(), "active": today < end, "days_left": (end - today).days}
 
     return {"purchased": purchased.isoformat(), "coverage": [one(reg.warranty_component, reg.warranty_component_years), one("other parts", 1)]}
+
+
+def mask_phone(phone: str) -> str:
+    """+919876543210 -> '+91 98765 \u00b7\u00b7\u00b7\u00b7\u00b7'"""
+    digits = phone.lstrip("+")
+    if len(digits) == 12 and digits.startswith("91"):
+        return f"+91 {digits[2:7]} \u00b7\u00b7\u00b7\u00b7\u00b7"
+    return phone[:4] + " \u00b7\u00b7\u00b7\u00b7\u00b7"

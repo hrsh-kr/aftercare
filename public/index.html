@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="/static/landing.css">
 </head>
 <body>
-<style>.static-note{position:relative;z-index:300;background:#0a2a52;color:#cfe4ff;font:500 13px/1.4 Inter,system-ui,sans-serif;text-align:center;padding:8px 16px}.static-note a{color:#8ec0ff}body.db .static-note{border-radius:0 0 14px 14px}</style><div class="static-note">A static copy of the site. The demo here is a <b>recording</b> of the real run; to run it live, see <a href="/run">Run it yourself</a>.</div>
 
   <!-- NAV — slim, translucent, one pill -->
   <nav class="l-nav" id="l-nav" aria-label="Primary">
@@ -20,10 +19,7 @@
       <span class="l-nav-mark">A</span>
       <span class="l-nav-wordmark">Aftercare</span>
     </a>
-    <span class="l-nav-cta">
-      <a class="l-pill l-pill-sm l-pill-alt" href="/run">Run it</a>
-      <a class="l-pill l-pill-sm" href="/sandbox">Recorded run</a>
-    </span>
+    <a class="l-pill l-pill-sm" href="/demo">Live demo</a>
   </nav>
 
   <!-- ═════════ 1 · HERO (black) ═════════ -->
@@ -34,8 +30,7 @@
       <h1 class="l-h1">Support.<br><span class="l-grad">Redefined.</span></h1>
       <p class="l-lead">The support line that already knows what you bought.</p>
       <div class="l-cta-row">
-        <a class="l-pill" href="/sandbox">Watch the recorded run</a>
-        <a class="l-pill l-pill-alt" href="/run">Run it yourself</a>
+        <a class="l-pill" href="/demo">Live demo</a>
         <a class="l-link" href="#step-0">How it works</a>
       </div>
     </div>
@@ -494,10 +489,9 @@
   <section class="l-band l-band-white l-cta" id="try">
     <div class="l-wrap l-cta-inner">
       <h2 class="l-cta-h2 l-reveal">Now see it run.</h2>
-      <p class="l-lead l-lead-dark l-reveal rd1">Watch a recorded run: eight customers, the agent at work, and a person taking over. Then run it yourself.</p>
+      <p class="l-lead l-lead-dark l-reveal rd1">Eight customers, the agent's real replies, the brand's dashboard, and a person taking over. Recorded from the running tool and replayed for you to click through. No sign-up, no download.</p>
       <div class="l-cta-row l-cta-row-center l-reveal rd2">
-        <a class="l-pill l-pill-lg" href="/sandbox">Watch the recorded run</a>
-        <a class="l-pill l-pill-lg l-pill-alt" href="/run">Run it yourself</a>
+        <a class="l-pill l-pill-lg" href="/demo">Open live demo</a>
         <a class="l-link l-link-dark" href="#top" id="l-top-link">Back to the top</a>
       </div>
     </div>
@@ -508,11 +502,11 @@
     <div class="l-footer-inner">
       <p>Aftercare — built for First Commit (WeMakeDevs × AWS): Build It · Best UI.</p>
       <p>Strands Agents · OpenSearch · Cedar · SAM Local, running locally with no AWS account. WhatsApp is simulated in this demo; the agent, manual search and access control are real.</p>
-      <p><a href="/sandbox">Recorded run</a> · <a href="/run">Run it yourself</a></p>
+      <p><a href="/demo">Live demo</a></p>
     </div>
   </footer>
 
   <script src="/static/replay-shim.js"></script>
-<script src="/static/landing.js"></script>
+  <script src="/static/landing.js"></script>
 </body>
 </html>

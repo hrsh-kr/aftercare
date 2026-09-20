@@ -1,10 +1,10 @@
 """Record the sandbox's eight personas from a RUNNING local stack (bash scripts/dev.sh) into
-site_src/recording.json, exactly as the browser would drive them: through the Meta-shaped webhook and the
-staff endpoints. The static Vercel site plays this back. Nothing in the recording is written by hand; only the
+public/static/recording.json, exactly as the browser would drive them: through the Meta-shaped webhook and the
+staff endpoints. The deployed demo page plays this back. Nothing in the recording is written by hand; only the
 persona blurbs and the choice of what each persona says are.
 
     .venv/bin/python scripts/record_playback.py [http://127.0.0.1:3000]
-Then: .venv/bin/python scripts/export_static_site.py
+Then: .venv/bin/python scripts/build_site.py
 """
 import json
 import sys
@@ -14,7 +14,7 @@ from pathlib import Path
 import requests
 
 BASE = next((a for a in sys.argv[1:] if a.startswith("http")), "http://127.0.0.1:3000").rstrip("/")
-OUT = Path(__file__).resolve().parent.parent / "site_src" / "recording.json"
+OUT = Path(__file__).resolve().parent.parent / "public" / "static" / "recording.json"
 LINE = {"aquaspin": "+91 1800 000 0001", "arcticair": "+91 1800 000 0002"}
 NAMES = {"aquaspin": "AquaSpin", "arcticair": "ArcticAir"}
 

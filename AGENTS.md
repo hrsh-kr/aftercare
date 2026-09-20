@@ -17,7 +17,7 @@ tests/run_all.sh                         # tests (services from dev.sh must be u
 4. **Identity comes from the signed session cookie**, never a header or body field. Every staff action is `cedar_authz.authorize(...)`; the response names the deciding policy.
 5. **No PII in logs** (phones, complaint text). Use `src/webapp/observability.py`.
 6. **One synonym list** (`src/domain/retrieval.py: SYNONYM_GROUPS`) feeds both the OpenSearch analyzer and the Python coverage gate; changing it means a new index name in `opensearch_retrieval.py`.
-7. `/demo` (`public/static/demo.*`, `templates/demo.html`) is the separate guided page; `/sandbox` is the free-form real demo.
+7. **`/demo` is a recording** (`templates/demo.html` + `public/static/recording.json`, captured from the real stack); `/sandbox` is the free-form real demo and runs only locally. The pages Vercel serves are pre-rendered from the templates into `public/*.html` (`scripts/build_site.py`); after changing a template, re-run it (`tests/test_site_fresh.py` fails if you forget).
 
 ## Where to change what
 | To change | Edit |
@@ -28,7 +28,7 @@ tests/run_all.sh                         # tests (services from dev.sh must be u
 | Manuals / terms / order files | `fixtures/` (re-run `scripts/bootstrap_local.py` to re-index) |
 | Who may do what | `policies/aftercare.cedar` + `.cedarschema` (`tests/test_cedar.py`) |
 | A DynamoDB access pattern | `src/storage/dynamodb_store.py` + `docs/DYNAMODB_DESIGN.md` (`tests/test_store_contract.py`) |
-| The static/Vercel copy | `scripts/record_playback.py` then `scripts/export_static_site.py` (`site/` is generated: never edit it by hand) |
+| The deployed (Vercel) pages | edit the template, then `scripts/build_site.py`; to refresh the recorded conversations, `scripts/record_playback.py` (needs `dev.sh` running) then `build_site.py`. `public/*.html` is generated: never edit by hand |
 | UI | `public/static/*.{css,js}`, `src/webapp/templates/*.html` (static files are live; templates need a rebuild) |
 
 Names: `domain/` (catalog, registration, retrieval), `agent/`, `records/` (tickets, cases), `storage/`, `authz/`, `channel/`. Everything in `fixtures/` is fabricated.

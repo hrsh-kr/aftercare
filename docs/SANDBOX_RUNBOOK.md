@@ -4,7 +4,7 @@
 the phone talks to a Meta-shaped webhook on this server, every message is stored in DynamoDB, and the brand's
 inbox reads the same log. The agent, manual search, tickets, Cedar and analytics are the real components.
 
-(`/demo` is the separate guided page with five scripted-order scenarios; it is untouched by all of this.)
+(`/demo` is the *recorded* version of this: the deployed site's live-demo page replays eight of these conversations from `public/static/recording.json`, captured by `scripts/record_playback.py`. This runbook is for the real, free-form one.)
 
 ## Start it
 
@@ -81,7 +81,6 @@ and things it can't diagnose. Anything else that shares no meaningful word with 
 
 ```bash
 .venv/bin/python scripts/run_sandbox_scenarios.py -v     # all eight personas through the webhook, with transcripts
-.venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000   # the /demo page's five scenarios
 PYTHONPATH=. .venv/bin/python scripts/eval_routing.py    # 41 phrasings route to the right thing
 PYTHONPATH=. .venv/bin/python scripts/eval_model.py      # how the local model does its two jobs
 ```

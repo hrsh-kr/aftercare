@@ -30,10 +30,10 @@ the analytics update. The click-by-click script, with expected results for eight
 
 | Page | What it is |
 |---|---|
-| `/` | The story: problem, onboarding by order file, the customer's six steps, "under the hood" with live status of each component |
-| `/sandbox` | **The real demo.** Order file → WhatsApp → agent → brand inbox → analytics. Only WhatsApp's network is simulated |
-| `/demo` | A guided page with five fixed scenarios, five different endings (also the real agent) |
-| `/dashboard` | The brand dashboard: complaints with red/yellow/green status, chat + reply, products, an AI analytics bar |
+| `/` | The story: problem, onboarding by order file, the customer's six steps, "under the hood" with the status of each component |
+| `/sandbox` | **The real thing, local only.** Load an order file, message as any customer, type anything, reply as a person from the inbox, see analytics update. Only WhatsApp's network is simulated |
+| `/demo` | **Live demo (recorded).** The brand's dashboard and eight customers' WhatsApp conversations replayed from real responses captured while running the tool |
+| `/dashboard` | The real brand dashboard (local): complaints with red/yellow/green status, chat + reply, products, an AI analytics bar |
 
 Staff sign-ins (demo passcodes, shown on the login page): `meera.nair` / `aqua-manager` (AquaSpin manager),
 `dev.patel` / `aqua-agent` (AquaSpin agent), `sara.thomas` / `arctic-manager` (ArcticAir manager). Agents may reply but
@@ -46,7 +46,7 @@ Cedar refuses them a resolve; "Try ArcticAir" while signed in to AquaSpin shows 
 | **Strands Agents** | Words one manual step, reads an ambiguous reply (Ollama, gemma2:9b). A fresh agent per call; a `HookProvider` times each model call | `src/agent/agent.py` |
 | **OpenSearch** | Manual retrieval (BM25, custom analyzer with a synonym filter); recurrence as a serial + `now-90d` range query; `terms` aggregations for the dashboard; ticket search | `src/domain/opensearch_retrieval.py`, `src/records/case_index.py` |
 | **Cedar** | Schema-validated policies for view / reply / resolve / unmask-phone, and a forbid across brands; session-derived principal; every decision names its policy | `policies/`, `src/authz/` |
-| **SAM CLI + API Gateway + Lambda** | The whole site is one Lambda (Powertools' API Gateway resolver): pages and 28 routes. `template.yaml` also declares both tables | `template.yaml`, `src/lambda_app.py` |
+| **SAM CLI + API Gateway + Lambda** | The whole site is one Lambda (Powertools' API Gateway resolver): pages and 26 routes. `template.yaml` also declares both tables | `template.yaml`, `src/lambda_app.py` |
 | **DynamoDB Local on Amazon Corretto** | Single table: registry, conversations, tickets, cases, the WhatsApp message log, inbox, atomic counter, TTL | `src/storage/`, `docker/`, [`docs/DYNAMODB_DESIGN.md`](docs/DYNAMODB_DESIGN.md) |
 | **Lambda Powertools** | JSON logs (never phones or complaint text), EMF metrics, `Idempotency-Key` on start | `src/webapp/observability.py`, `idempotency.py` |
 
@@ -54,16 +54,16 @@ Cedar refuses them a resolve; "Try ArcticAir" while signed in to AquaSpin shows 
 deployed. `template.yaml` is written for `sam deploy`; [ARCHITECTURE §9](docs/ARCHITECTURE.md) maps each piece to its managed
 service. **Not used, and why:** LocalStack (needs its own auth token), PartyRock (personal sign-in), Finch, EKS Distro/Anywhere and Firecracker (no natural role).
 
-## Static site (Vercel)
+## Deploy to Vercel (the website)
 
-The live demo can't run on a static host (it needs OpenSearch, DynamoDB, Cedar and a model). `site/` is a **static copy** made
-for Vercel: the story page, a **recorded run** of the sandbox (eight customers replayed from real transcripts captured from the
-running stack), and a read-only dashboard snapshot, each labelled as a recording. Deploy it by importing the repo in Vercel with
-**Root Directory = `site`** (no build command), or `cd site && npx vercel --prod`. Regenerate after any change:
+The website is what Vercel serves: import the GitHub repo in Vercel and it deploys `public/` (`vercel.json`; no build step). Every push to
+`main` redeploys. The pages are pre-rendered from the same templates the Lambda uses (`scripts/build_site.py`), and the live-demo page replays
+real responses recorded from the running tool (`scripts/record_playback.py`). The interactive, free-form version can't run on a static host
+(it needs OpenSearch, DynamoDB, Cedar and a model), so it stays local. After changing a template or re-recording:
 
 ```bash
-.venv/bin/python scripts/record_playback.py         # needs `bash scripts/dev.sh` running; writes site_src/recording.json
-.venv/bin/python scripts/export_static_site.py      # renders the real templates + assets into site/
+.venv/bin/python scripts/record_playback.py   # optional; needs `bash scripts/dev.sh` running; refreshes public/static/recording.json
+.venv/bin/python scripts/build_site.py        # re-renders public/*.html from the templates; commit the result
 ```
 
 ## Verify the claims
@@ -71,7 +71,6 @@ running stack), and a read-only dashboard snapshot, each labelled as a recording
 ```bash
 tests/run_all.sh                                                  # unit + integration (stubbed model; real Cedar, OpenSearch, DynamoDB Local)
 .venv/bin/python scripts/run_sandbox_scenarios.py -v              # 8 personas through the WhatsApp webhook, real model, 25 checks
-.venv/bin/python scripts/run_scenarios.py http://127.0.0.1:3000   # the /demo page's 5 scenarios
 PYTHONPATH=. .venv/bin/python scripts/eval_routing.py             # 41 customer phrasings route correctly
 PYTHONPATH=. .venv/bin/python scripts/eval_model.py               # how local models do the two jobs the model has
 ```

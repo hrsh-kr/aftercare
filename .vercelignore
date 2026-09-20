@@ -1,0 +1,8 @@
+.venv
+.aws-sam
+lambda_pkg
+tools
+data
+__pycache__
+node_modules
+.claude

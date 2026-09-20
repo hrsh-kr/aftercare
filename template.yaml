@@ -90,12 +90,6 @@ Resources:
         GetApiHealth:
           Type: Api
           Properties: {Path: "/api/health", Method: get}
-        GetApiCustomers:
-          Type: Api
-          Properties: {Path: "/api/customers", Method: get}
-        PostApiLookup:
-          Type: Api
-          Properties: {Path: "/api/lookup", Method: post}
         PostApiStart:
           Type: Api
           Properties: {Path: "/api/start", Method: post}

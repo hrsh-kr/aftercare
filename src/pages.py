@@ -8,8 +8,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from src.domain.catalog import BRAND_SLUGS, brand_for
-from src.domain.registration import load_registrations
-from src.webapp import api_core as core
+from src.domain.registration import load_registrations, mask_phone
 
 _env = Environment(
     loader=FileSystemLoader(str(Path(__file__).resolve().parent / "webapp" / "templates")),
@@ -22,7 +21,7 @@ def landing() -> str:
     (catalog.py) and real per-brand counts -- nothing invented."""
     regs = load_registrations()
     rows = [
-        {"customer": r.customer_name, "phone": core.mask_phone(r.customer_phone), "product": r.product_name,
+        {"customer": r.customer_name, "phone": mask_phone(r.customer_phone), "product": r.product_name,
          "serial": r.serial_number, "purchased": r.purchase_date, "brand": brand_for(r.product_id)}
         for r in regs
     ]
