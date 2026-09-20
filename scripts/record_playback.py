@@ -72,28 +72,28 @@ def main():
         P.append(p)
         return p
 
-    p = new("arjun", "Arjun Mehta", "aquaspin", "+919000000101", "One product. A noisy washing machine, fixed in one step.", "Resolved, no ticket")
+    p = new("arjun", "Arjun Mehta", "aquaspin", "+919000000101", "A noisy washer. One step fixes it.", "Fixed, no ticket")
     p.say("My washing machine bangs loudly when it spins"); p.say("That fixed it, thank you!")
 
-    p = new("kavya", "Kavya Nair", "arcticair", "+919000000102", "An AC that won't cool. Two manual steps don't fix it.", "Handed to a person: two steps tried")
+    p = new("kavya", "Kavya Nair", "arcticair", "+919000000102", "An AC that won't cool. Two steps, no luck.", "Handed to a person")
     p.say("My AC isn't cooling the room"); p.say("Still blowing warm air"); p.say("No change, still not cooling")
 
-    p = new("rohan", "Rohan Desai", "aquaspin", "+919000000103", "Owns two machines. The smell is back, and the agent remembers.", "Handed to a person: recurring issue")
+    p = new("rohan", "Rohan Desai", "aquaspin", "+919000000103", "Two machines. The smell is back.", "Recurring issue, spotted")
     p.say("Hi"); p.say("My clothes smell bad after washing"); p.say(button_title="FC-700 Washing Machine")
 
-    p = new("neha", "Neha Kulkarni", "aquaspin", "+919000000104", "Asks about her warranty: motor still covered, parts expired.", "Answered from the purchase date, no model")
+    p = new("neha", "Neha Kulkarni", "aquaspin", "+919000000104", "Is my warranty still on?", "Answered from the purchase date")
     p.say("Is my machine still under warranty?")
 
-    p = new("imran", "Imran Sheikh", "arcticair", "+919000000105", "Compressor warranty question, then water dripping from the AC.", "Answered, then a step from the manual")
+    p = new("imran", "Imran Sheikh", "arcticair", "+919000000105", "Compressor cover, then a leak.", "Answered, then a fix")
     p.say("Is my AC compressor covered under warranty?"); p.say("Water is dripping from my AC")
 
-    p = new("divya", "Divya Rao", "aquaspin", "+919000000106", "Out of warranty, then a fault that isn't in the manual at all.", "Handed to a person: not in the manual")
+    p = new("divya", "Divya Rao", "aquaspin", "+919000000106", "A fault that isn't in the manual.", "Won't guess. Hands over")
     p.say("Is my machine still under warranty?"); p.say("The touch panel flickers and won't respond")
 
-    p = new("sanjay", "Sanjay Iyer", "arcticair", "+919000000107", "A burning smell. No troubleshooting.", "Safety: the manual's own warning, a ticket")
+    p = new("sanjay", "Sanjay Iyer", "arcticair", "+919000000107", "A burning smell.", "Safety first. No troubleshooting")
     p.say("There's a burning smell coming from my AC")
 
-    p = new("meera", "Meera Pillai", "aquaspin", "+919000000108", "Asks for a person; the brand replies from its inbox, in the same chat.", "A person takes over and resolves it")
+    p = new("meera", "Meera Pillai", "aquaspin", "+919000000108", "“Let me talk to a person.”", "A person takes over")
     rep = p.say("I want to talk to a person")
     tid = next(m["meta"]["ticket_id"] for m in rep if (m.get("meta") or {}).get("ticket_id"))
 

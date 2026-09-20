@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
   <title>Aftercare — Live demo</title>
-  <meta name="description" content="Aftercare's demo: the brand's dashboard and eight customers' WhatsApp conversations, replayed from real responses recorded while running the tool (Strands, OpenSearch, Cedar, DynamoDB, one Lambda).">
+  <meta name="description" content="Eight customers, one real agent. Real replies recorded from the running tool (Strands, OpenSearch, Cedar, DynamoDB, one Lambda), and the dashboard the brand sees.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,19 +22,18 @@
   <header class="sb-hero pb-hero">
     <div class="l-hero-glow" aria-hidden="true"></div>
     <div class="sb-wrap">
-      <p class="l-eyebrow"><span class="l-pip"></span>Live demo · real responses, replayed</p>
+      <p class="l-eyebrow"><span class="l-pip"></span>Live demo</p>
       <h1 class="sb-h1">Eight customers.<br><span class="l-grad">One real agent.</span></h1>
-      <p class="l-sub">Everything below was recorded while running the tool: the agent's actual replies, the trace of what it did, the tickets, and the dashboard the brand sees. Nothing on this page is hard-coded or generated. Try any customer, press Send, and watch what happened when those messages were sent.</p>
+      <p class="l-sub">Real replies. Recorded from the running tool.</p>
+      <p class="pb-stamp">Recorded <b id="pb-when">…</b> · <span id="pb-model">…</span> · Fabricated customers · <a href="#run">Run it yourself</a></p>
     </div>
   </header>
 
-  <div class="pb-banner">This is a <b>recording</b> made on <b id="pb-when">…</b> from the running stack (<span id="pb-model">…</span> on Ollama, OpenSearch, DynamoDB Local, Cedar, one Lambda on SAM Local). The customers, orders and manuals are fabricated; only WhatsApp's network is simulated. <a href="#run">Run the real thing yourself</a> to try any message you like.</div>
-
-  <!-- the conversations -->
+  <!-- try a customer -->
   <section class="pb-section" id="try" aria-labelledby="h-try">
-    <div class="pb-head">
+    <div class="sb-wrap pb-head">
       <h2 class="pb-h2" id="h-try">Try a customer.</h2>
-      <p class="pb-lead">Pick someone, press Send, and watch what happened. Each one ends differently.</p>
+      <p class="pb-lead">Pick one. Press Send.</p>
     </div>
     <div class="sb-wrap pb-cols">
       <section class="pb-col" aria-labelledby="h-who">
@@ -56,10 +55,10 @@
           <div class="sb-thread" id="pb-thread" aria-live="polite"></div>
         </div>
         <div class="pb-controls">
-          <p class="pb-typed" id="pb-typed" hidden><span class="pb-tick" aria-hidden="true">✓</span> Message already typed. <b>Just press Send</b> <span class="pb-arrow" aria-hidden="true">→</span></p>
+          <p class="pb-typed" id="pb-typed" hidden><span class="pb-tick" aria-hidden="true">✓</span> Already typed. <b>Just press Send</b> <span class="pb-arrow" aria-hidden="true">→</span></p>
           <div class="pb-next"><input id="pb-input" type="text" readonly aria-label="Next message, already typed"><button id="pb-send" type="button">Send</button></div>
-          <p class="pb-over" id="pb-over" role="status" hidden>Example run over. Pick another customer, or restart this one.</p>
-          <div class="pb-tools"><label><input type="checkbox" id="pb-auto"> Autoplay</label><button class="sb-textbtn" id="pb-restart" type="button">Restart this customer</button></div>
+          <p class="pb-over" id="pb-over" role="status" hidden>Example run over. Pick another customer.</p>
+          <div class="pb-tools"><label><input type="checkbox" id="pb-auto"> Autoplay</label><button class="sb-textbtn" id="pb-restart" type="button">Restart</button></div>
         </div>
       </section>
 
@@ -73,40 +72,43 @@
 
   <!-- the brand's dashboard -->
   <section class="pb-section pb-dash" aria-labelledby="h-dash">
-    <div class="pb-head">
+    <div class="sb-wrap pb-head">
       <h2 class="pb-h2" id="h-dash">What the brand sees.</h2>
-      <p class="pb-lead">The dashboard after conversations like these: every complaint with a red, yellow or green status, the chat behind it, the registered products, and an AI analytics bar at the bottom. Cedar decides who may do what. The second tab is a real refusal, when AquaSpin's manager tries to open ArcticAir's dashboard.</p>
+      <p class="pb-lead">Every complaint. Every status. One glance.</p>
     </div>
+    <ul class="sb-wrap pb-trio">
+      <li><b>Red, yellow, green.</b> Status in one look.</li>
+      <li><b>The chat behind it.</b> Read it, reply to it.</li>
+      <li><b>AI analytics.</b> Why people need a person.</li>
+    </ul>
     <div class="pb-dash-body">
-      <div class="sb-tabs pb-dash-tabs" role="tablist">
-        <button class="sb-tab on" data-src="/dashboard-snapshot-aquaspin.html" role="tab">AquaSpin dashboard</button>
-        <button class="sb-tab" data-src="/dashboard-snapshot-arcticair.html" role="tab">Try ArcticAir's (refused)</button>
-      </div>
-      <iframe class="pb-frame" id="pb-frame" src="/dashboard-snapshot-aquaspin.html" title="Recorded brand dashboard" loading="lazy"></iframe>
+      <iframe class="pb-frame" id="pb-frame" src="/dashboard-snapshot-aquaspin.html" title="Recorded brand dashboard" loading="lazy" scrolling="no"></iframe>
     </div>
   </section>
 
   <!-- run it yourself -->
   <section class="pb-section pb-run" id="run" aria-labelledby="h-run">
-    <div class="pb-head">
-      <h2 class="pb-h2" id="h-run">Run it yourself, and say anything.</h2>
-      <p class="pb-lead">The recording can only replay what was recorded. The real thing is one Lambda behind API Gateway on SAM Local, with OpenSearch, DynamoDB Local, Cedar and a local model. It runs on your machine: load an order file, message as any customer and type whatever you like.</p>
+    <div class="sb-wrap pb-head">
+      <h2 class="pb-h2" id="h-run">Run it yourself.</h2>
+      <p class="pb-lead">Type anything. It runs on your machine.</p>
     </div>
-    <div class="pb-run-body">
+    <div class="sb-wrap pb-run-body">
 <pre>python3 -m venv .venv &amp;&amp; .venv/bin/pip install -r requirements.txt
 bash scripts/install_cedar_cli.sh
 ollama serve            # another terminal
 bash scripts/dev.sh     # then open http://127.0.0.1:3000/sandbox</pre>
-      <p class="pb-fine">Needs Docker, the AWS SAM CLI and Ollama. Click-by-click script: <code>docs/SANDBOX_RUNBOOK.md</code>. Design: <code>docs/ARCHITECTURE.md</code>. No AWS account is used and nothing is deployed to AWS (Build It track).</p>
+      <p class="pb-fine">Docker, SAM CLI, Ollama. No AWS account. Click-by-click: <code>docs/SANDBOX_RUNBOOK.md</code>.</p>
     </div>
   </section>
 
-  <p class="sb-honest">Recorded by <code>scripts/record_playback.py</code> through the same Meta-shaped webhook and staff endpoints the real sandbox uses. Only the persona blurbs are hand-written. What you see is a playback, so it cannot answer anything that was not recorded.</p>
+  <p class="sb-honest">Recorded, not generated. Customers, orders and manuals are fabricated. Only WhatsApp's network is simulated.</p>
   <script>
-    document.querySelectorAll(".pb-dash-tabs .sb-tab").forEach((t) => t.addEventListener("click", () => {
-      document.querySelectorAll(".pb-dash-tabs .sb-tab").forEach((x) => x.classList.toggle("on", x === t));
-      document.getElementById("pb-frame").src = t.dataset.src;
-    }));
+    (function () {
+      // size the dashboard frame to its content, so nothing scrolls inside it
+      const f = document.getElementById("pb-frame");
+      const fit = () => { try { f.style.height = f.contentDocument.documentElement.scrollHeight + "px"; } catch (e) { /* cross-origin: keep the CSS height */ } };
+      f.addEventListener("load", () => { fit(); try { new ResizeObserver(fit).observe(f.contentDocument.body); } catch (e) { setInterval(fit, 800); } });
+    })();
   </script>
   <script src="/static/playback.js"></script>
 </body>

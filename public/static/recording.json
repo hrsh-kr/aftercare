@@ -44,8 +44,8 @@
    "name": "Arjun Mehta",
    "brand": "aquaspin",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "One product. A noisy washing machine, fixed in one step.",
-   "outcome": "Resolved, no ticket",
+   "blurb": "A noisy washer. One step fixes it.",
+   "outcome": "Fixed, no ticket",
    "steps": [
     {
      "who": "customer",
@@ -141,8 +141,8 @@
    "name": "Kavya Nair",
    "brand": "arcticair",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "An AC that won't cool. Two manual steps don't fix it.",
-   "outcome": "Handed to a person: two steps tried",
+   "blurb": "An AC that won't cool. Two steps, no luck.",
+   "outcome": "Handed to a person",
    "steps": [
     {
      "who": "customer",
@@ -280,8 +280,8 @@
    "name": "Rohan Desai",
    "brand": "aquaspin",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "Owns two machines. The smell is back, and the agent remembers.",
-   "outcome": "Handed to a person: recurring issue",
+   "blurb": "Two machines. The smell is back.",
+   "outcome": "Recurring issue, spotted",
    "steps": [
     {
      "who": "customer",
@@ -399,8 +399,8 @@
    "name": "Neha Kulkarni",
    "brand": "aquaspin",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "Asks about her warranty: motor still covered, parts expired.",
-   "outcome": "Answered from the purchase date, no model",
+   "blurb": "Is my warranty still on?",
+   "outcome": "Answered from the purchase date",
    "steps": [
     {
      "who": "customer",
@@ -452,8 +452,8 @@
    "name": "Imran Sheikh",
    "brand": "arcticair",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "Compressor warranty question, then water dripping from the AC.",
-   "outcome": "Answered, then a step from the manual",
+   "blurb": "Compressor cover, then a leak.",
+   "outcome": "Answered, then a fix",
    "steps": [
     {
      "who": "customer",
@@ -544,8 +544,8 @@
    "name": "Divya Rao",
    "brand": "aquaspin",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "Out of warranty, then a fault that isn't in the manual at all.",
-   "outcome": "Handed to a person: not in the manual",
+   "blurb": "A fault that isn't in the manual.",
+   "outcome": "Won't guess. Hands over",
    "steps": [
     {
      "who": "customer",
@@ -638,8 +638,8 @@
    "name": "Sanjay Iyer",
    "brand": "arcticair",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "A burning smell. No troubleshooting.",
-   "outcome": "Safety: the manual's own warning, a ticket",
+   "blurb": "A burning smell.",
+   "outcome": "Safety first. No troubleshooting",
    "steps": [
     {
      "who": "customer",
@@ -701,8 +701,8 @@
    "name": "Meera Pillai",
    "brand": "aquaspin",
    "phone_masked": "+91900 000\u00b7\u00b7\u00b7\u00b7\u00b7",
-   "blurb": "Asks for a person; the brand replies from its inbox, in the same chat.",
-   "outcome": "A person takes over and resolves it",
+   "blurb": "\u201cLet me talk to a person.\u201d",
+   "outcome": "A person takes over",
    "steps": [
     {
      "who": "customer",

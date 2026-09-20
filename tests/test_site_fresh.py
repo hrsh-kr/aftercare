@@ -15,7 +15,7 @@ def test_pages_are_up_to_date():
 def test_the_recording_is_present_and_complete():
     import json
     rec = json.loads((build_site.PUBLIC / "static" / "recording.json").read_text())
-    assert len(rec["personas"]) == 8 and rec["dashboard"]["aquaspin"]["tickets"] and rec["dashboard"]["arcticair"]["_status"] == 403
+    assert len(rec["personas"]) == 8 and rec["dashboard"]["aquaspin"]["tickets"]
 
 
 def test_deployed_pages_contain_no_local_urls_or_secrets():

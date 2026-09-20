@@ -9,7 +9,7 @@ wasn't re-run, so the deployed pages can't drift from the source.
 
   public/index.html                          the landing page (its /api calls are answered from the recording by replay-shim.js)
   public/demo.html                           the live demo: the recorded dashboard and the recorded conversations (public/static/recording.json)
-  public/dashboard-snapshot-<brand>.html     the real dashboard UI over recorded API responses, read-only (framed on the demo page)
+  public/dashboard-snapshot-aquaspin.html   the real dashboard UI over recorded API responses, read-only (framed on the demo page)
 The recording itself comes from scripts/record_playback.py (run against a live stack), never from this script.
 """
 import re
@@ -48,7 +48,6 @@ def render_all() -> dict[str, str]:
         "index.html": landing(),
         "demo.html": pages.demo(),
         "dashboard-snapshot-aquaspin.html": snapshot("aquaspin"),
-        "dashboard-snapshot-arcticair.html": snapshot("arcticair"),
     }
 
 

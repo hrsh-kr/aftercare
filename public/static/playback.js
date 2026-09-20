@@ -11,6 +11,7 @@ const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LINES = { aquaspin: { name: "AquaSpin", initials: "Aq", number: "+91 1800 000 0001", bg: "linear-gradient(135deg,#1f7a5c,#30B0C7)" },
                 arcticair: { name: "ArcticAir", initials: "Ar", number: "+91 1800 000 0002", bg: "linear-gradient(135deg,#1a4a8e,#5aa0ff)" } };
 
+const TONE = { arjun: "green", kavya: "orange", rohan: "purple", neha: "blue", imran: "teal", divya: "yellow", sanjay: "pink", meera: "indigo" };
 let rec, cur = null, idx = 0, busy = false, run = 0, thread = [];
 
 fetch("/static/recording.json").then((r) => r.json()).then((j) => { rec = j; init(); });
@@ -21,9 +22,9 @@ function init() {
   $("pb-model").textContent = rec.model;
   const box = $("pb-people");
   rec.personas.forEach((p) => {
-    const b = el("button", "pb-person"); b.type = "button"; b.dataset.id = p.id;
+    const b = el("button", "pb-person tone-" + (TONE[p.id] || "blue")); b.type = "button"; b.dataset.id = p.id;
     b.append(el("b", null, p.name), el("small", null, `${LINES[p.brand].name} line · ${p.phone_masked}`), el("span", null, p.blurb),
-             el("span", "pb-out " + (/Resolved|Answered/.test(p.outcome) ? "ok" : /Safety/.test(p.outcome) ? "safety" : ""), p.outcome));
+             el("span", "pb-out", p.outcome));
     b.addEventListener("click", () => select(p.id));
     box.appendChild(b);
   });
