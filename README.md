@@ -32,7 +32,7 @@ the analytics update. The click-by-click script, with expected results for eight
 |---|---|
 | `/` | The story: problem, onboarding by order file, the customer's six steps, "under the hood" with the status of each component |
 | `/sandbox` | **The real thing, local only.** Load an order file, message as any customer, type anything, reply as a person from the inbox, see analytics update. Only WhatsApp's network is simulated |
-| `/demo` | **Live demo (recorded).** The brand's dashboard and eight customers' WhatsApp conversations replayed from real responses captured while running the tool |
+| `/demo` | **Live demo (recorded).** The same flow as the sandbox, replayed from real responses captured while running the tool: the order-file check, eight customers' WhatsApp conversations (click what they'd say), what Aftercare did, the brand's inbox where a person replies, analytics, and the dashboard |
 | `/dashboard` | The real brand dashboard (local): complaints with red/yellow/green status, chat + reply, products, an AI analytics bar |
 
 Staff sign-ins (demo passcodes, shown on the login page): `meera.nair` / `aqua-manager` (AquaSpin manager),

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
   <title>Aftercare — Live demo</title>
-  <meta name="description" content="Eight customers, one real agent. Real replies recorded from the running tool (Strands, OpenSearch, Cedar, DynamoDB, one Lambda), and the dashboard the brand sees.">
+  <meta name="description" content="An order file, eight customers, one real agent, and the brand's inbox and dashboard. Real replies recorded from the running tool (Strands, OpenSearch, Cedar, DynamoDB, one Lambda).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,11 +29,23 @@
     </div>
   </header>
 
-  <!-- try a customer -->
+  <!-- 1 · the order file -->
+  <section class="pb-section" id="order" aria-labelledby="h-order">
+    <div class="sb-wrap pb-head">
+      <h2 class="pb-h2" id="h-order">Start with an order file.</h2>
+      <p class="pb-lead">Every row checked. Every customer registered.</p>
+    </div>
+    <div class="sb-wrap pb-order">
+      <div class="pb-samples" id="pb-samples"></div>
+      <div class="sb-result pb-result" id="pb-result" aria-live="polite"><p class="pb-hint">Pick a file. See what Aftercare does with it.</p></div>
+    </div>
+  </section>
+
+  <!-- 2 · try a customer -->
   <section class="pb-section" id="try" aria-labelledby="h-try">
     <div class="sb-wrap pb-head">
       <h2 class="pb-h2" id="h-try">Try a customer.</h2>
-      <p class="pb-lead">Pick one. Press Send.</p>
+      <p class="pb-lead">Pick one. Click what they'd say.</p>
     </div>
     <div class="sb-wrap pb-cols">
       <section class="pb-col" aria-labelledby="h-who">
@@ -53,19 +65,36 @@
             <div class="l-ph-headtext"><div class="l-ph-name" id="pb-linename">AquaSpin Support</div><div class="l-ph-sub" id="pb-linesub">Business account</div></div>
           </div>
           <div class="sb-thread" id="pb-thread" aria-live="polite"></div>
+          <form class="sb-composer" id="pb-composer" autocomplete="off">
+            <input id="pb-input" type="text" placeholder="Message" aria-label="Message" readonly>
+            <button type="submit" aria-label="Send the next message">➤</button>
+          </form>
         </div>
-        <div class="pb-controls">
-          <p class="pb-typed" id="pb-typed" hidden><span class="pb-tick" aria-hidden="true">✓</span> Already typed. <b>Just press Send</b> <span class="pb-arrow" aria-hidden="true">→</span></p>
-          <div class="pb-next"><input id="pb-input" type="text" readonly aria-label="Next message, already typed"><button id="pb-send" type="button">Send</button></div>
-          <p class="pb-over" id="pb-over" role="status" hidden>Example run over. Pick another customer.</p>
-          <div class="pb-tools"><label><input type="checkbox" id="pb-auto"> Autoplay</label><button class="sb-textbtn" id="pb-restart" type="button">Restart</button></div>
-        </div>
+        <p class="sb-chip-title">Try saying <span>(click to send)</span></p>
+        <div class="sb-chips" id="pb-chips"></div>
+        <p class="pb-over" id="pb-over" role="status" hidden>Example run over. Pick another customer.</p>
+        <button class="sb-textbtn pb-restart" id="pb-restart" type="button">Restart this customer</button>
       </section>
 
       <section class="pb-col" aria-labelledby="h-brand">
-        <h3 class="pb-kicker" id="h-brand"><i>3</i>What Aftercare did</h3>
-        <ol class="d-trace" id="pb-trace"></ol>
-        <div class="pb-inbox-card" id="pb-inbox" hidden></div>
+        <h3 class="pb-kicker" id="h-brand"><i>3</i>The brand</h3>
+        <div class="sb-tabs" role="tablist">
+          <button class="sb-tab on" data-tab="trace" role="tab">What Aftercare did</button>
+          <button class="sb-tab" data-tab="inbox" role="tab">Inbox <i id="pb-inbox-count" hidden></i></button>
+          <button class="sb-tab" data-tab="stats" role="tab">Analytics</button>
+        </div>
+        <div class="sb-pane" id="pane-trace"><ol class="d-trace" id="pb-trace"></ol></div>
+        <div class="sb-pane" id="pane-inbox" hidden>
+          <p class="sb-who" id="pb-who"></p>
+          <div class="sb-inbox" id="pb-inbox"><p class="sb-empty">No chats yet. Someone has to need a person first.</p></div>
+          <div class="sb-thread-wrap" id="pb-staff" hidden>
+            <div class="sb-staff-head"><b id="pb-staff-title"></b><span id="pb-staff-badge"></span></div>
+            <div class="sb-staff-thread" id="pb-staff-thread"></div>
+            <div class="pb-actions" id="pb-actions"></div>
+            <p class="pb-note" id="pb-staff-msg" role="status"></p>
+          </div>
+        </div>
+        <div class="sb-pane" id="pane-stats" hidden><div id="pb-stats"></div></div>
       </section>
     </div>
   </section>

@@ -1,5 +1,5 @@
 {
- "recorded_at": "2026-09-20T18:08:51",
+ "recorded_at": "2026-09-20T20:17:47",
  "model": "gemma2:9b",
  "stack": {
   "ollama": "ok",
@@ -55,8 +55,8 @@
       {
        "sender": "aftercare",
        "kind": "text",
-       "text": "Check if your washing machine is level by gently rocking it from each corner \u2014 adjust the feet until it doesn't rock, and let me know how it goes.",
-       "created_at": "2026-09-20T12:38:38.495411",
+       "text": "Check that your washing machine is level by rocking it gently from each corner \u2014 adjust the feet if needed. Let me know how it goes after you've done this.",
+       "created_at": "2026-09-20T14:47:37.188421",
        "meta": {
         "source": "manual",
         "section_heading": "4.1 Drum wobbling or banging noise during spin",
@@ -70,7 +70,7 @@
          "parts_status": "active"
         },
         "model_ms": [
-         4105
+         5720
         ],
         "history_engine": "opensearch",
         "storage": "dynamodb",
@@ -82,7 +82,7 @@
        "sender": "system",
        "kind": "note",
        "text": "AquaSpin manual \u00b7 4.1 Drum wobbling or banging noise during spin",
-       "created_at": "2026-09-20T12:38:38.498514"
+       "created_at": "2026-09-20T14:47:37.192419"
       }
      ]
     },
@@ -95,7 +95,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Glad that fixed it! Let us know if anything else comes up.",
-       "created_at": "2026-09-20T12:38:38.634553",
+       "created_at": "2026-09-20T14:47:37.346463",
        "meta": {
         "source": "manual",
         "section_heading": "4.1 Drum wobbling or banging noise during spin",
@@ -118,7 +118,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Resolved. No ticket needed.",
-       "created_at": "2026-09-20T12:38:38.636545"
+       "created_at": "2026-09-20T14:47:37.348320"
       }
      ]
     }
@@ -131,7 +131,7 @@
       "serial": "WM-FC-91011",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.285155",
+     "created_at": "2026-09-20T14:47:31.307958",
      "text": "Hi Arjun! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91011, bought 14 Jul 2026.\nMotor warranty (2 years): active until 14 Jul 2028.\nOther parts (1 year): active until 14 Jul 2027.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -152,8 +152,8 @@
       {
        "sender": "aftercare",
        "kind": "text",
-       "text": "Try turning off the AC, removing and checking both filters for dustiness, cleaning them if needed, and letting them dry fully before reinstalling. Let me know how it goes.",
-       "created_at": "2026-09-20T12:38:43.119956",
+       "text": "Try turning off the AC, removing and checking both filters for dust. Let me know if cleaning them helps!",
+       "created_at": "2026-09-20T14:47:40.210940",
        "meta": {
         "source": "manual",
         "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
@@ -167,7 +167,7 @@
          "parts_status": "active"
         },
         "model_ms": [
-         4165
+         2751
         ],
         "history_engine": "opensearch",
         "storage": "dynamodb",
@@ -179,7 +179,7 @@
        "sender": "system",
        "kind": "note",
        "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
-       "created_at": "2026-09-20T12:38:43.125293"
+       "created_at": "2026-09-20T14:47:40.215857"
       }
      ]
     },
@@ -191,8 +191,8 @@
       {
        "sender": "aftercare",
        "kind": "text",
-       "text": "Please check that the outdoor unit isn't blocked or enclosed and let me know if that makes a difference.",
-       "created_at": "2026-09-20T12:38:46.259056",
+       "text": "Please check that the outdoor unit isn't blocked or enclosed and let me know if that helps.",
+       "created_at": "2026-09-20T14:47:42.548925",
        "meta": {
         "source": "manual",
         "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
@@ -206,7 +206,7 @@
          "parts_status": "active"
         },
         "model_ms": [
-         2690
+         2250
         ],
         "storage": "dynamodb",
         "status": "waiting",
@@ -217,7 +217,7 @@
        "sender": "system",
        "kind": "note",
        "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
-       "created_at": "2026-09-20T12:38:46.265727"
+       "created_at": "2026-09-20T14:47:42.550690"
       }
      ]
     },
@@ -230,7 +230,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Sorry those two steps didn't fix it. I've handed this to our service team as ticket TBB-0001, including what we already tried, so you won't be asked to repeat it.",
-       "created_at": "2026-09-20T12:38:46.481163",
+       "created_at": "2026-09-20T14:47:42.628413",
        "meta": {
         "source": "manual",
         "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
@@ -257,7 +257,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Ticket TBB-0001 \u00b7 Two steps tried",
-       "created_at": "2026-09-20T12:38:46.483114"
+       "created_at": "2026-09-20T14:47:42.631330"
       }
      ]
     }
@@ -270,7 +270,7 @@
       "serial": "AC-CB-91012",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.290596",
+     "created_at": "2026-09-20T14:47:31.313540",
      "text": "Hi Kavya! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91012, bought 22 Jan 2026.\nCompressor warranty (5 years): active until 22 Jan 2031.\nOther parts (1 year): active until 22 Jan 2027.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -292,7 +292,7 @@
        "sender": "aftercare",
        "kind": "buttons",
        "text": "Hi Rohan! I'm AquaSpin's support assistant. I can see your AquaSpin FC-700 Washing Machine, AquaSpin FL-900 Front Loader. Ask me about your warranty, or tell me what's going wrong.",
-       "created_at": "2026-09-20T12:38:46.550117",
+       "created_at": "2026-09-20T14:47:42.676849",
        "buttons": [
         {
          "id": "cmd:warranty",
@@ -315,7 +315,7 @@
        "sender": "aftercare",
        "kind": "buttons",
        "text": "Thanks Rohan. Which product is this about?",
-       "created_at": "2026-09-20T12:38:46.568538",
+       "created_at": "2026-09-20T14:47:42.695451",
        "buttons": [
         {
          "id": "prod:WM-FC-91013",
@@ -338,7 +338,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "This looks like the same problem we handled on 13 Aug 2026. Repeating the same fix won't help, so I've passed it to our service team as ticket TBB-0002, with the earlier case attached. You won't have to explain it again.",
-       "created_at": "2026-09-20T12:38:46.655595",
+       "created_at": "2026-09-20T14:47:42.757806",
        "meta": {
         "source": "manual",
         "section_heading": "4.2 Foul smell or dirt/residue left on clothes after washing",
@@ -366,7 +366,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Ticket TBB-0002 \u00b7 Recurring issue",
-       "created_at": "2026-09-20T12:38:46.657791"
+       "created_at": "2026-09-20T14:47:42.759752"
       }
      ]
     }
@@ -379,7 +379,7 @@
       "serial": "WM-FC-91013",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.295536",
+     "created_at": "2026-09-20T14:47:31.355049",
      "text": "Hi Rohan! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91013, bought 03 Nov 2025.\nMotor warranty (2 years): active until 03 Nov 2027.\nOther parts (1 year): active until 03 Nov 2026.\nMessage us here any time you need help or want to check your warranty."
     },
     {
@@ -389,7 +389,7 @@
       "serial": "WM-FL-91014",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.299827",
+     "created_at": "2026-09-20T14:47:31.359563",
      "text": "Hi Rohan! Your AquaSpin FL-900 Front Loader is registered with AquaSpin.\nSerial WM-FL-91014, bought 30 May 2026.\nMotor warranty (2 years): active until 30 May 2028.\nOther parts (1 year): active until 30 May 2027.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -411,7 +411,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91015) was bought on 01 Jul 2025.\n- Motor (2 years): active until 01 Jul 2027, about 9 months left.\n- Other parts (1 year): expired on 01 Jul 2026.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
-       "created_at": "2026-09-20T12:38:46.701221",
+       "created_at": "2026-09-20T14:47:42.813362",
        "meta": {
         "source": "terms",
         "section_heading": "1. Warranty Period",
@@ -442,7 +442,7 @@
       "serial": "WM-FC-91015",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.303156",
+     "created_at": "2026-09-20T14:47:31.363023",
      "text": "Hi Neha! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91015, bought 01 Jul 2025.\nMotor warranty (2 years): active until 01 Jul 2027.\nOther parts (1 year): expired on 01 Jul 2026.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -464,7 +464,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Your ArcticAir 1.5T Split AC (serial AC-CB-91016) was bought on 10 Aug 2022.\n- Compressor (5 years): active until 10 Aug 2027, about 11 months left.\n- Other parts (1 year): expired on 10 Aug 2023.\nFrom the terms (2. What Is Covered): Manufacturing defects in the covered components above. Mechanical or electrical faults arising from normal household use, when the product was installed and maintained per the user manual. One free service visit per warranty year for a covered issue.\nIf something is wrong with it, just tell me what's happening.",
-       "created_at": "2026-09-20T12:38:46.747137",
+       "created_at": "2026-09-20T14:47:42.866633",
        "meta": {
         "source": "terms",
         "section_heading": "2. What Is Covered",
@@ -494,8 +494,8 @@
       {
        "sender": "aftercare",
        "kind": "text",
-       "text": "Switch the AC off and look at the drain pipe (the thin pipe from the indoor unit to the outside) for kinks, sags or a blocked end, then let us know what you find.",
-       "created_at": "2026-09-20T12:38:51.292714",
+       "text": "Switch the AC off and look at the drain pipe (the thin pipe from the indoor unit to the outside) for kinks, sags or a blocked end, then let me know what you find.",
+       "created_at": "2026-09-20T14:47:47.002825",
        "meta": {
         "source": "manual",
         "section_heading": "4.3 Water dripping from the indoor unit",
@@ -509,7 +509,7 @@
          "parts_status": "expired"
         },
         "model_ms": [
-         4470
+         4099
         ],
         "history_engine": "opensearch",
         "storage": "dynamodb",
@@ -521,7 +521,7 @@
        "sender": "system",
        "kind": "note",
        "text": "ArcticAir manual \u00b7 4.3 Water dripping from the indoor unit",
-       "created_at": "2026-09-20T12:38:51.301062"
+       "created_at": "2026-09-20T14:47:47.007615"
       }
      ]
     }
@@ -534,7 +534,7 @@
       "serial": "AC-CB-91016",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.307139",
+     "created_at": "2026-09-20T14:47:31.367025",
      "text": "Hi Imran! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91016, bought 10 Aug 2022.\nCompressor warranty (5 years): active until 10 Aug 2027.\nOther parts (1 year): expired on 10 Aug 2023.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -556,7 +556,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91017) was bought on 05 Sep 2023.\n- Motor (2 years): expired on 05 Sep 2025.\n- Other parts (1 year): expired on 05 Sep 2024.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
-       "created_at": "2026-09-20T12:38:51.480384",
+       "created_at": "2026-09-20T14:47:47.184492",
        "meta": {
         "source": "terms",
         "section_heading": "1. Warranty Period",
@@ -587,7 +587,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "I couldn't find this in your product manual, and I won't guess at it. I've handed it to our service team as ticket TBB-0003 with your description as written.",
-       "created_at": "2026-09-20T12:38:51.546198",
+       "created_at": "2026-09-20T14:47:47.254938",
        "meta": {
         "source": "manual",
         "section_heading": "",
@@ -615,7 +615,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Ticket TBB-0003 \u00b7 Not in the manual",
-       "created_at": "2026-09-20T12:38:51.547953"
+       "created_at": "2026-09-20T14:47:47.257091"
       }
      ]
     }
@@ -628,7 +628,7 @@
       "serial": "WM-FC-91017",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.310979",
+     "created_at": "2026-09-20T14:47:31.370963",
      "text": "Hi Divya! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91017, bought 05 Sep 2023.\nMotor warranty (2 years): expired on 05 Sep 2025.\nOther parts (1 year): expired on 05 Sep 2024.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -650,7 +650,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Stop use immediately. Switch off power at the breaker, not just the remote. Do not attempt any troubleshooting yourself.\n\nThis is a safety issue, so I won't try to troubleshoot it over chat. I've raised ticket TBB-0004 for an emergency technician visit -- free of charge whatever your warranty status.",
-       "created_at": "2026-09-20T12:38:51.598898",
+       "created_at": "2026-09-20T14:47:47.343926",
        "meta": {
         "source": "manual",
         "section_heading": "4.4 Burning smell, sparking, unusual smell resembling gas, or visible smoke",
@@ -678,7 +678,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Ticket TBB-0004 \u00b7 Safety",
-       "created_at": "2026-09-20T12:38:51.600528"
+       "created_at": "2026-09-20T14:47:47.345415"
       }
      ]
     }
@@ -691,7 +691,7 @@
       "serial": "AC-CB-91018",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.314880",
+     "created_at": "2026-09-20T14:47:31.374481",
      "text": "Hi Sanjay! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91018, bought 29 Aug 2026.\nCompressor warranty (5 years): active until 29 Aug 2031.\nOther parts (1 year): active until 29 Aug 2027.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -713,7 +713,7 @@
        "sender": "aftercare",
        "kind": "text",
        "text": "Of course. I've passed this to our service team as ticket TBB-0005, with your details attached. A person will reply to you here on WhatsApp.",
-       "created_at": "2026-09-20T12:38:51.665932",
+       "created_at": "2026-09-20T14:47:47.445882",
        "meta": {
         "source": "manual",
         "section_heading": "",
@@ -741,7 +741,7 @@
        "sender": "system",
        "kind": "note",
        "text": "Ticket TBB-0005 \u00b7 Asked for a person",
-       "created_at": "2026-09-20T12:38:51.667514"
+       "created_at": "2026-09-20T14:47:47.447376"
       }
      ]
     },
@@ -770,7 +770,7 @@
       {
        "sender": "system",
        "kind": "note",
-       "created_at": "2026-09-20T12:38:51.793751",
+       "created_at": "2026-09-20T14:47:47.580658",
        "text": "Ticket TBB-0005 was marked resolved by Meera Nair."
       }
      ]
@@ -784,7 +784,7 @@
       "serial": "WM-FC-91019",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.318654",
+     "created_at": "2026-09-20T14:47:31.378072",
      "text": "Hi Meera! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91019, bought 18 Apr 2026.\nMotor warranty (2 years): active until 18 Apr 2028.\nOther parts (1 year): active until 18 Apr 2027.\nMessage us here any time you need help or want to check your warranty."
     }
    ]
@@ -860,7 +860,7 @@
      "reason_code": "recurring",
      "reason_label": "Recurring issue",
      "status": "new",
-     "created_at": "2026-09-20T12:38:46.626294"
+     "created_at": "2026-09-20T14:47:42.734851"
     },
     {
      "ticket_id": "TBB-0003",
@@ -874,7 +874,7 @@
      "reason_code": "unmatched",
      "reason_label": "Not in the manual",
      "status": "new",
-     "created_at": "2026-09-20T12:38:51.524079"
+     "created_at": "2026-09-20T14:47:47.228721"
     },
     {
      "ticket_id": "TBB-0005",
@@ -888,7 +888,7 @@
      "reason_code": "human_requested",
      "reason_label": "Asked for a person",
      "status": "resolved",
-     "created_at": "2026-09-20T12:38:51.630790"
+     "created_at": "2026-09-20T14:47:47.392613"
     }
    ],
    "warranty_counts": {
@@ -1014,14 +1014,162 @@
    ]
   },
   "arcticair": {
-   "_status": 403,
-   "error": "Meera Nair (aquaspin manager) may not view arcticair's dashboard. Cedar decided by: no-cross-brand.",
-   "decision": {
-    "allowed": false,
-    "policies": [
-     "no-cross-brand"
+   "brand": "arcticair",
+   "authz": {
+    "principal": {
+     "username": "sara.thomas",
+     "name": "Sara Thomas",
+     "brand": "arcticair",
+     "role": "manager"
+    },
+    "decision": {
+     "allowed": true,
+     "policies": [
+      "same-brand-views-dashboard"
+     ]
+    }
+   },
+   "insights": {
+    "engine": "opensearch",
+    "resolved": 0,
+    "answered": 1,
+    "escalated": 2,
+    "by_reason": [
+     {
+      "code": "attempts_exhausted",
+      "count": 1,
+      "label": "Two steps tried"
+     },
+     {
+      "code": "safety",
+      "count": 1,
+      "label": "Safety"
+     }
+    ],
+    "top_sections": [
+     {
+      "heading": "2. What Is Covered",
+      "count": 1,
+      "escalated": 0
+     },
+     {
+      "heading": "4.1 Not cooling properly / blowing warm or weak air",
+      "count": 1,
+      "escalated": 1
+     },
+     {
+      "heading": "4.4 Burning smell, sparking, unusual smell resembling gas, or visible smoke",
+      "count": 1,
+      "escalated": 1
+     }
     ]
-   }
+   },
+   "tickets": [
+    {
+     "ticket_id": "TBB-0001",
+     "customer_name": "Kavya Nair",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "issue_summary": "My AC isn't cooling the room -- 2 self-service attempts tried, issue persists.",
+     "attempts_tried": [
+      "Try turning off the AC, removing and checking both filters for dust. Let me know if cleaning them helps!",
+      "Please check that the outdoor unit isn't blocked or enclosed and let me know if that helps."
+     ],
+     "safety_flag": false,
+     "customer_phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "phone_unmasked": false,
+     "reason_code": "attempts_exhausted",
+     "reason_label": "Two steps tried",
+     "status": "new",
+     "created_at": "2026-09-20T14:47:42.602000"
+    },
+    {
+     "ticket_id": "TBB-0004",
+     "customer_name": "Sanjay Iyer",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "issue_summary": "There's a burning smell coming from my AC -- Safety-flagged complaint -- no troubleshooting attempted.",
+     "attempts_tried": [],
+     "safety_flag": true,
+     "customer_phone": "+919000000107",
+     "phone_unmasked": true,
+     "reason_code": "safety",
+     "reason_label": "Safety",
+     "status": "new",
+     "created_at": "2026-09-20T14:47:47.326473"
+    }
+   ],
+   "warranty_counts": {
+    "active": 7,
+    "expired": 3
+   },
+   "product_feedback": [
+    {
+     "product_name": "ArcticAir 1.5T Split AC",
+     "count": 2
+    }
+   ],
+   "registered_count": 5,
+   "registrations": [
+    {
+     "customer_name": "Sameer Khan",
+     "product_id": "AC-CB-15T",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "serial_number": "AC-CB-77102",
+     "purchase_date": "2023-03-15",
+     "retailer": "Amazon.in",
+     "warranty_component": "compressor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/arcticair?serial=AC-CB-77102"
+    },
+    {
+     "customer_name": "Ravi Kumar",
+     "product_id": "AC-CB-15T",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "serial_number": "AC-CB-78901",
+     "purchase_date": "2024-11-12",
+     "retailer": "Flipkart",
+     "warranty_component": "compressor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/arcticair?serial=AC-CB-78901"
+    },
+    {
+     "customer_name": "Kavya Nair",
+     "product_id": "AC-CB-15T",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "serial_number": "AC-CB-91012",
+     "purchase_date": "2026-01-22",
+     "retailer": "Croma (Kochi)",
+     "warranty_component": "compressor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/arcticair?serial=AC-CB-91012"
+    },
+    {
+     "customer_name": "Imran Sheikh",
+     "product_id": "AC-CB-15T",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "serial_number": "AC-CB-91016",
+     "purchase_date": "2022-08-10",
+     "retailer": "Croma (Hyderabad)",
+     "warranty_component": "compressor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "expired",
+     "qr_content": "https://wa.me/message/arcticair?serial=AC-CB-91016"
+    },
+    {
+     "customer_name": "Sanjay Iyer",
+     "product_id": "AC-CB-15T",
+     "product_name": "ArcticAir 1.5T Split AC",
+     "serial_number": "AC-CB-91018",
+     "purchase_date": "2026-08-29",
+     "retailer": "Croma (Chennai)",
+     "warranty_component": "compressor",
+     "warranty_component_status": "active",
+     "warranty_parts_status": "active",
+     "qr_content": "https://wa.me/message/arcticair?serial=AC-CB-91018"
+    }
+   ]
   }
  },
  "threads": {
@@ -1042,9 +1190,9 @@
       "serial": "WM-FC-91013",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.295536",
+     "created_at": "2026-09-20T14:47:31.355049",
      "text": "Hi Rohan! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91013, bought 03 Nov 2025.\nMotor warranty (2 years): active until 03 Nov 2027.\nOther parts (1 year): active until 03 Nov 2026.\nMessage us here any time you need help or want to check your warranty.",
-     "cursor": "MSG#2026-09-20T12:38:34.295539#999a2b"
+     "cursor": "MSG#2026-09-20T14:47:31.355053#09031b"
     },
     {
      "sender": "aftercare",
@@ -1053,16 +1201,16 @@
       "serial": "WM-FL-91014",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.299827",
+     "created_at": "2026-09-20T14:47:31.359563",
      "text": "Hi Rohan! Your AquaSpin FL-900 Front Loader is registered with AquaSpin.\nSerial WM-FL-91014, bought 30 May 2026.\nMotor warranty (2 years): active until 30 May 2028.\nOther parts (1 year): active until 30 May 2027.\nMessage us here any time you need help or want to check your warranty.",
-     "cursor": "MSG#2026-09-20T12:38:34.299830#d277f9"
+     "cursor": "MSG#2026-09-20T14:47:31.359565#1f8f3c"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:46.546078",
+     "created_at": "2026-09-20T14:47:42.669657",
      "text": "Hi",
-     "cursor": "MSG#2026-09-20T12:38:46.546084#614b18"
+     "cursor": "MSG#2026-09-20T14:47:42.669664#f3a64d"
     },
     {
      "buttons": [
@@ -1077,16 +1225,16 @@
      ],
      "sender": "aftercare",
      "kind": "buttons",
-     "created_at": "2026-09-20T12:38:46.550117",
+     "created_at": "2026-09-20T14:47:42.676849",
      "text": "Hi Rohan! I'm AquaSpin's support assistant. I can see your AquaSpin FC-700 Washing Machine, AquaSpin FL-900 Front Loader. Ask me about your warranty, or tell me what's going wrong.",
-     "cursor": "MSG#2026-09-20T12:38:46.550121#092171"
+     "cursor": "MSG#2026-09-20T14:47:42.676860#c353fc"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:46.564387",
+     "created_at": "2026-09-20T14:47:42.691384",
      "text": "My clothes smell bad after washing",
-     "cursor": "MSG#2026-09-20T12:38:46.564394#fd5986"
+     "cursor": "MSG#2026-09-20T14:47:42.691389#49f44a"
     },
     {
      "buttons": [
@@ -1101,16 +1249,16 @@
      ],
      "sender": "aftercare",
      "kind": "buttons",
-     "created_at": "2026-09-20T12:38:46.568538",
+     "created_at": "2026-09-20T14:47:42.695451",
      "text": "Thanks Rohan. Which product is this about?",
-     "cursor": "MSG#2026-09-20T12:38:46.568541#e9a40f"
+     "cursor": "MSG#2026-09-20T14:47:42.695454#918bbb"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:46.598861",
+     "created_at": "2026-09-20T14:47:42.723287",
      "text": "FC-700 Washing Machine",
-     "cursor": "MSG#2026-09-20T12:38:46.598871#63f8d9"
+     "cursor": "MSG#2026-09-20T14:47:42.723291#64c7b3"
     },
     {
      "sender": "aftercare",
@@ -1137,16 +1285,16 @@
       "retrieval_method": "opensearch",
       "status": "escalated"
      },
-     "created_at": "2026-09-20T12:38:46.655595",
+     "created_at": "2026-09-20T14:47:42.757806",
      "text": "This looks like the same problem we handled on 13 Aug 2026. Repeating the same fix won't help, so I've passed it to our service team as ticket TBB-0002, with the earlier case attached. You won't have to explain it again.",
-     "cursor": "MSG#2026-09-20T12:38:46.655603#beaa00"
+     "cursor": "MSG#2026-09-20T14:47:42.757813#da139f"
     },
     {
      "sender": "system",
      "kind": "note",
-     "created_at": "2026-09-20T12:38:46.657791",
+     "created_at": "2026-09-20T14:47:42.759752",
      "text": "Ticket TBB-0002 \u00b7 Recurring issue",
-     "cursor": "MSG#2026-09-20T12:38:46.657806#cdf7a3"
+     "cursor": "MSG#2026-09-20T14:47:42.759756#011ebe"
     }
    ]
   },
@@ -1167,16 +1315,16 @@
       "serial": "WM-FC-91017",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.310979",
+     "created_at": "2026-09-20T14:47:31.370963",
      "text": "Hi Divya! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91017, bought 05 Sep 2023.\nMotor warranty (2 years): expired on 05 Sep 2025.\nOther parts (1 year): expired on 05 Sep 2024.\nMessage us here any time you need help or want to check your warranty.",
-     "cursor": "MSG#2026-09-20T12:38:34.310981#86ef8d"
+     "cursor": "MSG#2026-09-20T14:47:31.370966#de5f46"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:51.422124",
+     "created_at": "2026-09-20T14:47:47.108766",
      "text": "Is my machine still under warranty?",
-     "cursor": "MSG#2026-09-20T12:38:51.422133#192d75"
+     "cursor": "MSG#2026-09-20T14:47:47.108774#3abe9b"
     },
     {
      "sender": "aftercare",
@@ -1199,16 +1347,16 @@
       "retrieval_method": "opensearch",
       "status": "answered"
      },
-     "created_at": "2026-09-20T12:38:51.480384",
+     "created_at": "2026-09-20T14:47:47.184492",
      "text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91017) was bought on 05 Sep 2023.\n- Motor (2 years): expired on 05 Sep 2025.\n- Other parts (1 year): expired on 05 Sep 2024.\nFrom the terms (1. Warranty Period): Motor and drum mechanism: 2 years from date of purchase. All other parts (filter assembly, door, control panel, hoses): 1 year from date of purchase.\nIf something is wrong with it, just tell me what's happening.",
-     "cursor": "MSG#2026-09-20T12:38:51.480396#5a7392"
+     "cursor": "MSG#2026-09-20T14:47:47.184505#362fe5"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:51.509598",
+     "created_at": "2026-09-20T14:47:47.220021",
      "text": "The touch panel flickers and won't respond",
-     "cursor": "MSG#2026-09-20T12:38:51.509609#240fef"
+     "cursor": "MSG#2026-09-20T14:47:47.220026#89e503"
     },
     {
      "sender": "aftercare",
@@ -1235,16 +1383,16 @@
       "retrieval_method": "opensearch",
       "status": "escalated"
      },
-     "created_at": "2026-09-20T12:38:51.546198",
+     "created_at": "2026-09-20T14:47:47.254938",
      "text": "I couldn't find this in your product manual, and I won't guess at it. I've handed it to our service team as ticket TBB-0003 with your description as written.",
-     "cursor": "MSG#2026-09-20T12:38:51.546207#b369d6"
+     "cursor": "MSG#2026-09-20T14:47:47.254947#015063"
     },
     {
      "sender": "system",
      "kind": "note",
-     "created_at": "2026-09-20T12:38:51.547953",
+     "created_at": "2026-09-20T14:47:47.257091",
      "text": "Ticket TBB-0003 \u00b7 Not in the manual",
-     "cursor": "MSG#2026-09-20T12:38:51.547956#67a955"
+     "cursor": "MSG#2026-09-20T14:47:47.257096#2f8ed7"
     }
    ]
   },
@@ -1265,16 +1413,16 @@
       "serial": "WM-FC-91019",
       "kind": "registration"
      },
-     "created_at": "2026-09-20T12:38:34.318654",
+     "created_at": "2026-09-20T14:47:31.378072",
      "text": "Hi Meera! Your AquaSpin FC-700 Washing Machine is registered with AquaSpin.\nSerial WM-FC-91019, bought 18 Apr 2026.\nMotor warranty (2 years): active until 18 Apr 2028.\nOther parts (1 year): active until 18 Apr 2027.\nMessage us here any time you need help or want to check your warranty.",
-     "cursor": "MSG#2026-09-20T12:38:34.318656#64218d"
+     "cursor": "MSG#2026-09-20T14:47:31.378074#e42837"
     },
     {
      "sender": "customer",
      "kind": "text",
-     "created_at": "2026-09-20T12:38:51.624091",
+     "created_at": "2026-09-20T14:47:47.381928",
      "text": "I want to talk to a person",
-     "cursor": "MSG#2026-09-20T12:38:51.624097#5e5de8"
+     "cursor": "MSG#2026-09-20T14:47:47.381933#1ec08a"
     },
     {
      "sender": "aftercare",
@@ -1301,16 +1449,16 @@
       "retrieval_method": "rule",
       "status": "escalated"
      },
-     "created_at": "2026-09-20T12:38:51.665932",
+     "created_at": "2026-09-20T14:47:47.445882",
      "text": "Of course. I've passed this to our service team as ticket TBB-0005, with your details attached. A person will reply to you here on WhatsApp.",
-     "cursor": "MSG#2026-09-20T12:38:51.665942#9a5dab"
+     "cursor": "MSG#2026-09-20T14:47:47.445888#37ffef"
     },
     {
      "sender": "system",
      "kind": "note",
-     "created_at": "2026-09-20T12:38:51.667514",
+     "created_at": "2026-09-20T14:47:47.447376",
      "text": "Ticket TBB-0005 \u00b7 Asked for a person",
-     "cursor": "MSG#2026-09-20T12:38:51.667519#41c5c3"
+     "cursor": "MSG#2026-09-20T14:47:47.447379#7459fb"
     },
     {
      "sender": "human",
@@ -1319,16 +1467,346 @@
       "ticket_id": "TBB-0005",
       "staff": "Dev Patel"
      },
-     "created_at": "2026-09-20T12:38:51.737609",
+     "created_at": "2026-09-20T14:47:47.528584",
      "text": "Hi Meera, this is Dev from AquaSpin. Which cycle is the machine on?",
-     "cursor": "MSG#2026-09-20T12:38:51.737617#18bfff"
+     "cursor": "MSG#2026-09-20T14:47:47.528592#aef276"
     },
     {
      "sender": "system",
      "kind": "note",
-     "created_at": "2026-09-20T12:38:51.793751",
+     "created_at": "2026-09-20T14:47:47.580658",
      "text": "Ticket TBB-0005 was marked resolved by Meera Nair.",
-     "cursor": "MSG#2026-09-20T12:38:51.793758#32f1ee"
+     "cursor": "MSG#2026-09-20T14:47:47.580664#0fe949"
+    }
+   ]
+  },
+  "TBB-0001": {
+   "ticket": {
+    "ticket_id": "TBB-0001",
+    "status": "new",
+    "customer_name": "Kavya Nair",
+    "product_name": "ArcticAir 1.5T Split AC",
+    "reason_label": "Two steps tried",
+    "safety_flag": false
+   },
+   "messages": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "AC-CB-91012",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T14:47:31.313540",
+     "text": "Hi Kavya! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91012, bought 22 Jan 2026.\nCompressor warranty (5 years): active until 22 Jan 2031.\nOther parts (1 year): active until 22 Jan 2027.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T14:47:31.313543#3877e7"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T14:47:37.434721",
+     "text": "My AC isn't cooling the room",
+     "cursor": "MSG#2026-09-20T14:47:37.434726#274168"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": null,
+      "model_ms": [
+       2751
+      ],
+      "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "compressor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "",
+      "attempt": 1,
+      "retrieval_method": "opensearch",
+      "status": "waiting"
+     },
+     "created_at": "2026-09-20T14:47:40.210940",
+     "text": "Try turning off the AC, removing and checking both filters for dust. Let me know if cleaning them helps!",
+     "cursor": "MSG#2026-09-20T14:47:40.210963#3e828d"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T14:47:40.215857",
+     "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
+     "cursor": "MSG#2026-09-20T14:47:40.215875#66cde5"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T14:47:40.291361",
+     "text": "Still blowing warm air",
+     "cursor": "MSG#2026-09-20T14:47:40.291371#a9865e"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "escalation": null,
+      "model_ms": [
+       2250
+      ],
+      "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "compressor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "",
+      "attempt": 2,
+      "retrieval_method": "opensearch",
+      "status": "waiting"
+     },
+     "created_at": "2026-09-20T14:47:42.548925",
+     "text": "Please check that the outdoor unit isn't blocked or enclosed and let me know if that helps.",
+     "cursor": "MSG#2026-09-20T14:47:42.548934#112f6a"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T14:47:42.550690",
+     "text": "ArcticAir manual \u00b7 4.1 Not cooling properly / blowing warm or weak air",
+     "cursor": "MSG#2026-09-20T14:47:42.550696#db8bfb"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T14:47:42.593350",
+     "text": "No change, still not cooling",
+     "cursor": "MSG#2026-09-20T14:47:42.593355#fa899d"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "escalation": {
+       "code": "attempts_exhausted",
+       "label": "Two steps tried",
+       "detail": ""
+      },
+      "model_ms": [],
+      "section_heading": "4.1 Not cooling properly / blowing warm or weak air",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "compressor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "TBB-0001",
+      "attempt": 2,
+      "retrieval_method": "opensearch",
+      "status": "escalated"
+     },
+     "created_at": "2026-09-20T14:47:42.628413",
+     "text": "Sorry those two steps didn't fix it. I've handed this to our service team as ticket TBB-0001, including what we already tried, so you won't be asked to repeat it.",
+     "cursor": "MSG#2026-09-20T14:47:42.628430#6e50fc"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T14:47:42.631330",
+     "text": "Ticket TBB-0001 \u00b7 Two steps tried",
+     "cursor": "MSG#2026-09-20T14:47:42.631334#161d9b"
+    }
+   ]
+  },
+  "TBB-0004": {
+   "ticket": {
+    "ticket_id": "TBB-0004",
+    "status": "new",
+    "customer_name": "Sanjay Iyer",
+    "product_name": "ArcticAir 1.5T Split AC",
+    "reason_label": "Safety",
+    "safety_flag": true
+   },
+   "messages": [
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "serial": "AC-CB-91018",
+      "kind": "registration"
+     },
+     "created_at": "2026-09-20T14:47:31.374481",
+     "text": "Hi Sanjay! Your ArcticAir 1.5T Split AC is registered with ArcticAir.\nSerial AC-CB-91018, bought 29 Aug 2026.\nCompressor warranty (5 years): active until 29 Aug 2031.\nOther parts (1 year): active until 29 Aug 2027.\nMessage us here any time you need help or want to check your warranty.",
+     "cursor": "MSG#2026-09-20T14:47:31.374483#b0a9b1"
+    },
+    {
+     "sender": "customer",
+     "kind": "text",
+     "created_at": "2026-09-20T14:47:47.316938",
+     "text": "There's a burning smell coming from my AC",
+     "cursor": "MSG#2026-09-20T14:47:47.316944#5d4972"
+    },
+    {
+     "sender": "aftercare",
+     "kind": "text",
+     "meta": {
+      "history_engine": "opensearch",
+      "escalation": {
+       "code": "safety",
+       "label": "Safety",
+       "detail": ""
+      },
+      "model_ms": [],
+      "section_heading": "4.4 Burning smell, sparking, unusual smell resembling gas, or visible smoke",
+      "max_attempts": 2,
+      "warranty": {
+       "component_status": "active",
+       "component": "compressor",
+       "parts_status": "active"
+      },
+      "source": "manual",
+      "storage": "dynamodb",
+      "ticket_id": "TBB-0004",
+      "attempt": 0,
+      "retrieval_method": "safety_rule",
+      "status": "escalated"
+     },
+     "created_at": "2026-09-20T14:47:47.343926",
+     "text": "Stop use immediately. Switch off power at the breaker, not just the remote. Do not attempt any troubleshooting yourself.\n\nThis is a safety issue, so I won't try to troubleshoot it over chat. I've raised ticket TBB-0004 for an emergency technician visit -- free of charge whatever your warranty status.",
+     "cursor": "MSG#2026-09-20T14:47:47.343932#2e475f"
+    },
+    {
+     "sender": "system",
+     "kind": "note",
+     "created_at": "2026-09-20T14:47:47.345415",
+     "text": "Ticket TBB-0004 \u00b7 Safety",
+     "cursor": "MSG#2026-09-20T14:47:47.345419#c18f77"
+    }
+   ]
+  }
+ },
+ "inbox": {
+  "aquaspin": {
+   "principal": {
+    "username": "meera.nair",
+    "name": "Meera Nair",
+    "brand": "aquaspin",
+    "role": "manager"
+   },
+   "chats": [
+    {
+     "customer_name": "Divya Rao",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "I couldn't find this in your product manual, and I won't guess at it. I've handed it to our service team as ticket TBB-0",
+     "mode": "human",
+     "ticket_id": "TBB-0003",
+     "reason": "Not in the manual",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:47.259751",
+     "ticket_status": "new",
+     "safety": false
+    },
+    {
+     "customer_name": "Rohan Desai",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "This looks like the same problem we handled on 13 Aug 2026. Repeating the same fix won't help, so I've passed it to our ",
+     "mode": "human",
+     "ticket_id": "TBB-0002",
+     "reason": "Recurring issue",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:42.761570",
+     "ticket_status": "new",
+     "safety": false
+    },
+    {
+     "customer_name": "Meera Pillai",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Ticket resolved",
+     "mode": "idle",
+     "ticket_id": "TBB-0005",
+     "reason": "",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:47.583423",
+     "ticket_status": "resolved",
+     "safety": false
+    },
+    {
+     "customer_name": "Neha Kulkarni",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Your AquaSpin FC-700 Washing Machine (serial WM-FC-91015) was bought on 01 Jul 2025.\n- Motor (2 years): active until 01 ",
+     "mode": "idle",
+     "ticket_id": "",
+     "reason": "",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:42.816125",
+     "ticket_status": "",
+     "safety": false
+    },
+    {
+     "customer_name": "Arjun Mehta",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Glad that fixed it! Let us know if anything else comes up.",
+     "mode": "idle",
+     "ticket_id": "",
+     "reason": "",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:37.350299",
+     "ticket_status": "",
+     "safety": false
+    }
+   ]
+  },
+  "arcticair": {
+   "principal": {
+    "username": "sara.thomas",
+    "name": "Sara Thomas",
+    "brand": "arcticair",
+    "role": "manager"
+   },
+   "chats": [
+    {
+     "customer_name": "Sanjay Iyer",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Stop use immediately. Switch off power at the breaker, not just the remote. Do not attempt any troubleshooting yourself.",
+     "mode": "human",
+     "ticket_id": "TBB-0004",
+     "reason": "Safety",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:47.347249",
+     "ticket_status": "new",
+     "safety": true
+    },
+    {
+     "customer_name": "Kavya Nair",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Sorry those two steps didn't fix it. I've handed this to our service team as ticket TBB-0001, including what we already ",
+     "mode": "human",
+     "ticket_id": "TBB-0001",
+     "reason": "Two steps tried",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:42.633217",
+     "ticket_status": "new",
+     "safety": false
+    },
+    {
+     "customer_name": "Imran Sheikh",
+     "phone": "+91 90000 \u00b7\u00b7\u00b7\u00b7\u00b7",
+     "last_text": "Switch the AC off and look at the drain pipe (the thin pipe from the indoor unit to the outside) for kinks, sags or a bl",
+     "mode": "bot",
+     "ticket_id": "",
+     "reason": "",
+     "unread": 0,
+     "updated_at": "2026-09-20T14:47:47.014438",
+     "ticket_status": "",
+     "safety": false
     }
    ]
   }
@@ -1339,7 +1817,7 @@
   "components": {
    "ollama": {
     "ok": true,
-    "ms": 10,
+    "ms": 15,
     "models": [
      "gemma2:9b",
      "qwen2.5-coder:7b",
@@ -1358,13 +1836,13 @@
    },
    "cedar": {
     "ok": true,
-    "ms": 8,
+    "ms": 7,
     "policy_sha": "ceb4742d",
     "validated": true
    },
    "dynamodb": {
     "ok": true,
-    "ms": 3,
+    "ms": 9,
     "backend": "dynamodb",
     "table": "AftercareTable",
     "items": 106
@@ -1373,6 +1851,20 @@
  },
  "csv": {
   "clean": "customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\nPriya Sharma,+919876543210,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-78234,2025-06-05,Amazon.in,24999\nPriya Sharma,+919876543210,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-90012,2026-01-18,Croma (Bengaluru),34999\nRavi Kumar,+919812345678,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-78901,2024-11-12,Flipkart,32999\nAnanya Iyer,+919845098450,WM-FC-700,AquaSpin FC-700 Washing Machine,WM-FC-79345,2025-08-20,Croma (Chennai),25999\nSameer Khan,+919900112233,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-77102,2023-03-15,Amazon.in,31499\n"
+ },
+ "ingest_direct": {
+  "rows": 3,
+  "accepted": 3,
+  "rejected": 0,
+  "brands": [
+   {
+    "brand": "AquaSpin",
+    "slug": "aquaspin",
+    "products": 3,
+    "customers": 3
+   }
+  ],
+  "issues": []
  },
  "ingest_check": {
   "clean": {

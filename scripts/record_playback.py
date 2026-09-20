@@ -109,20 +109,22 @@ def main():
     p.d["steps"].append({"who": "staff_action", "actor": "Meera Nair (manager)", "action": "Resolve ticket", "ok": r.ok,
                          "result": f"Allowed by {', '.join(r.json()['decision']['policies'])}" if r.ok else r.json().get("error", ""), "replies": [clean(msgs[-1])]})
 
-    print("dashboard snapshots")
-    dash = {"aquaspin": manager.get(f"{BASE}/api/dashboard/aquaspin").json()}
-    denied = manager.get(f"{BASE}/api/dashboard/arcticair")
-    dash["arcticair"] = {"_status": denied.status_code, **denied.json()}
-    threads = {}
-    for t in dash["aquaspin"]["tickets"]:
-        threads[t["ticket_id"]] = manager.get(f"{BASE}/api/tickets/{t['ticket_id']}/thread").json()
+    print("dashboards, inboxes and chat threads (both brands, each as its own manager)")
+    sara = requests.Session(); sara.post(BASE + "/api/login", json={"username": "sara.thomas", "passcode": "arctic-manager"})
+    sessions = {"aquaspin": manager, "arcticair": sara}
+    dash, threads, inbox = {}, {}, {}
+    for brand, sess in sessions.items():
+        dash[brand] = sess.get(f"{BASE}/api/dashboard/{brand}").json()
+        inbox[brand] = sess.get(f"{BASE}/api/inbox/{brand}").json()
+        for t in dash[brand]["tickets"]:
+            threads[t["ticket_id"]] = sess.get(f"{BASE}/api/tickets/{t['ticket_id']}/thread").json()
     health = requests.get(BASE + "/api/health").json()
 
     rec = {
         "recorded_at": datetime.now().isoformat(timespec="seconds"),
         "model": "gemma2:9b",
         "stack": {k: ("ok" if v["ok"] else "down") for k, v in health["components"].items()},
-        "ingest": ingest, "personas": [x.d for x in P], "dashboard": dash, "threads": threads,
+        "ingest": ingest, "personas": [x.d for x in P], "dashboard": dash, "threads": threads, "inbox": inbox,
         "health": health, "csv": {"clean": requests.get(BASE + "/api/sample-csv").text},
     }
     messy = ("customer_name,customer_phone,product_id,product_name,serial_number,purchase_date,retailer,purchase_price\n"
@@ -132,6 +134,8 @@ def main():
              "Rohit Jain,+919800000004,AC-CB-15T,ArcticAir 1.5T Split AC,AC-CB-80002,2026-03-10,Reliance Digital,33999\n"
              "Sana Ali,98000,WM-FL-900,AquaSpin FL-900 Front Loader,WM-FL-80005,12/03/2026,Reliance Digital,35999")
     hdr = {"Content-Type": "text/csv"}
+    direct = requests.get(BASE + "/api/sandbox/samples/orders_aquaspin_direct.csv").text
+    rec["ingest_direct"] = requests.post(BASE + "/api/ingest", data=direct, headers=hdr).json()
     rec["ingest_check"] = {"clean": requests.post(BASE + "/api/ingest", data=rec["csv"]["clean"], headers=hdr).json(),
                            "messy": requests.post(BASE + "/api/ingest", data=messy, headers=hdr).json()}
     OUT.parent.mkdir(parents=True, exist_ok=True)
